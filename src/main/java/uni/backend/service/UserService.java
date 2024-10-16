@@ -4,4 +4,6 @@ import uni.backend.domain.User;
 
 public interface UserService {
     User signUp(User user);
+
+    User findUser(Integer userId);
 }

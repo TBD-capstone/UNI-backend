@@ -1,9 +1,6 @@
 package uni.backend.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,12 +9,15 @@ import lombok.Setter;
 public class MainCategory {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "main_category_id")
+    private Long mainCategoryId;
+
     @ManyToOne
-    @JoinColumn(name = "profileId")
+    @JoinColumn(name = "profile_id")
     private Profile profile;
 
-    @Id
     @ManyToOne
-    @JoinColumn(name = "hashtagId")
+    @JoinColumn(name = "hashtag_id")
     private Hashtag hashtag;
 }
