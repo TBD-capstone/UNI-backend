@@ -7,6 +7,8 @@ import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -23,7 +25,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User findUser(Integer id) {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

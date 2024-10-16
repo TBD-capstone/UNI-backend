@@ -31,7 +31,6 @@ public class HashtagService {
                     });
 
             MainCategory mainCategory = new MainCategory();
-//            mainCategory.setProfile(user.getProfile());
             mainCategory.setHashtag(hashtag);
 
             mainCategoryRepository.save(mainCategory);
