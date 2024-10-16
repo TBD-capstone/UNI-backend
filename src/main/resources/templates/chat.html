@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Room</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h2>채팅방 이름: <span id="roomIdDisplay"></span></h2>
+<div id="chatbox"></div>
+
+<input type="text" id="message" placeholder="메시지를 입력하세요" />
+<button onclick="sendMessage()">보내기</button>
+
+<script>
+  var stompClient = null;
+  var roomId = null;
+  var username = null;
+
+  function connect() {
+    roomId = new URLSearchParams(window.location.search).get('roomId');
+    username = new URLSearchParams(window.location.search).get('username');
+    document.getElementById('roomIdDisplay').innerText = roomId;
+
+    var socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+      console.log('Connected: ' + frame);
+
+      stompClient.subscribe('/sub/chat/' + roomId, function (message) {
+        showMessage(JSON.parse(message.body).sender + ": " + JSON.parse(message.body).content);
+      });
+    });
+  }
+
+  function sendMessage() {
+    var message = {
+      sender: username,
+      content: document.getElementById('message').value
+    };
+    stompClient.send("/pub/chat/" + roomId, {}, JSON.stringify(message));
+  }
+
+  function showMessage(message) {
+    var chatbox = document.getElementById('chatbox');
+    var p = document.createElement('p');
+    p.appendChild(document.createTextNode(message));
+    chatbox.appendChild(p);
+  }
+
+  connect();
+</script>
+</body>
+</html>
