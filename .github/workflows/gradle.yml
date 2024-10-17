@@ -1,11 +1,20 @@
 name: Java CI with Gradle
 
+#on:
+  #push:
+    #branches: [ "dev" ]  # 테스트를 위해 dev 브랜치에서만 작동 
+  #pull_request:
+    #branches: [ "dev" ]  # 테스트를 위해 dev 브랜치에서만 작동
+    #types: [closed]
 on:
   push:
-    branches: [ "dev" ]  # 테스트를 위해 dev 브랜치에서만 작동 
+    branches: 
+      - "2-도커-및-devops"  # 테스트를 위해 이 브랜치에서 푸시될 때 작동
+      - "5-깃허브-액션"      # 테스트를 위해 이 브랜치에서도 푸시될 때 작동
   pull_request:
-    branches: [ "dev" ]  # 테스트를 위해 dev 브랜치에서만 작동
-    types: [closed]
+    branches: 
+      - "2-도커-및-devops"  # 테스트를 위해 이 브랜치에서 PR이 열릴 때 작동
+      - "5-깃허브-액션"      # 테스트를 위해 이 브랜치에서도 PR이 열릴 때 작동
 
 permissions:
   contents: read
@@ -46,7 +55,7 @@ jobs:
 
     # Docker 이미지 빌드
     - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/uni .
+      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/uni:latest .
 
     # Docker 로그인
     - name: Docker login
@@ -57,4 +66,4 @@ jobs:
 
     # Docker 이미지 푸시
     - name: Push Docker image to DockerHub
-      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/uni
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/uni:latest
