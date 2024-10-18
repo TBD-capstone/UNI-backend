@@ -31,7 +31,7 @@ public class UserController {
         user.setRole(form.getRole());
         user.setStatus("INACTIVE");
 
-        userService.signUp(user);
+        userService.saveUser(user);
         return "redirect:/";
     }
 }
