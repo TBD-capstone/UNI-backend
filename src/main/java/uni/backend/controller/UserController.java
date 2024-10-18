@@ -35,7 +35,7 @@ public class UserController {
             User user = User.createUser(form, passwordEncoder);
             userService.saveUser(user);
         } catch (IllegalStateException e) {
-            model.addAttribute("errorMesage", e.getMessage());
+            model.addAttribute("errorMessage", e.getMessage());
             return "users/createUserForm";
         }
 
