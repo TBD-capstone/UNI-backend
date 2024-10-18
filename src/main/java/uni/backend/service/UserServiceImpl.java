@@ -13,6 +13,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User saveUser(User user) {
+        validateDuplicateUser(user);
         return userRepository.save(user);
     }
 
