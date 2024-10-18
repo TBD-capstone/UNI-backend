@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>새로운 채팅방 생성</title>
+</head>
+<body>
+<h1>새로운 채팅방 생성</h1>
+
+<form action="/chat/room" method="post">
+    <div>
+        <label>상대방의 ID</label>
+        <input type="text" name="otherUserId" placeholder="상대방의 ID를 입력하세요">
+    </div>
+    <button type="submit">채팅방 생성</button>
+</form>
+
+<a href="/chat/rooms">채팅방 목록으로</a>
+
+</body>
+</html>

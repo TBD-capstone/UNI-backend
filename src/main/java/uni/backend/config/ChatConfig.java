@@ -8,16 +8,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class ChatConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/sub");  // 메시지를 구독하는 목적지
-        config.setApplicationDestinationPrefixes("/pub");  // 클라이언트가 메시지를 보낼 경로
+        config.enableSimpleBroker("/sub"); // 구독 신청 prefix
+        config.setApplicationDestinationPrefixes("/pub"); // 메시지 전달 prefix
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();  // 웹소켓 연결 엔드포인트
+        registry.addEndpoint("/ws/chat").withSockJS(); // WebSocket endpoint
     }
 }

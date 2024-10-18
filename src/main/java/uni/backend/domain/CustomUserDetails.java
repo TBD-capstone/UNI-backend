@@ -13,6 +13,10 @@ public class CustomUserDetails implements UserDetails {
 
     private User user;
 
+    public Integer getUserId() { // 추가된 메서드
+        return user.getUserId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));

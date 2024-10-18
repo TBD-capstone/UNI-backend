@@ -41,4 +41,10 @@ public class UserController {
 
         return "redirect:/";
     }
+
+    @GetMapping("/users")
+    public String listUsers(Model model) {
+        model.addAttribute("users", userService.findAllUsers()); // 모든 회원을 조회하여 모델에 추가
+        return "users/list"; // 회원 목록 페이지로 이동
+    }
 }

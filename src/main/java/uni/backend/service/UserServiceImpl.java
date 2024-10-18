@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -22,5 +24,10 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findByEmail(user.getEmail()) != null) {
             throw new IllegalStateException("이미 가입된 회원입니다.");
         }
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return userRepository.findAll(); // 모든 회원 조회
     }
 }

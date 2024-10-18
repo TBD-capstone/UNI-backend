@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>채팅방</title>
+    <script src="https://cdn.jsdelivr.net/sockjs/1.1.4/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h1>채팅방</h1>
+
+<!-- 채팅 메시지 목록 -->
+<div id="chatMessages">
+    <ul>
+        <li th:each="message : ${chatRoom.chatMessages}">
+            <span th:text="${message.senderId == chatRoom.myId ? '나' : '상대방'}"></span> :
+            <span th:text="${message.content}"></span>
+            <small th:text="${message.sendAt}"></small>
+        </li>
+    </ul>
+</div>
+
+<!-- 메시지 입력 폼 -->
+<div>
+    <form id="chatForm">
+        <input type="text" id="message" placeholder="메시지를 입력하세요">
+        <button type="submit">보내기</button>
+    </form>
+</div>
+
+<a href="/chat/rooms">채팅방 목록으로</a>
+
+<script>
+    var socket = new SockJS('/ws/chat');
+    var stompClient = Stomp.over(socket);
+    var roomId = /*[[${chatRoom.chatRoomId}]]*/ '1';  // 디버깅을 위해 임시 값 설정
+    var senderId = /*[[${chatRoom.myId}]]*/ '2';      // 디버깅을 위해 임시 값 설정
+    console.log("roomId: " + roomId + ", senderId: " + senderId);
+
+    stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+
+        stompClient.subscribe('/sub/chat/room/' + roomId, function (messageOutput) {
+            var message = JSON.parse(messageOutput.body);
+            var messageElement = document.createElement('li');
+            messageElement.innerHTML = (message.senderId === senderId ? '나' : '상대방') + ' : ' + message.content + ' <small>' + message.sendAt + '</small>';
+            document.querySelector('#chatMessages ul').appendChild(messageElement);
+        });
+    });
+
+    // 메시지 보내기
+    document.getElementById('chatForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var messageContent = document.getElementById('message').value;
+
+        if (messageContent && stompClient) {
+            var chatMessage = {
+                content: messageContent,
+                senderId: senderId
+            };
+            stompClient.send("/pub/sendMessage/" + roomId, {}, JSON.stringify(chatMessage));
+            document.getElementById('message').value = '';  // 메시지 입력란 초기화
+        }
+    });
+</script>
+
+</body>
+</html>

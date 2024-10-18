@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>채팅방 목록</title>
+</head>
+<body>
+<h1>채팅방 목록</h1>
+
+<table>
+  <thead>
+  <tr>
+    <th>상대방</th>
+    <th>마지막 메시지 시간</th>
+    <th>채팅방 입장</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="room : ${chatRooms}">
+    <td th:text="${room.otherName}"></td>
+    <td th:text="${room.lastMessageAt}"></td>
+    <td>
+      <a th:href="@{/chat/room/{roomId}(roomId=${room.chatRoomId})}">입장</a>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<a href="/static">홈으로</a>
+
+</body>
+</html>
