@@ -32,5 +32,6 @@ RUN echo "$APPLICATION_YAML" > /app/src/main/resources/application.yml
 # Step 6: Expose the port your application uses
 EXPOSE 8080
 
-# Step 7: Run the application
+# ci와 local 구분
 ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=ci"]
+#ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=local"]
