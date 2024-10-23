@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<h1>Search Results for "<span th:text="${hashtags}"></span>"</h1>
+
+<div th:if="${#lists.isEmpty(users)}">
+    <p>No users found with these hashtags.</p>
+</div>
+
+<div th:if="${!#lists.isEmpty(users)}">
+    <ul>
+        <li th:each="user : ${users}">
+            <span th:text="${user}"></span>
+        </li>
+    </ul>
+</div>
+
+<a href="/search">Search again</a>
+</body>
+</html>

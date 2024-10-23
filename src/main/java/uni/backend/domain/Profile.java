@@ -14,7 +14,7 @@ public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "profile_id")
-    private Long profileId;
+    private Integer profileId;
 
     @OneToOne
     @JoinColumn(name = "user_id")
@@ -26,6 +26,6 @@ public class Profile {
 
     private String content;
 
-    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<MainCategory> mainCategories;
 }

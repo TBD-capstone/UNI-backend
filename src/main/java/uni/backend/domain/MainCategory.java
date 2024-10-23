@@ -11,7 +11,7 @@ public class MainCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "main_category_id")
-    private Long mainCategoryId;
+    private Integer mainCategoryId;
 
     @ManyToOne
     @JoinColumn(name = "profile_id")
