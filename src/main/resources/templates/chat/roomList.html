@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방 목록</title>
+</head>
+<body>
+<h1>채팅방 목록</h1>
+
+<ul>
+    <!-- 각 채팅방을 목록으로 표시 -->
+    <li th:each="chatRoom : ${chatRooms}">
+        <a th:href="@{'/chat/room/' + ${chatRoom.chatRoomId}}">
+            [[${chatRoom.sender.name}]] 님과 [[${chatRoom.receiver.name}]] 님의 채팅방
+        </a>
+    </li>
+</ul>
+
+<!-- 메인 페이지로 돌아가는 링크 -->
+<a href="/">메인 페이지로 돌아가기</a>
+</body>
+</html>
