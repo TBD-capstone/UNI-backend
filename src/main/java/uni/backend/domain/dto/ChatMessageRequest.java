@@ -1,14 +1,17 @@
 package uni.backend.domain.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChatMessageRequest {
-    private String content; // 메시지 내용
-    private Integer receiverId; // 받는 사람 ID
+    private Integer roomId;
+    private String content;
+    private Integer senderId;
     private LocalDateTime sendAt;
 }

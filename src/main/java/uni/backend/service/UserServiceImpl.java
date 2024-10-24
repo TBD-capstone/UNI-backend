@@ -2,6 +2,7 @@ package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uni.backend.domain.Role;
 import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
@@ -29,5 +30,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findAllUsers() {
         return userRepository.findAll(); // 모든 회원 조회
+    }
+
+    @Override
+    public List<User> findKoreanUsers() {
+        return userRepository.findByRole(Role.KOREAN);
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

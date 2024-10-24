@@ -10,9 +10,7 @@
     <p>로그인: <span th:text="${remoteUser}"></span></p>
     <a href="/logout">로그아웃</a>
     <!-- 회원 목록 버튼 추가 -->
-    <a href="/users">회원 목록</a>
-    <!-- 채팅방 목록 링크 -->
-    <a href="/chat/rooms">채팅방 목록</a>
+    <a href="/users/list">회원 목록</a>
 </div>
 <div th:if="${remoteUser == null}">
     <a href="/login">로그인</a>

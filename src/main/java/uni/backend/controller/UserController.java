@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import uni.backend.domain.User;
 import uni.backend.service.UserService;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class UserController {
@@ -46,5 +48,13 @@ public class UserController {
     public String listUsers(Model model) {
         model.addAttribute("users", userService.findAllUsers()); // 모든 회원을 조회하여 모델에 추가
         return "users/list"; // 회원 목록 페이지로 이동
+    }
+
+    @GetMapping("/users/list")
+    public String userList(Model model) {
+        // ROLE이 KOREAN인 사용자들만 가져옴
+        List<User> koreanUsers = userService.findKoreanUsers();
+        model.addAttribute("koreanUsers", koreanUsers);
+        return "users/userList";
     }
 }

@@ -1,16 +1,18 @@
 package uni.backend.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import uni.backend.domain.CustomUserDetails;
-import uni.backend.domain.dto.*;
+import uni.backend.domain.User;
+import uni.backend.domain.dto.ChatMainResponse;
+import uni.backend.domain.dto.ChatMessageRequest;
+import uni.backend.domain.dto.ChatRoomRequest;
 import uni.backend.service.ChatService;
+import uni.backend.service.UserService;
 
 import java.security.Principal;
 import java.util.List;
@@ -20,46 +22,54 @@ import java.util.List;
 public class ChatController {
 
     private final ChatService chatService;
-    private final SimpMessagingTemplate messagingTemplate; // SimpMessagingTemplate 주입
+    private final UserService userService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
+    // 채팅방 목록 조회
     @GetMapping("/chat/rooms")
-    public String getChatRooms(Model model) {
-        // 로그인된 사용자의 정보를 SecurityContextHolder에서 가져옵니다.
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Integer myId = userDetails.getUserId(); // 사용자 ID를 가져옴
-        List<ChatMainResponse> chatRooms = chatService.getChatRooms(myId); // 채팅방 목록 조회
-        model.addAttribute("chatRooms", chatRooms);
-        return "chat/main"; // 채팅방 목록 페이지로 연결
+    public String getChatRooms(Principal principal, Model model) {
+        // 이메일로 User 객체 조회
+        User currentUser = userService.findByEmail(principal.getName());
+        model.addAttribute("chatRooms", chatService.getChatRooms(currentUser));
+        return "chat/chatrooms";
     }
 
-    @GetMapping("/chat/room/{roomId}")
-    public String getChatRoom(@PathVariable Integer roomId, Model model) {
-        // roomId는 이미 Integer 타입이어야 하므로 이메일을 사용하지 않습니다.
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Integer myId = userDetails.getUserId(); // 로그인한 사용자 ID 가져오기
-        ChatRoomResponse chatRoom = chatService.getChatRoom(roomId, myId); // 채팅방 조회
-        model.addAttribute("chatRoom", chatRoom);
-        model.addAttribute("myId", myId);
-        return "chat/room"; // 채팅방 페이지로 연결
-    }
-
+    // 채팅방 생성
     @PostMapping("/chat/room")
-    public String createChatRoom(@RequestParam("otherUserEmail") String otherUserEmail) {
-        // 로그인된 사용자의 정보를 SecurityContextHolder에서 가져옵니다.
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Integer myId = userDetails.getUserId(); // 로그인한 사용자 ID 가져오기
-        chatService.createChatRoom(myId, otherUserEmail); // 이메일로 상대방과 채팅방 생성
-        return "redirect:/chat/rooms"; // 채팅방 목록으로 리다이렉트
+    public String createChatRoom(@ModelAttribute ChatRoomRequest request, Principal principal) {
+        chatService.createChatRoom(principal.getName(), request);
+        return "redirect:/chat/rooms";
     }
 
-    @MessageMapping("/sendMessage/{roomId}")
-    public void sendMessage(@PathVariable Integer roomId, @RequestBody ChatMessageRequest messageRequest, Principal principal) {
-        Integer senderId = ((CustomUserDetails) ((Authentication) principal).getPrincipal()).getUserId();
-        chatService.sendMessage(roomId, senderId, messageRequest);
-        // 메시지를 해당 채팅방에 연결된 클라이언트로 전달
-        messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, messageRequest);
+    // 채팅방 조회
+    @GetMapping("/chat/room/{roomId}")
+    public String getChatRoom(@PathVariable Integer roomId, Principal principal, Model model) {
+        model.addAttribute("chatRoomId", roomId);
+        model.addAttribute("chatMessages", chatService.getChatMessages(roomId));
+        model.addAttribute("myId", userService.findByEmail(principal.getName()).getUserId());
+        return "chat/chatroom";
+    }
+
+    // 클라이언트가 /pub/chat/message로 메시지를 보낼 때 처리
+    @MessageMapping("/chat/message")
+    public void sendMessage(ChatMessageRequest messageRequest) {
+        // 메시지를 저장
+        chatService.sendMessage(messageRequest);
+
+        // 해당 채팅방 구독자에게 메시지 브로드캐스트
+        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), messageRequest);
+        System.out.println("메시지 브로드캐스트: " + messageRequest.getContent());  // 메시지 브로드캐스트 확인 로그
+    }
+
+    // POST 요청으로 메시지 전송 처리
+    @PostMapping("/sendMessage/{roomId}")
+    public String sendChatMessage(@PathVariable Integer roomId, @RequestParam String message, Principal principal) {
+        ChatMessageRequest chatMessageRequest = new ChatMessageRequest();
+        chatMessageRequest.setRoomId(roomId);
+        chatMessageRequest.setContent(message);
+        chatMessageRequest.setSenderId(chatService.getSenderIdFromPrincipal(principal));
+
+        chatService.sendMessage(chatMessageRequest);
+        return "redirect:/chat/room/" + roomId;
     }
 }
