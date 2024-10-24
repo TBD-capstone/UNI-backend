@@ -25,34 +25,40 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
 
-    // 채팅방 목록 조회
-    @Transactional(readOnly = true)
-    public List<ChatMainResponse> getChatRooms(User user) {
-        // sender 또는 receiver가 현재 사용자와 관련된 모든 채팅방 조회
-        List<ChatRoom> chatRooms = chatRoomRepository.findBySenderOrReceiver(user, user);
-
-        return chatRooms.stream()
-                .map(room -> ChatMainResponse.builder()
-                        .chatRoomId(room.getChatRoomId())
-                        // 메시지가 있는지 확인 후 처리
-                        .otherName(room.getReceiver().getName())
-                        .lastMessageTime(room.getChatMessages().isEmpty() ? null : room.getChatMessages().get(0).getSendAt())
-                        .build())
-                .collect(Collectors.toList());
+    /*public List<ChatRoom> getChatRooms(User user) {
+        return chatRoomRepository.findBySenderOrReceiver(user, user);
     }
+
+    public ChatRoom createOrGetChatRoom(User sender, User receiver) {
+        // 채팅방이 이미 존재하는지 확인
+        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findBySenderAndReceiver(sender, receiver);
+
+        // 기존 채팅방이 있으면 그 채팅방을 반환
+        if (existingChatRoom.isPresent()) {
+            return existingChatRoom.get();
+        }
+
+        // 채팅방이 없으면 새 채팅방 생성 후 저장
+        return createChatRoom(sender.getEmail(), );  // 데이터베이스에 저장
+    }*/
 
     // 채팅방 생성
     @Transactional
-    public void createChatRoom(String senderEmail, ChatRoomRequest request) {
+    public ChatRoom createChatRoom(String senderEmail, ChatRoomRequest request) {
+        // 이메일을 통해 발신자 찾기
         User sender = userRepository.findByEmail(senderEmail);
-        User receiver = userRepository.findById(request.getReceiverId()).orElseThrow();
+        // 수신자를 ID로 찾기, 없으면 예외 발생
+        User receiver = userRepository.findById(request.getReceiverId())
+                .orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
 
+        // 새 채팅방 생성
         ChatRoom chatRoom = new ChatRoom();
         chatRoom.setSender(sender);
         chatRoom.setReceiver(receiver);
         chatRoom.setCreatedAt(request.getCreatedAt());
 
-        chatRoomRepository.save(chatRoom);
+        // 채팅방 저장 후 반환
+        return chatRoomRepository.save(chatRoom);
     }
 
     // Principal에서 유저의 이메일을 가져와 User ID 반환

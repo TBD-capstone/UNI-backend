@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Home</title>
+    <title>UNI - Main Page</title>
 </head>
 <body>
 <h1>UNI</h1>
 
+<!-- 유저가 로그인했을 때 보여줄 내용 -->
 <div th:if="${remoteUser != null}">
-    <p>로그인: <span th:text="${remoteUser}"></span></p>
+    <p>로그인 사용자: <span th:text="${remoteUser}"></span></p>
+
+    <!-- 유학생일 때 표시 -->
+    <div th:if="${role == 'EXCHANGE'}">
+        <a href="/chat/rooms">채팅방 목록 보기 (한국 대학생과)</a>
+        <a href="/users/list">회원 목록에서 한국 대학생에게 채팅 요청</a>
+    </div>
+
+    <!-- 한국 대학생일 때 표시 -->
+    <div th:if="${role == 'KOREAN'}">
+        <a href="/chat/rooms">유학생과의 채팅방 목록 보기</a>
+    </div>
+
     <a href="/logout">로그아웃</a>
-    <!-- 회원 목록 버튼 추가 -->
-    <a href="/users/list">회원 목록</a>
 </div>
+
+<!-- 로그인하지 않은 상태라면 로그인/회원가입 버튼만 표시 -->
 <div th:if="${remoteUser == null}">
     <a href="/login">로그인</a>
     <a href="/users/new">회원가입</a>
