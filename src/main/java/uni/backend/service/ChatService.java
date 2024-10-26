@@ -51,6 +51,11 @@ public class ChatService {
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
 
+        // 기존 채팅방이 있으면 그 채팅방을 반환
+        if(chatRoomRepository.findBySenderAndReceiver(sender, receiver).isPresent()){
+            return chatRoomRepository.findBySenderAndReceiver(sender, receiver).get();
+        }
+
         // 새 채팅방 생성
         ChatRoom chatRoom = new ChatRoom();
         chatRoom.setSender(sender);
