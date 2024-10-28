@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
+import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.repository.HashtagRepository;
 import uni.backend.repository.MainCategoryRepository;
+import uni.backend.repository.ProfileRepository;
 import uni.backend.repository.UserRepository;
 import uni.backend.service.HashtagService;
 
@@ -21,6 +23,9 @@ public class InputController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ProfileRepository profileRepository;
 
     @Autowired
     private HashtagRepository hashtagRepository;
@@ -42,8 +47,9 @@ public class InputController {
             Model model) {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Profile profile = profileRepository.findByUser(user).orElseThrow(() -> new RuntimeException("User not found"));
 
-        hashtagService.addHashtagsToUser(user, hashtags);
+        hashtagService.addHashtagsToProfile(profile, hashtags);
 
         model.addAttribute("message", "Hashtags successfully added");
 

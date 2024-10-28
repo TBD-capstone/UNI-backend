@@ -10,6 +10,8 @@ import uni.backend.repository.UserRepository;
 
 import java.util.List;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {

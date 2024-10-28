@@ -25,18 +25,15 @@ class UserServiceTest {
     void 회원가입() {
         User user = new User();
 
-        user.setUserId(123);
+        user.setName("test");
         user.setEmail("test@test.com");
         user.setPassword("123456");
-        user.setName("test");
-        user.setLastVerification(null);
-        user.setStatus("INACTIVE");
         user.setRole(Role.KOREAN);
+        user.setStatus("INACTIVE");
 
         userServiceImpl.signUp(user);
 
         User findUser = userServiceImpl.findUser(user.getUserId());
-        Assertions.assertThat(findUser).isNotNull();
         Assertions.assertThat(user.getUserId()).isEqualTo(findUser.getUserId());
     }
 
