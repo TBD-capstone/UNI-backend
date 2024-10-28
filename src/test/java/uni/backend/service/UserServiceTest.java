@@ -13,6 +13,8 @@ class UserServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    private Profile profile;
+
     @Test
     void 회원가입() {
         User user = new User(

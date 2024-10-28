@@ -38,4 +38,10 @@ public class User {
     @Column(nullable = false)
     private Role role;  // ENUM 타입
 
+
+    @OneToOne(mappedBy = "user",fetch = FetchType.LAZY)
+    private Profile profile;
+
+
+
 }
