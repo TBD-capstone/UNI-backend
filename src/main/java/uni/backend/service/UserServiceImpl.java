@@ -3,6 +3,8 @@ package uni.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Role;
+import org.springframework.transaction.annotation.Transactional;
+import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
@@ -15,8 +17,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public User saveUser(User user) {
         validateDuplicateUser(user);
+        Profile profile = new Profile();
+        profile.setUser(user);
+        user.setProfile(profile);
         return userRepository.save(user);
     }
 

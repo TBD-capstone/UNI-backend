@@ -1,18 +1,17 @@
 package uni.backend.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import uni.backend.controller.UserForm;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "user")
 @Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Builder
 public class User {
 
     @Id
@@ -49,4 +48,7 @@ public class User {
 
         return user;
     }
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Profile profile;
+
 }
