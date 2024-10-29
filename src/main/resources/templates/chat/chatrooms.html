@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>채팅방 목록</title>
+</head>
+<body>
+<h1>채팅방 목록</h1>
+<div th:each="chatRoom : ${chatRooms}">
+    <p th:text="${chatRoom.otherName}"></p>
+    <a th:href="@{/chat/room/{roomId}(roomId=${chatRoom.chatRoomId})}">채팅방 입장</a>
+</div>
+</body>
+</html>
