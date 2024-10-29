@@ -17,9 +17,5 @@ spring:
 
   logging:
     level:
-      org:
-        springframework:
-          transaction: DEBUG
-        hibernate:
-          SQL: DEBUG
-        hibernate.type: TRACE
+      org.springframework.security: DEBUG
+      org.springframework.web: DEBUG
