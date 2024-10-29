@@ -2,25 +2,29 @@ package uni.backend.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.UserForm;
 import uni.backend.service.UserService;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    @GetMapping("/users/new")
+/*    @GetMapping("/users/new")
     public String createUserForm(Model model) {
         model.addAttribute("userForm", new UserForm());
         return "users/createUserForm";
@@ -42,6 +46,20 @@ public class UserController {
         }
 
         return "redirect:/";
+    }*/
+
+    @PostMapping("/users/new")
+    public ResponseEntity<?> registerUser(@RequestBody @Valid UserForm form) {
+        try {
+            // 새로운 사용자 생성
+            User user = User.createUser(form, passwordEncoder);
+            userService.saveUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공");
+
+        } catch (IllegalStateException e) {
+            // 중복 사용자 오류 등의 예외 처리
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("오류: " + e.getMessage());
+        }
     }
 
     @GetMapping("/users")

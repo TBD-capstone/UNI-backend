@@ -1,4 +1,4 @@
-package uni.backend.controller;
+package uni.backend.domain.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
