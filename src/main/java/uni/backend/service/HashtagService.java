@@ -22,9 +22,11 @@ public class HashtagService {
     @Autowired
     private MainCategoryRepository mainCategoryRepository;
 
-
     @Transactional
     public void addHashtagsToProfile(Profile profile, List<String> hashtags) {
+        // 기존 mainCategories를 clear() 호출로 초기화
+        profile.getMainCategories().clear();  // 수정된 부분
+
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -35,61 +37,54 @@ public class HashtagService {
 
             MainCategory mainCategory = new MainCategory();
             mainCategory.setHashtag(hashtag);
-            mainCategory.setProfile(profile);
+            mainCategory.setProfile(profile);  // Profile과 연관 설정 (수정된 부분)
+            profile.addMainCategory(mainCategory);  // Profile에 MainCategory 추가
 
             mainCategoryRepository.save(mainCategory);
         }
     }
 
     public void editHashtagsToUser(User user, List<String> hashtags) {
-        // To Do
+        // TODO: 사용자 해시태그 수정 메서드 구현
     }
 
     @Transactional
     public List<String> findUsersByHashtags(List<String> hashtags) {
         List<Hashtag> hashtagList = new ArrayList<>();
 
-        // 입력된 해시태그 각각을 확인하면서 유효한 해시태그인지 검사
         for (String hashtagName : hashtags) {
             Optional<Hashtag> optionalHashtag = hashtagRepository.findByHashtagName(hashtagName);
-
-            if (optionalHashtag.isEmpty())
+            if (optionalHashtag.isEmpty()) {
                 return List.of();
+            }
             hashtagList.add(optionalHashtag.get());
         }
 
-        // 첫 번째 해시태그의 MainCategory에서 연결된 Profile을 추출
-        List<Profile> initialProfiles = new java.util.ArrayList<>(hashtagList.getFirst().getMainCategories().stream()
+        if (hashtagList.isEmpty()) {
+            return List.of();
+        }
+
+        List<Profile> initialProfiles = new ArrayList<>(hashtagList.get(0).getMainCategories().stream()
                 .map(MainCategory::getProfile)
                 .filter(Objects::nonNull)
-                .toList());
+                .collect(Collectors.toList()));  // 수정된 부분
 
-        System.out.println("0: " + initialProfiles.getFirst().getUser().getName());
-
-        // 나머지 해시태그들에 대해 공통으로 연결된 Profile만 남김
         for (Hashtag hashtag : hashtagList.subList(1, hashtagList.size())) {
-            System.out.println("Hello..?");
             List<Profile> profilesWithHashtag = hashtag.getMainCategories().stream()
                     .map(MainCategory::getProfile)
                     .filter(Objects::nonNull)
-                    .toList();
+                    .collect(Collectors.toList());
 
-            // 현재 검색 중인 해시태그의 Profile 목록과 교집합만 남김
-            System.out.println(profilesWithHashtag);
             initialProfiles.retainAll(profilesWithHashtag);
-            System.out.println(initialProfiles);
 
-            // 교집합이 비어있으면 더 이상 검색할 필요 없으므로 바로 빈 리스트 반환
             if (initialProfiles.isEmpty()) {
                 return List.of();
             }
         }
 
-        // 공통으로 모든 해시태그를 가진 Profile에서 사용자 이름 추출
         return initialProfiles.stream()
                 .map(profile -> profile.getUser().getName())
-                .distinct()  // 중복 제거
-                .toList();
+                .distinct()
+                .collect(Collectors.toList());
     }
-
 }
