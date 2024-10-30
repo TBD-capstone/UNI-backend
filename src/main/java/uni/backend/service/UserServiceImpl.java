@@ -3,10 +3,14 @@ package uni.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Role;
+import org.springframework.transaction.annotation.Transactional;
+import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
 import java.util.List;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,8 +19,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public User saveUser(User user) {
-        validateDuplicateUser(user);
+        // validateDuplicateUser(user); // 추후 이메일 api 인증시에 이 부분 활성화 하면 될 것 같습니다.
+        Profile profile = new Profile();
+        profile.setUser(user);
+        user.setProfile(profile);
         return userRepository.save(user);
     }
 

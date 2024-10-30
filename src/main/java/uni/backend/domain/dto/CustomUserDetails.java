@@ -1,9 +1,10 @@
-package uni.backend.domain;
+package uni.backend.domain.dto;
 
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import uni.backend.domain.User;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,10 +12,18 @@ import java.util.Collections;
 @AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    private User user;
+    private final User user; // User 객체 포함
 
-    public Integer getUserId() { // 추가된 메서드
-        return user.getUserId();
+    public String getName() {
+        return user.getName();
+    }
+
+    public String getRole() {
+        return user.getRole().name(); // 사용자의 역할을 반환
+    }
+
+    public User getUser() {
+        return this.user;
     }
 
     @Override
@@ -47,8 +56,8 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
-/*    @Override
+    @Override
     public boolean isEnabled() {
-        return user.getStatus().equals("ACTIVE");
-    }*/
+        return true;
+    }
 }
