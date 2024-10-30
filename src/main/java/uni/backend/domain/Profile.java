@@ -37,12 +37,13 @@ public class Profile {
     private double star;            // 별점
     private String time;            // 활동시간
 
+
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MainCategory> mainCategories = new ArrayList<>();
 
     public void addMainCategory(MainCategory mainCategory) {
         this.mainCategories.add(mainCategory);
-        mainCategory.setProfile(this); // 양방향 연관관계 설정
+        mainCategory.setProfile(this);
     }
 
     public void removeMainCategory(MainCategory mainCategory) {
