@@ -77,14 +77,15 @@ public class ChatService {
     }
 
     @Transactional
-    public void sendMessage(ChatMessageRequest messageRequest) {
+    public ChatMessage sendMessage(ChatMessageRequest messageRequest) {
         ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId()).orElseThrow();
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setChatRoom(chatRoom);
         chatMessage.setSender(userRepository.findById(messageRequest.getSenderId()).orElseThrow());
         chatMessage.setContent(messageRequest.getContent());
         chatMessage.setSendAt(LocalDateTime.now());
-        chatMessageRepository.save(chatMessage);
+
+        return chatMessageRepository.save(chatMessage);  // 저장된 메시지를 반환
     }
 
     // 채팅방에 속한 메시지 조회
