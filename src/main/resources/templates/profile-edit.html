@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>프로필 수정</title>
+</head>
+<body>
+<h1>프로필 수정</h1>
+
+<form th:action="@{/profile-edit}" th:object="${profile}" method="post">
+    <div>
+        <label for="content">내용:</label>
+        <textarea id="content" th:field="*{content}" rows="4" cols="50" required></textarea>
+    </div>
+
+    <div>
+        <h3>주요 카테고리:</h3>
+        <ul id="categoryList">
+            <li th:each="category, iterStat : ${profile.mainCategories}">
+                <input type="text" th:field="*{mainCategories[iterStat.index].hashtag.hashtagName}" th:value="${category.hashtag.hashtagName}" required />
+                <button type="button" onclick="removeCategory(${iterStat.index})">삭제</button>
+            </li>
+        </ul>
+        <input type="text" id="newCategory" placeholder="새로운 카테고리 추가" />
+        <button type="button" onclick="addCategory()">추가</button>
+    </div>
+
+    <button type="submit">저장</button>
+</form>
+
+<a href="/profile">프로필 페이지로 돌아가기</a>
+
+<script>
+    function removeCategory(index) {
+        // 해당 카테고리 삭제
+        const categoryInput = document.querySelector(`input[name='mainCategories[${index}].hashtag.hashtagName']`);
+        if (categoryInput) {
+            categoryInput.parentElement.remove(); // 입력 요소를 DOM에서 제거
+        }
+    }
+
+    function addCategory() {
+        const newCategoryInput = document.getElementById("newCategory");
+        const newCategoryName = newCategoryInput.value.trim();
+
+        if (newCategoryName) {
+            const categoryList = document.getElementById("categoryList");
+            const listItem = document.createElement("li");
+            listItem.innerHTML = `
+                <input type="text" name="mainCategories[${categoryList.children.length}].hashtag.hashtagName" value="${newCategoryName}" required />
+                <button type="button" onclick="removeCategory(${categoryList.children.length})">삭제</button>
+            `;
+            categoryList.appendChild(listItem);
+            newCategoryInput.value = ""; // 추가 후 입력 필드 비우기
+        } else {
+            alert("카테고리 이름을 입력하세요.");
+        }
+    }
+</script>
+
+</body>
+</html>

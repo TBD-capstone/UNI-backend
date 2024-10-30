@@ -5,10 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import uni.backend.controller.UserForm;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -19,7 +22,7 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;  // INT 타입, Primary Key
 
-    @Column(nullable = false, length = 255)
+    @Column(unique = true, nullable = false, length = 255)
     private String email;  // VARCHAR(255)
 
     @Column(nullable = false, length = 255)
@@ -38,4 +41,21 @@ public class User {
     @Column(nullable = false)
     private Role role;  // ENUM 타입
 
+    @Column(name = "univ")  // 대학교 정보 추가
+    private String univ;  // VARCHAR(255)
+
+    public static User createUser(UserForm userForm, PasswordEncoder passwordEncoder) {
+        User user = new User();
+        user.setEmail(userForm.getEmail());
+        user.setPassword(passwordEncoder.encode(userForm.getPassword()));
+        user.setName(userForm.getName());
+        user.setStatus("INACTIVE");
+        user.setRole(userForm.getRole());
+        user.setUniv(userForm.getUniv()); // UserForm에서 대학 정보도 가져와야 함
+
+        return user;
+    }
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Profile profile;
 }

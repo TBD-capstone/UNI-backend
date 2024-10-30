@@ -5,25 +5,40 @@
 </head>
 <body>
 <h1>회원가입</h1>
+
+<!-- 에러 메시지 표시 영역 -->
+<div th:if="${errorMessage}" style="color: red;">
+  <p th:text="${errorMessage}"></p>
+</div>
+
 <form action="/users/new" method="post" th:object="${userForm}">
   <div>
     <label>이름</label>
     <input type="text" th:field="*{name}" />
+    <div th:if="${#fields.hasErrors('name')}" style="color: red;">
+      <p th:errors="*{name}"></p>
+    </div>
   </div>
   <div>
     <label>이메일</label>
     <input type="email" th:field="*{email}" />
+    <div th:if="${#fields.hasErrors('email')}" style="color: red;">
+      <p th:errors="*{email}"></p>
+    </div>
   </div>
   <div>
     <label>비밀번호</label>
     <input type="password" th:field="*{password}" />
+    <div th:if="${#fields.hasErrors('password')}" style="color: red;">
+      <p th:errors="*{password}"></p>
+    </div>
   </div>
   <div>
     <label>Role</label>
     <select th:field="*{role}">
       <option th:value="KOREAN">한국 대학생</option>
       <option th:value="EXCHANGE">유학생</option>
-<!--      <option th:value="ADMIN">Admin</option>-->
+      <!-- <option th:value="ADMIN">Admin</option> -->
     </select>
   </div>
   <button type="submit">회원가입</button>
