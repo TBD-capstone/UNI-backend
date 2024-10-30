@@ -1,6 +1,8 @@
 package uni.backend.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -12,6 +14,7 @@ import uni.backend.domain.User;
 import uni.backend.domain.dto.ChatMessageRequest;
 import uni.backend.domain.dto.ChatMessageResponse;
 import uni.backend.domain.dto.ChatRoomRequest;
+import uni.backend.domain.dto.ChatRoomResponse;
 import uni.backend.repository.ChatRoomRepository;
 import uni.backend.service.ChatService;
 import uni.backend.service.UserService;
@@ -24,6 +27,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
+
     private final ChatService chatService;
     private final UserService userService;
     private final ChatRoomRepository chatRoomRepository;
@@ -31,17 +36,36 @@ public class ChatController {
 
     // 채팅방 목록 조회
     @GetMapping("/rooms")
-    public ResponseEntity<List<ChatRoom>> getChatRooms(Principal principal) {
+    public ResponseEntity<List<ChatRoomResponse>> getChatRooms(Principal principal) {
         User currentUser = userService.findByEmail(principal.getName());
         List<ChatRoom> chatRooms = chatRoomRepository.findBySenderOrReceiver(currentUser, currentUser);
-        return ResponseEntity.ok(chatRooms); // HTTP 200 OK 상태와 함께 목록 반환
+
+        List<ChatRoomResponse> chatRoomResponses = chatRooms.stream()
+                .map(chatRoom -> ChatRoomResponse.builder()
+                        .chatRoomId(chatRoom.getChatRoomId())
+                        .myId(currentUser.getUserId())
+                        .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                        .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
+                        .build())
+                .toList();
+
+        return ResponseEntity.ok(chatRoomResponses);
     }
 
     // 채팅방 생성 및 채팅 요청
     @PostMapping("/request")
-    public ResponseEntity<ChatRoom> requestChat(@RequestBody ChatRoomRequest request, Principal principal) {
+    public ResponseEntity<ChatRoomResponse> requestChat(@RequestBody ChatRoomRequest request, Principal principal) {
         ChatRoom chatRoom = chatService.createChatRoom(principal.getName(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(chatRoom); // HTTP 201 Created 상태와 함께 생성된 방 정보 반환
+
+        User currentUser = userService.findByEmail(principal.getName());
+        ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
+                .chatRoomId(chatRoom.getChatRoomId())
+                .myId(currentUser.getUserId())
+                .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(chatRoomResponse);
     }
 
     // 특정 채팅방 조회
@@ -64,12 +88,25 @@ public class ChatController {
 
     // RESTful POST 요청으로 메시지 전송 처리
     @PostMapping("/room/{roomId}/messages")
-    public ResponseEntity<ChatMessage> sendChatMessage(@PathVariable Integer roomId, @RequestBody ChatMessageRequest chatMessageRequest, Principal principal) {
+    public ResponseEntity<ChatMessageResponse> sendChatMessage(
+            @PathVariable Integer roomId,
+            @RequestBody ChatMessageRequest chatMessageRequest,
+            Principal principal) {
+
         chatMessageRequest.setRoomId(roomId);
         chatMessageRequest.setSenderId(chatService.getSenderIdFromPrincipal(principal));
 
         ChatMessage savedMessage = chatService.sendMessage(chatMessageRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedMessage);  // HTTP 201 Created 상태와 함께 저장된 메시지 반환
+
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .content(savedMessage.getContent())
+                .senderId(savedMessage.getSender().getUserId())
+                .sendAt(savedMessage.getSendAt())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);  // HTTP 201 Created 상태와 함께 응답 반환
     }
+
+
 
 }
