@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import uni.backend.domain.Profile;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.ProfileDTO;
+import uni.backend.domain.dto.IndividualProfileResponse;
 import uni.backend.repository.ProfileRepository;
 
 import java.time.LocalDateTime;
@@ -50,18 +50,18 @@ class ProfileServiceTest {
         when(profileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
 
         // When
-        ProfileDTO profileDTO = profileService.getProfileDTOByUserId(userId);
+        IndividualProfileResponse individualProfileResponse = profileService.getProfileDTOByUserId(userId);
 
         // Then
-        assertNotNull(profileDTO);
-        assertEquals(userId, profileDTO.getUserId());
-        assertEquals("profileImage.png", profileDTO.getImgProf());
-        assertEquals("backgroundImage.png", profileDTO.getImgBack());
-        assertEquals("My University", profileDTO.getUniv());
-        assertEquals("Seoul", profileDTO.getRegion());
-        assertEquals("About me", profileDTO.getExplain());
-        assertEquals(5, profileDTO.getNumEmployment());
-        assertEquals(4.5, profileDTO.getStar());
+        assertNotNull(individualProfileResponse);
+        assertEquals(userId, individualProfileResponse.getUserId());
+        assertEquals("profileImage.png", individualProfileResponse.getImgProf());
+        assertEquals("backgroundImage.png", individualProfileResponse.getImgBack());
+        assertEquals("My University", individualProfileResponse.getUniv());
+        assertEquals("Seoul", individualProfileResponse.getRegion());
+        assertEquals("About me", individualProfileResponse.getExplain());
+        assertEquals(5, individualProfileResponse.getNumEmployment());
+        assertEquals(4.5, individualProfileResponse.getStar());
     }
 
     @Test
