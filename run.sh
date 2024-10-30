@@ -4,6 +4,13 @@ if [ "$1" == "exec" ]; then
     docker start backend-container
 
 elif [ "$1" == "init" ]; then
+
+    # Remove original backend-container
+    if [ "$(docker ps -a -q -f name=^backend-container$)" ]; then
+        echo "Removing existing container 'backend-container'..."
+        docker rm backend-container
+    fi
+
     # Dockerfile build (create docker image)
     docker build -t uni-backend:latest .
 
