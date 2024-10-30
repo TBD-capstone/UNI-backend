@@ -32,15 +32,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 추가
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 필요한 경우 세션 생성
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("*","/api/auth/signup", "/api/auth/login", "/ws/**").permitAll()  // 배포 시 수정해야 함
-                        .anyRequest().authenticated())  // 그 외의 요청은 인증 필요
-                .addFilterAt(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)  // 커스텀 필터 추가
-                .authenticationProvider(authenticationProvider());  // CustomUserDetailsService 등록
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 추가
+                .csrf(AbstractHttpConfigurer::disable);
+//                .sessionManagement(session -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 필요한 경우 세션 생성
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("*","/api/auth/signup", "/api/auth/login", "/ws/**").permitAll()  // 배포 시 수정해야 함
+//                        .anyRequest().authenticated())  // 그 외의 요청은 인증 필요
+//                .addFilterAt(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)  // 커스텀 필터 추가
+//                .authenticationProvider(authenticationProvider());  // CustomUserDetailsService 등록
 
         return http.build();
     }
