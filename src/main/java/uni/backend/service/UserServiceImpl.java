@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User saveUser(User user) {
-        validateDuplicateUser(user);
+        // validateDuplicateUser(user); // 추후 이메일 api 인증시에 이 부분 활성화 하면 될 것 같습니다.
         Profile profile = new Profile();
         profile.setUser(user);
         user.setProfile(profile);
