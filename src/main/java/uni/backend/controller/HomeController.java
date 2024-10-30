@@ -24,8 +24,8 @@ public class HomeController {
         return "home";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";  // login.html 템플릿 반환
-    }
+//    @GetMapping("/login")
+//    public String login() {
+//        return "login";  // login.html 템플릿 반환
+//    }
 }

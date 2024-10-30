@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 필요한 경우 세션 생성
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/new", "/api/login", "/api/user-role", "/ws/**").permitAll()  // 인증 없이 접근 가능
+                        .requestMatchers("*","/api/auth/signup", "/api/auth/login", "/ws/**").permitAll()  // 배포 시 수정해야 함
                         .anyRequest().authenticated())  // 그 외의 요청은 인증 필요
                 .addFilterAt(jsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)  // 커스텀 필터 추가
                 .authenticationProvider(authenticationProvider());  // CustomUserDetailsService 등록
@@ -66,19 +66,19 @@ public class SecurityConfig {
     @Bean
     public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() throws Exception {
         JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(authenticationManagerBean(null));
-        filter.setFilterProcessesUrl("/api/login"); // 로그인 경로 설정
+        filter.setFilterProcessesUrl("/api/auth/login"); // 로그인 경로 설정
         filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"message\": \"로그인에 성공했습니다.\"}");
+            response.getWriter().write("{\"status\": \"success\", \"message\": \"signed up successfully\"}");
             response.getWriter().flush();
         });
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"error\": \"인증에 실패하였습니다.\"}");
+            response.getWriter().write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
             response.getWriter().flush();
         });
         return filter;
@@ -89,6 +89,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 프론트엔드 도메인
+        configuration.setAllowedOrigins(List.of("http://localhost:8080"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 인증 정보 포함 허용
