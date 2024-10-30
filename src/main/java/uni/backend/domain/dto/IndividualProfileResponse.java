@@ -18,7 +18,7 @@ public class IndividualProfileResponse {
     private int numEmployment;     // 고용 횟수
     private double star;           // 별점
     private String time;           // 시간
-    private List<HashtagResponse> hashtags =  new ArrayList<>();
+    private List<String> hashtags = new ArrayList<>(); // 해시태그 목록
 
 
 

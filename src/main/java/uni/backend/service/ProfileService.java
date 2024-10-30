@@ -53,25 +53,14 @@ public class ProfileService {
         individualProfileResponse.setStar(profile.getStar());
         individualProfileResponse.setTime(profile.getCreatedAt().toString());
 
-        // 해시태그 매핑
-        List<HashtagResponse> hashtags = profile.getMainCategories().stream()
+        // 해시태그 매핑을 List<String>으로 변경
+        List<String> hashtags = profile.getMainCategories().stream()
                 .map(mainCategory -> {
                     Hashtag hashtag = mainCategory.getHashtag();
-                    if (hashtag != null) {
-                        return new HashtagResponse(hashtag.getHashtagName()); // 이름만 사용
-                    }
-                    return null;
+                    return hashtag != null ? hashtag.getHashtagName() : null;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-        // 디버깅 출력 추가
-        System.out.println("Profile ID: " + profile.getProfileId());
-        System.out.println("MainCategories: " + profile.getMainCategories());
-        for (MainCategory mainCategory : profile.getMainCategories()) {
-            System.out.println("MainCategory ID: " + mainCategory.getMainCategoryId());
-            System.out.println("Hashtag: " + mainCategory.getHashtag());
-        }
 
         individualProfileResponse.setHashtags(hashtags); // DTO에 해시태그 세팅
 
@@ -106,9 +95,7 @@ public class ProfileService {
         // 해시태그 업데이트
         if (individualProfileResponse.getHashtags() != null) {
             profile.getMainCategories().clear(); // 기존 카테고리 삭제
-            for (HashtagResponse hashtagResponse : individualProfileResponse.getHashtags()) {
-                String hashtagName = hashtagResponse.getHashtagName(); // 해시태그 이름 추출
-
+            for (String hashtagName : individualProfileResponse.getHashtags()) {
                 Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                         .orElseGet(() -> {
                             // 해시태그가 없을 경우 기본 해시태그 추가
@@ -126,6 +113,5 @@ public class ProfileService {
 
         profile.setUpdatedAt(LocalDateTime.now());
         return profileRepository.save(profile);
-
     }
 }
