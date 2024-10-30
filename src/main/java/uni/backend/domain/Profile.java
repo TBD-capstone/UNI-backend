@@ -32,7 +32,7 @@ public class Profile {
     private String imgProf;  // 프로필 이미지
     private String imgBack;  // 배경 이미지
     private String region;          // 지역
-    private String explain;         // 설명
+    private String description;         // 설명
     private int numEmployment;      // 고용 횟수
     private double star;            // 별점
     private String time;            // 활동시간

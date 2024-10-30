@@ -2,8 +2,9 @@ package uni.backend.domain.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import uni.backend.domain.MainCategory;
+import uni.backend.domain.Hashtag;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -14,9 +15,17 @@ public class ProfileDTO {
     private String imgBack;        // 배경 이미지
     private String univ;           // 대학교
     private String region;         // 지역
-    private String explain;        // 설명
+    private String description;        // 설명
     private int numEmployment;     // 고용 횟수
     private double star;           // 별점
     private String time;           // 시간
-    private List<MainCategory> mainCategories; // 메인 카테고리 리스트
+    private List<String> hashtags =  new ArrayList<>();
+
+
+
+
+//    private List<MainCategoryDTO> mainCategories = new ArrayList<>();  // 메인 카테고리 리스트
+
 }
+
+
