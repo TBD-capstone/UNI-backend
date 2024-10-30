@@ -2,14 +2,21 @@ package uni.backend.domain.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import uni.backend.domain.MainCategory;
 
 import java.util.List;
 
 @Getter
 @Setter
 public class ProfileDTO {
-    private UserDTO user;
-    private List<ReviewDTO> review;
-
-    // 기본 생성자, 필요에 따라 추가 생성자 작성 가능
+    private Integer userId;        // User ID
+    private String imgProf;        // 프로필 이미지
+    private String imgBack;        // 배경 이미지
+    private String univ;           // 대학교
+    private String region;         // 지역
+    private String explain;        // 설명
+    private int numEmployment;     // 고용 횟수
+    private double star;           // 별점
+    private String time;           // 시간
+    private List<MainCategory> mainCategories; // 메인 카테고리 리스트
 }
