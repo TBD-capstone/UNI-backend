@@ -90,6 +90,18 @@ public class ProfileService {
         profileRepository.save(profile);
     }
 
+
+
+
+//    "userId": Integer ,
+//            "imgProf": String ,
+//            "imgBack": String ,
+//            "region": Map ,
+//            "description": String ,
+//            "time": String ,
+//            "hashtags": List<String>
+
+
     @Transactional
     public Profile updateProfile(Integer userId, IndividualProfileResponse individualProfileResponse) {
         Profile profile = profileRepository.findByUser_UserId(userId)
@@ -98,9 +110,8 @@ public class ProfileService {
         profile.setImgProf(individualProfileResponse.getImgProf());
         profile.setImgBack(individualProfileResponse.getImgBack());
         profile.setRegion(individualProfileResponse.getRegion());
+        profile.setTime(individualProfileResponse.getTime());
         profile.setDescription(individualProfileResponse.getDescription());
-        profile.setNumEmployment(individualProfileResponse.getNumEmployment());
-        profile.setStar(individualProfileResponse.getStar());
 
         // 해시태그 업데이트
         if (individualProfileResponse.getHashtags() != null) {
@@ -128,6 +139,8 @@ public class ProfileService {
     private List<Profile> getAllProfiles() {
         return profileRepository.findAll();
     }
+
+
 
     private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
         HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
