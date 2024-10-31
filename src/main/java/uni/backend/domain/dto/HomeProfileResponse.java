@@ -11,4 +11,5 @@ public class HomeProfileResponse {
      Double star;
      String univName;
      List<String> hashtags;
+     Integer userId;
 }
