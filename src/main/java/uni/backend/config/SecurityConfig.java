@@ -33,7 +33,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
 //                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 추가
-                .csrf(AbstractHttpConfigurer::disable);
+            .csrf(AbstractHttpConfigurer::disable);
 //                .sessionManagement(session -> session
 //                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 필요한 경우 세션 생성
 //                .authorizeHttpRequests(auth -> auth
@@ -46,7 +46,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManagerBean(
+        AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -64,21 +65,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() throws Exception {
-        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(authenticationManagerBean(null));
+    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter()
+        throws Exception {
+        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(
+            authenticationManagerBean(null));
         filter.setFilterProcessesUrl("/api/auth/login"); // 로그인 경로 설정
         filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"success\", \"message\": \"signed up successfully\"}");
+            response.getWriter()
+                .write("{\"status\": \"success\", \"message\": \"signed up successfully\"}");
             response.getWriter().flush();
         });
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
+            response.getWriter()
+                .write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
             response.getWriter().flush();
         });
         return filter;

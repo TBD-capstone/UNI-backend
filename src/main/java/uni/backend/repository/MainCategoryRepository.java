@@ -6,4 +6,5 @@ import uni.backend.domain.MainCategory;
 
 @Repository
 public interface MainCategoryRepository extends JpaRepository<MainCategory, Long> {
+
 }

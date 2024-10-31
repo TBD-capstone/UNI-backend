@@ -66,7 +66,6 @@ public class AuthController {
 //        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 //    }
 
-
 //    @GetMapping("/user-role")
 //    public ResponseEntity<?> getUserRole(Authentication authentication) {
 //        if (authentication == null || !authentication.isAuthenticated()) {

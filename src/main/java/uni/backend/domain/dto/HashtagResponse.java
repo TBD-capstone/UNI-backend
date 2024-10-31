@@ -10,5 +10,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HashtagResponse {
+
     private String hashtagName;   // 해시태그 이름
 }

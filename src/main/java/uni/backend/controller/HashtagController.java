@@ -22,7 +22,8 @@ public class HashtagController {
     }
 
     @GetMapping("/search-results")
-    public String searchUsersByHashtags(@RequestParam("hashtags") String hashtagsParam, Model model) {
+    public String searchUsersByHashtags(@RequestParam("hashtags") String hashtagsParam,
+        Model model) {
         List<String> hashtags = Arrays.asList(hashtagsParam.split(","));
         System.out.println(hashtags);
 

@@ -10,7 +10,8 @@ import uni.backend.domain.dto.SignupRequest;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -54,6 +55,7 @@ public class User {
 
         return user;
     }
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;
 

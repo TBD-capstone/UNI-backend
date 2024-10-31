@@ -21,14 +21,17 @@ public class JsonUsernamePasswordAuthenticationFilter extends UsernamePasswordAu
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+    public Authentication attemptAuthentication(HttpServletRequest request,
+        HttpServletResponse response) throws AuthenticationException {
         if ("application/json".equals(request.getContentType())) {
             try {
-                Map<String, String> authRequest = objectMapper.readValue(request.getInputStream(), Map.class);
+                Map<String, String> authRequest = objectMapper.readValue(request.getInputStream(),
+                    Map.class);
                 String username = authRequest.get("email");
                 String password = authRequest.get("password");
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password);
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    username, password);
                 setDetails(request, authToken);
                 return this.getAuthenticationManager().authenticate(authToken);
 

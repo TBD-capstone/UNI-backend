@@ -42,12 +42,14 @@ public class InputController {
 
     @PostMapping("/input")
     public String processInput(
-            @RequestParam("userId") Integer userId,
-            @RequestParam("hashtags") List<String> hashtags,
-            Model model) {
+        @RequestParam("userId") Integer userId,
+        @RequestParam("hashtags") List<String> hashtags,
+        Model model) {
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        Profile profile = profileRepository.findByUser(user).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        Profile profile = profileRepository.findByUser(user)
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
         hashtagService.addHashtagsToProfile(profile, hashtags);
 
