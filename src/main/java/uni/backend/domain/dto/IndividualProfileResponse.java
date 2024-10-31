@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 public class IndividualProfileResponse {
     private Integer userId;        // User ID
+    private String userName;       // User Name
     private String imgProf;        // 프로필 이미지
     private String imgBack;        // 배경 이미지
     private String univ;           // 대학교
