@@ -7,6 +7,8 @@ import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
 import uni.backend.domain.Profile;
 import uni.backend.domain.dto.HashtagResponse;
+import uni.backend.domain.dto.HomeDataResponse;
+import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
 import uni.backend.repository.HashtagRepository;
 import uni.backend.repository.ProfileRepository;
@@ -38,6 +40,19 @@ public class ProfileService {
         return profileRepository.findByUser_UserId(userId);
     }
 
+    private static List<String> getHashtagListFromProfile(Profile profile) {
+        List<String> hashtags;
+        hashtags = profile.getMainCategories().stream()
+                .map(mainCategory -> {
+                    Hashtag hashtag = mainCategory.getHashtag();
+                    return hashtag != null ? hashtag.getHashtagName() : null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return hashtags;
+    }
+
     public IndividualProfileResponse getProfileDTOByUserId(Integer userId) {
         Profile profile = profileRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
@@ -54,13 +69,7 @@ public class ProfileService {
         individualProfileResponse.setTime(profile.getCreatedAt().toString());
 
         // 해시태그 매핑을 List<String>으로 변경
-        List<String> hashtags = profile.getMainCategories().stream()
-                .map(mainCategory -> {
-                    Hashtag hashtag = mainCategory.getHashtag();
-                    return hashtag != null ? hashtag.getHashtagName() : null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<String> hashtags = getHashtagListFromProfile(profile);
 
         individualProfileResponse.setHashtags(hashtags); // DTO에 해시태그 세팅
 
@@ -114,4 +123,32 @@ public class ProfileService {
         profile.setUpdatedAt(LocalDateTime.now());
         return profileRepository.save(profile);
     }
+
+    private List<Profile> getAllProfiles() {
+        return profileRepository.findAll();
+    }
+
+    private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
+        HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
+        List<String> hashtags = getHashtagListFromProfile(profile);
+        homeProfileResponse.setUsername(profile.getUser().getName());
+        homeProfileResponse.setImgProf(profile.getImgProf());
+        homeProfileResponse.setStar(profile.getStar());
+        homeProfileResponse.setUnivName(profile.getUser().getUnivName());
+        homeProfileResponse.setHashtags(hashtags);
+
+        return homeProfileResponse;
+    }
+
+    public HomeDataResponse getHomeDataProfiles() {
+        HomeDataResponse homeDataResponse = new HomeDataResponse();
+        List<Profile> list = getAllProfiles();
+
+        homeDataResponse.setData(list.stream()
+                .map(ProfileService::profileToHomeProfileResponse)
+                .collect(Collectors.toList()));
+
+        return homeDataResponse;
+    }
+
 }
