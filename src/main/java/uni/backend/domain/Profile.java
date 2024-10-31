@@ -8,9 +8,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Entity
 @Getter
 @Setter
-@Entity
 public class Profile {
 
     @Id
@@ -19,24 +20,35 @@ public class Profile {
     private Integer profileId;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = true) // null 허용
     private User user;
 
+    @Column(nullable = true) // null 허용
     private LocalDateTime createdAt;
 
+    @Column(nullable = true) // null 허용
     private LocalDateTime updatedAt;
 
-//    private String content;
+    @Column(nullable = true) // null 허용
+    private String imgProf;
 
-    // 추가 필드
-    private String imgProf;  // 프로필 이미지
-    private String imgBack;  // 배경 이미지
-    private String region;          // 지역
-    private String description;         // 설명
-    private int numEmployment;      // 고용 횟수
-    private double star;            // 별점
-    private String time;            // 활동시간
+    @Column(nullable = true) // null 허용
+    private String imgBack;
 
+    @Column(nullable = true) // null 허용
+    private String region;
+
+    @Column(nullable = true) // null 허용
+    private String description;
+
+    @Column(nullable = true) // null 허용
+    private Integer numEmployment;
+
+    @Column(nullable = true) // null 허용
+    private Double star;
+
+    @Column(nullable = true) // null 허용
+    private String time;
 
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MainCategory> mainCategories = new ArrayList<>();
@@ -53,11 +65,11 @@ public class Profile {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now(); // 프로필 생성 시 작성일 설정
+        this.createdAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = LocalDateTime.now(); // 프로필 수정 시 수정일 업데이트
+        this.updatedAt = LocalDateTime.now();
     }
 }
