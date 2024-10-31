@@ -68,6 +68,8 @@ public class Profile {
         this.createdAt = LocalDateTime.now();
         this.numEmployment = 0;
         this.star = 0.0;
+
+
     }
 
 
