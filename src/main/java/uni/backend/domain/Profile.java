@@ -66,7 +66,11 @@ public class Profile {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        this.numEmployment = 0;
+        this.star = 0.0;
     }
+
+
 
     @PreUpdate
     public void preUpdate() {
