@@ -59,6 +59,7 @@ public class ProfileService {
 
         IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
         individualProfileResponse.setUserId(userId);
+        individualProfileResponse.setUserName(profile.getUser().getName()); // userName 추가
         individualProfileResponse.setImgProf(profile.getImgProf());
         individualProfileResponse.setImgBack(profile.getImgBack());
         individualProfileResponse.setUniv(profile.getUser().getUnivName());
