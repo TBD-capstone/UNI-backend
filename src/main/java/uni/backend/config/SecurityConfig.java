@@ -34,9 +34,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // SecurityContextHolder에 ThreadLocal 전략 설정
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_THREADLOCAL);
-
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
                 .csrf(AbstractHttpConfigurer::disable)

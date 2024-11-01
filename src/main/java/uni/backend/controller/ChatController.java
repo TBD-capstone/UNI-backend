@@ -82,9 +82,20 @@ public class ChatController {
         User sender = userService.findByEmail(principal.getName());
         messageRequest.setSenderId(sender.getUserId());
 
-        chatService.sendMessage(messageRequest);
-        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), messageRequest);
+        // 메시지를 데이터베이스에 저장
+        ChatMessage savedMessage = chatService.sendMessage(messageRequest);
+
+        // Response DTO 생성
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .content(savedMessage.getContent())
+                .senderId(savedMessage.getSender().getUserId())
+                .sendAt(savedMessage.getSendAt())
+                .build();
+
+        // WebSocket을 통해 클라이언트에게 전송
+        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
     }
+
 
     // RESTful POST 요청으로 메시지 전송 처리
     @PostMapping("/room/{roomId}/messages")
