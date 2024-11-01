@@ -7,9 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CertificationRequest {
-    private String key;
-    private String email;
-    private String univName;
-    private boolean univCheck;
+
+  private String key;
+  private String email;
+  private String univName;
+  private boolean univCheck;
+  private Integer code;
 }
 
