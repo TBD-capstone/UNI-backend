@@ -1,15 +1,22 @@
 package uni.backend.controller;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uni.backend.domain.University;
+import uni.backend.domain.dto.UniversityResponse;
 import uni.backend.repository.UserRepository;
 import uni.backend.service.CertificationService;
+import uni.backend.service.UniversityService;
 
 
 /*
@@ -22,6 +29,8 @@ import uni.backend.service.CertificationService;
 @RequiredArgsConstructor
 public class CertificationController {
 
+
+  private final UniversityService universityService;
   private final CertificationService certificationService;
   private final UserRepository userRepository;
 
@@ -63,12 +72,26 @@ public class CertificationController {
     }
   }
 
+  //대학 리스트 받아오기
+
+  @GetMapping("/univ")
+  public List<UniversityResponse> getAllUniversities() {
+    List<University> universities = universityService.findAll();
+    return universities.stream()
+        .map(university -> {
+          UniversityResponse dto = new UniversityResponse();
+          dto.setUniversityId(university.getUniversityId());
+          dto.setUniName(university.getUniName());
+          return dto;
+        })
+        .collect(Collectors.toList());
+  }
 
   // 대학교 이름 검증 메서드
   @PostMapping("/univ")
   public ResponseEntity<Map<String, String>> validateUniversity(
       @RequestBody Map<String, String> request) {
-    String univName = request.get("univname");
+    String univName = request.get("univName");
 
     boolean isValid = certificationService.universityCertification(univName);
     if (isValid) {

@@ -19,6 +19,8 @@ public class CertificationService {
   private static final String CERTIFY_UNIV_URL = "https://univcert.com/api/v1/check";
   private static final String CERTIFY_API_URL = "https://univcert.com/api/v1/certify";
   private static final String CERTIFY_CODE_API_URL = "https://univcert.com/api/v1/certifycode";
+
+  //  @Value("${univCert.key}")
   private static final String API_KEY = "0a44d2bc-1cae-4991-a5e1-41884894b333"; // 부여받은 API Key
 
   // 1 인증 코드 요청 메서드

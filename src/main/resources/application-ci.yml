@@ -9,3 +9,6 @@ spring:
     show-sql: true
     properties:
       hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+
+univCert:
+  key: 0a44d2bc-1cae-4991-a5e1-41884894b333
