@@ -19,3 +19,6 @@ spring:
     level:
       org.springframework.security: DEBUG
       org.springframework.web: DEBUG
+
+  profiles:
+    include: private
