@@ -36,6 +36,7 @@ public class AwsS3Service {
     private String bucketName;
 
     public String upload(MultipartFile image) {
+        log.info(bucketName);
         if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
             throw new AwsS3Exception(AwsS3ErrorCode.EMPTY_FILE_EXCEPTION);
         }
