@@ -68,7 +68,7 @@ public class CertificationController {
   @PostMapping("/univ")
   public ResponseEntity<Map<String, String>> validateUniversity(
       @RequestBody Map<String, String> request) {
-    String univName = request.get("univ_name");
+    String univName = request.get("univname");
 
     boolean isValid = certificationService.universityCertification(univName);
     if (isValid) {
