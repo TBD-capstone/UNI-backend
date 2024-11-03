@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import uni.backend.domain.dto.AwsS3UploadResponse;
+import uni.backend.domain.dto.Response;
 import uni.backend.exception.AwsS3Exception;
 import uni.backend.service.AwsS3Service;
 
@@ -27,11 +29,13 @@ public class AwsS3Controller {
     public ResponseEntity<?> s3Upload(
         @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            String profileImage = awsS3Service.upload(image);
-            return ResponseEntity.ok(profileImage);
+            String imageUrl = awsS3Service.upload(image);
+            AwsS3UploadResponse awsS3UploadResponse = new AwsS3UploadResponse(imageUrl);
+            return ResponseEntity.ok(awsS3UploadResponse);
         } catch (AwsS3Exception e) {
             log.info(e.getMessage());
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            Response response = Response.failMessage(e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
         }
 
     }
