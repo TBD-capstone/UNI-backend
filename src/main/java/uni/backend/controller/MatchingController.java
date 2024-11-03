@@ -27,25 +27,22 @@ public class MatchingController {
     private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/request")
-    public Matching createMatchRequest(@RequestBody MatchingRequest matchingRequest) {
-        // userService를 사용해 요청자와 수신자를 로드
+    public MatchingRequest createMatchRequest(@RequestBody MatchingRequest matchingRequest) {
         User requester = userService.findById(matchingRequest.getRequesterId());
         User receiver = userService.findById(matchingRequest.getReceiverId());
 
-        // Matching 엔티티 생성
         Matching request = Matching.builder()
                 .requester(requester)
                 .receiver(receiver)
                 .status(Matching.Status.PENDING)
                 .build();
 
-        // 요청자와 수신자를 함께 전달하여 매칭 요청 생성
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
-        // 수신자에게 실시간 매칭 요청 알림 전송
         messagingTemplate.convertAndSend("/sub/match-request/" + matchingRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
 
-        return savedRequest;
+        matchingRequest.setRequestId(savedRequest.getRequestId());
+        return matchingRequest;
     }
 
     @PostMapping("/respond")
@@ -73,10 +70,11 @@ public class MatchingController {
                 .status(Matching.Status.PENDING)
                 .build();
 
-        matchingService.createRequest(request, requester, receiver);
+        Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
         messagingTemplate.convertAndSend("/sub/match-request/" + receiver.getUserId(), matchingRequest);
 
+        matchingRequest.setRequestId(savedRequest.getRequestId());
         return matchingRequest;
     }
 
