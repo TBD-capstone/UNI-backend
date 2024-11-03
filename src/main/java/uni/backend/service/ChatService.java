@@ -1,6 +1,8 @@
 package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.ChatMessage;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -54,15 +58,23 @@ public class ChatService {
 
     @Transactional
     public ChatMessage sendMessage(ChatMessageRequest messageRequest) {
-        ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId()).orElseThrow();
+        ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId())
+                .orElseThrow(() -> new IllegalArgumentException("Chat room not found"));
+
+        User sender = userRepository.findById(messageRequest.getSenderId())
+                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setChatRoom(chatRoom);
-        chatMessage.setSender(userRepository.findById(messageRequest.getSenderId()).orElseThrow());
+        chatMessage.setSender(sender);
         chatMessage.setContent(messageRequest.getContent());
         chatMessage.setSendAt(LocalDateTime.now());
 
+        logger.info("Saving message: {}", chatMessage);
+
         return chatMessageRepository.save(chatMessage);
     }
+
 
     // 채팅방에 속한 메시지 조회
     @Transactional(readOnly = true)

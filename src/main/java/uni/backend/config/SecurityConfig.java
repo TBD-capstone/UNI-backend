@@ -38,20 +38,20 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))  // 필요할 때만 세션 생성
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/chat/request").hasAnyRole("KOREAN", "EXCHANGE") // 접근 권한 설정
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/ws/**", "/api/auth/loginCheck").permitAll()
-                        .anyRequest().authenticated()  // 그 외의 요청은 인증 필요
-                )
-                .exceptionHandling().authenticationEntryPoint(customAuthenticationEntryPoint)  // Custom Entry Point 등록
+                        .requestMatchers("/api/home", "/api/auth/signup", "/api/auth/login", "/ws/**", "/ws/chat/**", "/api/auth/loginCheck").permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling()
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .and()
-                // SecurityContextPersistenceFilter 뒤에 커스텀 필터 추가
                 .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
-                .authenticationProvider(authenticationProvider());  // CustomUserDetailsService 등록
+                .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
+
+
 
     @Bean
     public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -107,13 +107,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of("*")); // 모든 도메인 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
-        configuration.setAllowCredentials(true); // 인증 정보 포함 허용
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true); // 쿠키, 인증정보 포함 허용
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 }

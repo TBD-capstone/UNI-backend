@@ -1,31 +1,32 @@
 package uni.backend.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import uni.backend.domain.User;
-import uni.backend.service.UserService;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import uni.backend.domain.dto.HomeDataResponse;
+import uni.backend.domain.dto.HomeProfileResponse;
+import uni.backend.service.ProfileService;
 
-@Controller
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000") // 프론트엔드 도메인 허용
 public class HomeController {
 
-    private final UserService userService;
+    @Autowired
+    ProfileService profileService;
 
-    @GetMapping("/")
-    public String home(HttpServletRequest request, Model model) {
-        User user = userService.findByEmail(request.getRemoteUser());
-        if (user != null) {
-            model.addAttribute("remoteUser", user.getName());
-            model.addAttribute("role", user.getRole().name());  // 역할 전달
-        }
-        return "home";
+
+    @GetMapping("/home")
+    public ResponseEntity<HomeDataResponse> getHomeProfiles() {
+        HomeDataResponse homeDataResponse = profileService.getHomeDataProfiles();
+
+        return ResponseEntity.ok(homeDataResponse);
     }
-
-//    @GetMapping("/login")
-//    public String login() {
-//        return "login";  // login.html 템플릿 반환
-//    }
 }

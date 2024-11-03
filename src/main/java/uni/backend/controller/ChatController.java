@@ -82,19 +82,25 @@ public class ChatController {
         User sender = userService.findByEmail(principal.getName());
         messageRequest.setSenderId(sender.getUserId());
 
-        // 메시지를 데이터베이스에 저장
-        ChatMessage savedMessage = chatService.sendMessage(messageRequest);
+        // 디버그 로그: 메시지 수신
+        logger.info("Received message from user: {}", sender.getUserId());
 
-        // Response DTO 생성
+        // 메시지 저장
+        ChatMessage savedMessage = chatService.sendMessage(messageRequest);
+        logger.info("Saved message: {}", savedMessage);
+
+        // 클라이언트로 메시지 전송
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
                 .sendAt(savedMessage.getSendAt())
                 .build();
 
-        // WebSocket을 통해 클라이언트에게 전송
         messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
+        logger.info("Message sent to clients: {}", response);
     }
+
+
 
 
     // RESTful POST 요청으로 메시지 전송 처리

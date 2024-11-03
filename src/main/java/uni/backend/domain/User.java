@@ -36,7 +36,7 @@ public class User {
     @Column(nullable = false, length = 255)
     private String status;  // VARCHAR(255)
 
-    @Column
+    @Column(name = "univ_name")
     private String univName;
 
     @Enumerated(EnumType.STRING)
