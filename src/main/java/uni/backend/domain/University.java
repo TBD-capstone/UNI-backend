@@ -21,5 +21,13 @@ public class University {
   @Column(nullable = false, length = 255)
   private String uniName;
 
+  public University(Integer universityId, String uniName) {
+    this.universityId = universityId;
+    this.uniName = uniName;
+  }
+
+  public University() {
+
+  }
 
 }
