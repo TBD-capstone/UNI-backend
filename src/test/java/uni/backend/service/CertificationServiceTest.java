@@ -43,7 +43,7 @@ class CertificationServiceTest {
 
     // Given
     Map<String, Object> mockResponse = new HashMap<>();
-    mockResponse.put("status", true);
+    mockResponse.put("success", true);
 
     when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
         .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
@@ -72,6 +72,83 @@ class CertificationServiceTest {
     boolean result = certificationService.requestCertification(email, univName, univCheck);
     //then
     assertFalse(result, "인증 요청이 실패해야 합니다.");
+  }
+
+  @Test
+  void 인증코드_검증_성공() {
+    // Given
+    String email = "test@example.com";
+    String univName = "Sample University";
+    int code = 123456;
+
+    Map<String, Object> mockResponse = new HashMap<>();
+    mockResponse.put("success", true); // 성공 응답
+
+    when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+
+    // When
+    boolean result = certificationService.verifyCertification(email, univName, code);
+
+    // Then
+    assertTrue(result, "인증 코드 검증이 성공해야 합니다.");
+  }
+
+  @Test
+  void 인증코드_검증_실패() {
+    String email = "test@example.com";
+    String univName = "Sample University";
+    int code = 123456;
+
+    // Given
+    Map<String, Object> mockResponse = new HashMap<>();
+    mockResponse.put("success", false);
+
+    when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+
+    // When
+
+    boolean result = certificationService.verifyCertification(email, univName, code);
+    // Then
+    assertFalse(result, "인증 코드 검증이 실패해야 합니다.");
+
+  }
+
+  @Test
+  void 대학_인증_성공() {
+    // Given
+    String univName = "Sample University";
+
+    Map<String, Object> mockResponse = new HashMap<>();
+    mockResponse.put("success", true); // 성공 응답
+
+    when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+
+    // When
+    boolean result = certificationService.universityCertification(univName);
+
+    // Then
+    assertTrue(result, "대학교 인증이 성공해야 합니다.");
+  }
+
+  @Test
+  void 대학_인증_실패() {
+    // Given
+    String univName = "Unknown University";
+
+    Map<String, Object> mockResponse = new HashMap<>();
+    mockResponse.put("success", false); // 실패 응답
+
+    when(restTemplate.postForEntity(anyString(), any(), eq(Map.class)))
+        .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+
+    // When
+    boolean result = certificationService.universityCertification(univName);
+
+    // Then
+    assertFalse(result, "대학교 인증이 실패해야 합니다.");
   }
 
 
