@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import uni.backend.domain.dto.SignupRequest;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -58,5 +59,8 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MatchingJoin> matchingJoins;
 
 }
