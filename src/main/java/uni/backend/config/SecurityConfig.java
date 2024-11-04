@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/home", "/api/auth/signup", "/api/auth/login", "/ws/**", "/ws/chat/**", "/api/auth/loginCheck").permitAll()
+                        .requestMatchers("/api/home", "/api/auth/**", "/api/auth/login", "/ws/**", "/ws/chat/**", "/api/auth/loginCheck").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling()
                 .authenticationEntryPoint(customAuthenticationEntryPoint)

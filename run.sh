@@ -27,13 +27,6 @@ elif [ "$1" == "rebuild" ]; then
 
 elif [ "$1" == "init" ]; then
 
-	if [ -f "$PARENT_FILE" ]; then
-    	cp "$PARENT_FILE" "$TARGET_DIR/"
-	else
-		echo "application-private.yml 파일을 ./src/main/resource 디렉토리에 넣어주세요."
-		exit 0
-	fi
-
     # Remove original backend-container
     if [ "$(docker ps -a -q -f name=^backend-container$)" ]; then
         echo "Removing existing container 'backend-container'..."
