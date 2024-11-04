@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ChatMessageRequest {
+
     private Integer roomId;
     private String content;
     private Integer senderId;

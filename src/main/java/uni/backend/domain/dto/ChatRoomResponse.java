@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ChatRoomResponse {
+
     private Integer chatRoomId;
     private List<ChatMessageResponse> chatMessages;
     private Integer myId;

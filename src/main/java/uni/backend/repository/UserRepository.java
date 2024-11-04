@@ -7,6 +7,11 @@ import uni.backend.domain.User;
 import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
-    User findByEmail(String email);
-    List<User> findByRole(Role role); // Role 기반 조회
+
+  User findByEmail(String email);
+
+  List<User> findByRole(Role role); // Role 기반 조회
+
+  boolean existsByEmail(String email);
+
 }

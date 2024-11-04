@@ -29,11 +29,11 @@ public class HashtagService {
 
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
-                    .orElseGet(() -> {
-                        Hashtag newHashtag = new Hashtag();
-                        newHashtag.setHashtagName(hashtagName);
-                        return hashtagRepository.save(newHashtag);
-                    });
+                .orElseGet(() -> {
+                    Hashtag newHashtag = new Hashtag();
+                    newHashtag.setHashtagName(hashtagName);
+                    return hashtagRepository.save(newHashtag);
+                });
 
             MainCategory mainCategory = new MainCategory();
             mainCategory.setHashtag(hashtag);
@@ -64,16 +64,17 @@ public class HashtagService {
             return List.of();
         }
 
-        List<Profile> initialProfiles = new ArrayList<>(hashtagList.get(0).getMainCategories().stream()
+        List<Profile> initialProfiles = new ArrayList<>(
+            hashtagList.get(0).getMainCategories().stream()
                 .map(MainCategory::getProfile)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));  // 수정된 부분
 
         for (Hashtag hashtag : hashtagList.subList(1, hashtagList.size())) {
             List<Profile> profilesWithHashtag = hashtag.getMainCategories().stream()
-                    .map(MainCategory::getProfile)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                .map(MainCategory::getProfile)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
             initialProfiles.retainAll(profilesWithHashtag);
 
@@ -83,8 +84,8 @@ public class HashtagService {
         }
 
         return initialProfiles.stream()
-                .map(profile -> profile.getUser().getName())
-                .distinct()
-                .collect(Collectors.toList());
+            .map(profile -> profile.getUser().getName())
+            .distinct()
+            .collect(Collectors.toList());
     }
 }
