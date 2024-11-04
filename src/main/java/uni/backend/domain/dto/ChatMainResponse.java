@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ChatMainResponse {
+
     private Integer chatRoomId;
     private String otherName;
     private LocalDateTime lastMessageTime;

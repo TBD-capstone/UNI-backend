@@ -18,7 +18,7 @@ public class SignupRequest {
     private String email;
 
     @NotBlank(message = "비밀번호는 필수 입력 값입니다.")
-    @Length(min=4, message = "비밀번호는 4자 이상 입력해주세요")
+    @Length(min = 4, message = "비밀번호는 4자 이상 입력해주세요")
     private String password;
 
     private Boolean isKorean;

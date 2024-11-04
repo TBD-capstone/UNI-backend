@@ -9,8 +9,7 @@ spring:
     hibernate:
       ddl-auto: update
     properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+      hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
 
   server:
     servlet:
@@ -21,3 +20,12 @@ spring:
     level:
       org.springframework.web.socket: DEBUG
       org.springframework.messaging: DEBUG
+      org.springframework.security: DEBUG
+      org.springframework.web: DEBUG
+
+  profiles:
+    include: private
+
+  servlet:
+    multipart:
+      enabled: true

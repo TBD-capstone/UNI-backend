@@ -9,6 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 public class IndividualProfileResponse {
+
     private Integer userId;        // User ID
     private String userName;       // User Name
     private String imgProf;        // 프로필 이미지
@@ -20,9 +21,6 @@ public class IndividualProfileResponse {
     private double star;           // 별점
     private String time;           // 시간
     private List<String> hashtags = new ArrayList<>(); // 해시태그 목록
-
-
-
 
 //    private List<MainCategoryDTO> mainCategories = new ArrayList<>();  // 메인 카테고리 리스트
 

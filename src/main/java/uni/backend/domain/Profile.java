@@ -73,7 +73,6 @@ public class Profile {
     }
 
 
-
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();

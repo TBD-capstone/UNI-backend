@@ -28,8 +28,8 @@ public class ProfileService {
 
     @Autowired
     public ProfileService(ProfileRepository profileRepository,
-                          HashtagRepository hashtagRepository,
-                          HashtagService hashtagService) {
+        HashtagRepository hashtagRepository,
+        HashtagService hashtagService) {
         this.profileRepository = profileRepository;
         this.hashtagRepository = hashtagRepository;
         this.hashtagService = hashtagService;  // HashtagService 초기화
@@ -43,19 +43,19 @@ public class ProfileService {
     private static List<String> getHashtagListFromProfile(Profile profile) {
         List<String> hashtags;
         hashtags = profile.getMainCategories().stream()
-                .map(mainCategory -> {
-                    Hashtag hashtag = mainCategory.getHashtag();
-                    return hashtag != null ? hashtag.getHashtagName() : null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            .map(mainCategory -> {
+                Hashtag hashtag = mainCategory.getHashtag();
+                return hashtag != null ? hashtag.getHashtagName() : null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         return hashtags;
     }
 
     public IndividualProfileResponse getProfileDTOByUserId(Integer userId) {
         Profile profile = profileRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
+            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
         IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
         individualProfileResponse.setUserId(userId);
@@ -103,9 +103,10 @@ public class ProfileService {
 
 
     @Transactional
-    public Profile updateProfile(Integer userId, IndividualProfileResponse individualProfileResponse) {
+    public Profile updateProfile(Integer userId,
+        IndividualProfileResponse individualProfileResponse) {
         Profile profile = profileRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
+            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
         profile.setImgProf(individualProfileResponse.getImgProf());
         profile.setImgBack(individualProfileResponse.getImgBack());
@@ -118,12 +119,12 @@ public class ProfileService {
             profile.getMainCategories().clear(); // 기존 카테고리 삭제
             for (String hashtagName : individualProfileResponse.getHashtags()) {
                 Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
-                        .orElseGet(() -> {
-                            // 해시태그가 없을 경우 기본 해시태그 추가
-                            Hashtag newHashtag = new Hashtag();
-                            newHashtag.setHashtagName(hashtagName);
-                            return hashtagRepository.save(newHashtag);
-                        });
+                    .orElseGet(() -> {
+                        // 해시태그가 없을 경우 기본 해시태그 추가
+                        Hashtag newHashtag = new Hashtag();
+                        newHashtag.setHashtagName(hashtagName);
+                        return hashtagRepository.save(newHashtag);
+                    });
 
                 MainCategory mainCategory = new MainCategory();
                 mainCategory.setHashtag(hashtag);
@@ -160,8 +161,8 @@ public class ProfileService {
         List<Profile> list = getAllProfiles();
 
         homeDataResponse.setData(list.stream()
-                .map(ProfileService::profileToHomeProfileResponse)
-                .collect(Collectors.toList()));
+            .map(ProfileService::profileToHomeProfileResponse)
+            .collect(Collectors.toList()));
 
         return homeDataResponse;
     }

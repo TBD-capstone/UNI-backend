@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class HomeDataResponse {
-//    String profileString;
+
+    //    String profileString;
     List<HomeProfileResponse> data;
 }
