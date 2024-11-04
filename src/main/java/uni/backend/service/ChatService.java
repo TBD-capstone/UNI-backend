@@ -49,10 +49,10 @@ public class ChatService {
         User sender = userRepository.findByEmail(senderEmail);
         // 수신자를 ID로 찾기, 없으면 예외 발생
         User receiver = userRepository.findById(request.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
 
         // 기존 채팅방이 있으면 그 채팅방을 반환
-        if(chatRoomRepository.findBySenderAndReceiver(sender, receiver).isPresent()){
+        if (chatRoomRepository.findBySenderAndReceiver(sender, receiver).isPresent()) {
             return chatRoomRepository.findBySenderAndReceiver(sender, receiver).get();
         }
 
@@ -91,18 +91,19 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageResponse> getChatMessages(Integer roomId) {
         // 채팅방 조회
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Invalid chat room ID"));
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid chat room ID"));
 
         // 채팅방에 속한 메시지들을 가져옴
         List<ChatMessage> messages = chatMessageRepository.findByChatRoom(chatRoom);
 
         // 메시지를 ChatMessageResponse로 변환하여 반환
         return messages.stream()
-                .map(message -> ChatMessageResponse.builder()
-                        .content(message.getContent())
-                        .senderId(message.getSender().getUserId())
-                        .sendAt(message.getSendAt())
-                        .build())
-                .collect(Collectors.toList());
+            .map(message -> ChatMessageResponse.builder()
+                .content(message.getContent())
+                .senderId(message.getSender().getUserId())
+                .sendAt(message.getSendAt())
+                .build())
+            .collect(Collectors.toList());
     }
 }
