@@ -3,6 +3,7 @@ package uni.backend.service;
 import com.univcert.api.UnivCert;
 import java.security.PublicKey;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -20,8 +21,8 @@ public class CertificationService {
   private static final String CERTIFY_API_URL = "https://univcert.com/api/v1/certify";
   private static final String CERTIFY_CODE_API_URL = "https://univcert.com/api/v1/certifycode";
 
-  //  @Value("${univCert.key}")
-  private static final String API_KEY = "0a44d2bc-1cae-4991-a5e1-41884894b333"; // 부여받은 API Key
+  @Value("${univCert.key}")
+  private String API_KEY;
 
   // 1 인증 코드 요청 메서드
   public boolean requestCertification(String email, String univName, boolean univCheck) {

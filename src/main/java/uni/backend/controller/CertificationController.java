@@ -81,7 +81,7 @@ public class CertificationController {
         .map(university -> {
           UniversityResponse dto = new UniversityResponse();
           dto.setUniversityId(university.getUniversityId());
-          dto.setUniName(university.getUniName());
+          dto.setUnivName(university.getUniName());
           return dto;
         })
         .collect(Collectors.toList());

@@ -8,5 +8,5 @@ import lombok.Setter;
 public class UniversityResponse {
 
   private Integer universityId;
-  private String uniName;
+  private String univName;
 }
