@@ -20,5 +20,3 @@ spring:
       org.springframework.security: DEBUG
       org.springframework.web: DEBUG
 
-univCert:
-  key: 0a44d2bc-1cae-4991-a5e1-41884894b333
