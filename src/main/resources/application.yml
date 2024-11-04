@@ -20,3 +20,9 @@ spring:
       org.springframework.security: DEBUG
       org.springframework.web: DEBUG
 
+  profiles:
+    include: private
+
+  servlet:
+    multipart:
+      enabled: true
