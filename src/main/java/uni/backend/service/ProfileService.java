@@ -151,6 +151,7 @@ public class ProfileService {
         homeProfileResponse.setStar(profile.getStar());
         homeProfileResponse.setUnivName(profile.getUser().getUnivName());
         homeProfileResponse.setHashtags(hashtags);
+        homeProfileResponse.setUserId(profile.getUser().getUserId());
 
         return homeProfileResponse;
     }
