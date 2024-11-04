@@ -30,7 +30,8 @@ public class ChatController {
     @GetMapping("/chat/rooms")
     public String getChatRooms(Principal principal, Model model) {
         User currentUser = userService.findByEmail(principal.getName());
-        List<ChatRoom> chatRooms = chatRoomRepository.findBySenderOrReceiver(currentUser, currentUser);
+        List<ChatRoom> chatRooms = chatRoomRepository.findBySenderOrReceiver(currentUser,
+            currentUser);
         model.addAttribute("chatRooms", chatRooms);
         return "chat/roomList";
     }
@@ -68,12 +69,14 @@ public class ChatController {
         chatService.sendMessage(messageRequest);
 
         // 해당 채팅방 구독자에게 메시지 브로드캐스트
-        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), messageRequest);
+        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(),
+            messageRequest);
     }
 
     // POST 요청으로 메시지 전송 처리
     @PostMapping("/sendMessage/{roomId}")
-    public String sendChatMessage(@PathVariable Integer roomId, @RequestParam String message, Principal principal) {
+    public String sendChatMessage(@PathVariable Integer roomId, @RequestParam String message,
+        Principal principal) {
         ChatMessageRequest chatMessageRequest = new ChatMessageRequest();
         chatMessageRequest.setRoomId(roomId);
         chatMessageRequest.setContent(message);
