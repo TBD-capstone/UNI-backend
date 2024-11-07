@@ -71,10 +71,11 @@ public class MatchingController {
                 .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
+        matchingRequest.setRequestId(savedRequest.getRequestId());
 
         messagingTemplate.convertAndSend("/sub/match-request/" + receiver.getUserId(), matchingRequest);
 
-        matchingRequest.setRequestId(savedRequest.getRequestId());
+
         return matchingRequest;
     }
 
