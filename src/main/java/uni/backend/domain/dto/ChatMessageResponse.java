@@ -13,5 +13,6 @@ public class ChatMessageResponse {
 
     private String content;
     private Integer senderId;
+    private Integer receiverId;
     private LocalDateTime sendAt;
 }
