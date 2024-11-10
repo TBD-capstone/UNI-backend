@@ -22,6 +22,10 @@ public class ChatMessage {
     private User sender;
 
     @ManyToOne
+    @JoinColumn(name = "receiver_id")
+    private User receiver;
+
+    @ManyToOne
     @JoinColumn(name = "chatroom_id")
     private ChatRoom chatRoom;
 
