@@ -35,7 +35,7 @@ public class ChatService {
     public ChatRoom createChatRoom(String senderEmail, ChatRoomRequest request) {
         User sender = userRepository.findByEmail(senderEmail);
         User receiver = userRepository.findById(request.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
 
         return chatRoomRepository.findBySenderAndReceiver(sender, receiver)
                 .orElseGet(() -> {
@@ -64,9 +64,13 @@ public class ChatService {
         User sender = userRepository.findById(messageRequest.getSenderId())
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
 
+        User receiver = userRepository.findById(messageRequest.getReceiverId())
+                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setChatRoom(chatRoom);
         chatMessage.setSender(sender);
+        chatMessage.setReceiver(receiver);
         chatMessage.setContent(messageRequest.getContent());
         chatMessage.setSendAt(LocalDateTime.now());
 
@@ -86,6 +90,7 @@ public class ChatService {
                 .map(message -> ChatMessageResponse.builder()
                         .content(message.getContent())
                         .senderId(message.getSender().getUserId())
+                        .receiverId(message.getReceiver().getUserId())
                         .sendAt(message.getSendAt())
                         .build())
                 .collect(Collectors.toList());
