@@ -93,11 +93,14 @@ public class ChatController {
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
+                .receiverId(savedMessage.getReceiver().getUserId())
                 .sendAt(savedMessage.getSendAt())
                 .build();
 
         messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
         logger.info("Message sent to clients: {}", response);
+
+        messagingTemplate.convertAndSend("/sub/user/" + messageRequest.getReceiverId(), response);
     }
 
 
@@ -113,11 +116,18 @@ public class ChatController {
         chatMessageRequest.setRoomId(roomId);
         chatMessageRequest.setSenderId(chatService.getSenderIdFromPrincipal(principal));
 
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        Integer receiverId = chatRoom.getSender().getUserId().equals(chatMessageRequest.getSenderId()) ?
+                chatRoom.getReceiver().getUserId() : chatRoom.getSender().getUserId();
+        chatMessageRequest.setReceiverId(receiverId);
+
         ChatMessage savedMessage = chatService.sendMessage(chatMessageRequest);
 
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
+                .receiverId(savedMessage.getReceiver().getUserId())
                 .sendAt(savedMessage.getSendAt())
                 .build();
 
