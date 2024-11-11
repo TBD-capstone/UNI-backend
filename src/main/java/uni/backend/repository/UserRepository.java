@@ -8,10 +8,7 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-  User findByEmail(String email);
+    User findByEmail(String email);
 
-  List<User> findByRole(Role role); // Role 기반 조회
-
-  boolean existsByEmail(String email);
-
+    List<User> findByRole(Role role); // Role 기반 조회
 }

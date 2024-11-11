@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProfileController {
 
-  private final ProfileService profileService;
-  private final UserService userService;
-  private final HashtagService hashtagService;
+    private final ProfileService profileService;
+    private final UserService userService;
+    private final HashtagService hashtagService;
 
 //    @GetMapping("/profile")
 //    public String viewProfile(Model model, Authentication authentication) {
@@ -106,40 +106,40 @@ public class ProfileController {
 //    }
 
 
-  @GetMapping("/user/{user_id}")
-  public ResponseEntity<IndividualProfileResponse> getUserProfile(
-      @PathVariable("user_id") Integer userId) {
-    User user = userService.findById(userId);
-    IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
+    @GetMapping("/user/{user_id}")
+    public ResponseEntity<IndividualProfileResponse> getUserProfile(
+        @PathVariable("user_id") Integer userId) {
+        User user = userService.findById(userId);
+        IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
 
-    individualProfileResponse.setUserId(user.getUserId());
-    individualProfileResponse.setUserName(user.getName());
-    individualProfileResponse.setImgProf(user.getProfile().getImgProf());
-    individualProfileResponse.setImgBack(user.getProfile().getImgBack());
-    individualProfileResponse.setUniv(user.getUnivName());
-    individualProfileResponse.setRegion(user.getProfile().getRegion());
-    individualProfileResponse.setDescription(user.getProfile().getDescription());
-    individualProfileResponse.setNumEmployment(user.getProfile().getNumEmployment());
-    individualProfileResponse.setStar(user.getProfile().getStar());
-    individualProfileResponse.setTime(user.getProfile().getTime());
+        individualProfileResponse.setUserId(user.getUserId());
+        individualProfileResponse.setImgProf(user.getProfile().getImgProf());
+        individualProfileResponse.setImgBack(user.getProfile().getImgBack());
+        individualProfileResponse.setUniv(user.getUnivName());
+        individualProfileResponse.setRegion(user.getProfile().getRegion());
+        individualProfileResponse.setDescription(user.getProfile().getDescription());
+        individualProfileResponse.setNumEmployment(user.getProfile().getNumEmployment());
+        individualProfileResponse.setStar(user.getProfile().getStar());
+        individualProfileResponse.setTime(
+            user.getProfile().getCreatedAt().toString()); // 생성 시간을 가져옵니다.
 
-    // 해시태그 목록을 String으로 설정
-    List<String> hashtags = user.getProfile().getMainCategories().stream()
-        .map(mainCategory -> mainCategory.getHashtag().getHashtagName())
-        .collect(Collectors.toList());
-    individualProfileResponse.setHashtags(hashtags);
+        // 해시태그 목록을 String으로 설정
+        List<String> hashtags = user.getProfile().getMainCategories().stream()
+            .map(mainCategory -> mainCategory.getHashtag().getHashtagName())
+            .collect(Collectors.toList());
+        individualProfileResponse.setHashtags(hashtags);
 
-    return ResponseEntity.ok(individualProfileResponse);
-  }
+        return ResponseEntity.ok(individualProfileResponse);
+    }
 
 
-  @PostMapping("/user/{userId}")
-  public ResponseEntity<IndividualProfileResponse> updateUserProfile(@PathVariable String userId,
-      @RequestBody IndividualProfileResponse profileDto) {
-    Profile updatedProfile = profileService.updateProfile(Integer.valueOf(userId), profileDto);
-    IndividualProfileResponse individualProfileResponse = profileService.getProfileDTOByUserId(
-        Integer.valueOf(userId));
-    return ResponseEntity.ok(individualProfileResponse);
-  }
+    @PostMapping("/user/{userId}")
+    public ResponseEntity<IndividualProfileResponse> updateUserProfile(@PathVariable String userId,
+        @RequestBody IndividualProfileResponse profiledto) {
+        Profile updatedProfile = profileService.updateProfile(Integer.valueOf(userId), profiledto);
+        IndividualProfileResponse individualProfileResponse = profileService.getProfileDTOByUserId(
+            Integer.valueOf(userId));
+        return ResponseEntity.ok(individualProfileResponse);
+    }
 
 }
