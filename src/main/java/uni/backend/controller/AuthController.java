@@ -49,6 +49,16 @@ public class AuthController {
         return ResponseEntity.ok(Response.successMessage("signed up successfully"));
     }
 
+    @GetMapping("/auth/loginCheck")
+    public ResponseEntity<String> loginCheck(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails != null) {
+            String responseMessage = String.format("User is logged in: %s", userDetails.getUsername());
+            return ResponseEntity.ok(responseMessage);
+        } else {
+            return ResponseEntity.status(401).body("User is not logged in.");
+        }
+    }
+
 //    @PostMapping("/login")
 //    public ResponseEntity<Response> login(@RequestBody LoginRequest loginRequest) {
 //        // 사용자 인증 토큰 생성
