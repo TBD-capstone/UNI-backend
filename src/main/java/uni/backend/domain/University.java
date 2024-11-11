@@ -13,21 +13,21 @@ import lombok.Setter;
 @Setter
 public class University {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "university_id")
-  private Integer universityId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "university_id")
+    private Integer universityId;
 
-  @Column(nullable = false, length = 255)
-  private String uniName;
+    @Column(nullable = false, length = 255)
+    private String uniName;
 
-  public University(Integer universityId, String uniName) {
-    this.universityId = universityId;
-    this.uniName = uniName;
-  }
+    public University(Integer universityId, String uniName) {
+        this.universityId = universityId;
+        this.uniName = uniName;
+    }
 
-  public University() {
+    public University() {
 
-  }
+    }
 
 }

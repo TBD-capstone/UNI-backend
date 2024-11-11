@@ -113,6 +113,7 @@ public class ProfileController {
         IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
 
         individualProfileResponse.setUserId(user.getUserId());
+        individualProfileResponse.setUserName(user.getName());
         individualProfileResponse.setImgProf(user.getProfile().getImgProf());
         individualProfileResponse.setImgBack(user.getProfile().getImgBack());
         individualProfileResponse.setUniv(user.getUnivName());
@@ -120,8 +121,7 @@ public class ProfileController {
         individualProfileResponse.setDescription(user.getProfile().getDescription());
         individualProfileResponse.setNumEmployment(user.getProfile().getNumEmployment());
         individualProfileResponse.setStar(user.getProfile().getStar());
-        individualProfileResponse.setTime(
-            user.getProfile().getCreatedAt().toString()); // 생성 시간을 가져옵니다.
+        individualProfileResponse.setTime(user.getProfile().getTime());
 
         // 해시태그 목록을 String으로 설정
         List<String> hashtags = user.getProfile().getMainCategories().stream()
@@ -135,8 +135,8 @@ public class ProfileController {
 
     @PostMapping("/user/{userId}")
     public ResponseEntity<IndividualProfileResponse> updateUserProfile(@PathVariable String userId,
-        @RequestBody IndividualProfileResponse profiledto) {
-        Profile updatedProfile = profileService.updateProfile(Integer.valueOf(userId), profiledto);
+        @RequestBody IndividualProfileResponse profileDto) {
+        Profile updatedProfile = profileService.updateProfile(Integer.valueOf(userId), profileDto);
         IndividualProfileResponse individualProfileResponse = profileService.getProfileDTOByUserId(
             Integer.valueOf(userId));
         return ResponseEntity.ok(individualProfileResponse);

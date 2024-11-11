@@ -67,7 +67,8 @@ public class ProfileService {
         individualProfileResponse.setDescription(profile.getDescription());
         individualProfileResponse.setNumEmployment(profile.getNumEmployment());
         individualProfileResponse.setStar(profile.getStar());
-        individualProfileResponse.setTime(profile.getCreatedAt().toString());
+//        individualProfileResponse.setTime(profile.getCreatedAt().toString());
+        individualProfileResponse.setTime(profile.getTime());
 
         // 해시태그 매핑을 List<String>으로 변경
         List<String> hashtags = getHashtagListFromProfile(profile);
@@ -89,9 +90,6 @@ public class ProfileService {
         profile.setUpdatedAt(LocalDateTime.now());
         profileRepository.save(profile);
     }
-
-
-
 
 //    "userId": Integer ,
 //            "imgProf": String ,
@@ -140,7 +138,6 @@ public class ProfileService {
     private List<Profile> getAllProfiles() {
         return profileRepository.findAll();
     }
-
 
 
     private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
