@@ -9,8 +9,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class QnaUserResponse {
 
-  private Integer userId;
-  private String name;
+    private Integer userId;
+    private String name;
 
 
 }

@@ -8,6 +8,6 @@ import uni.backend.domain.User;
 
 public interface ReplyLikeRepository extends JpaRepository<ReplyLikes, Long> {
 
-  Optional<ReplyLikes> findByUserAndReply(User user, Reply reply);
+    Optional<ReplyLikes> findByUserAndReply(User user, Reply reply);
 
 }

@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class ReplyCreateRequest {
 
-  private String content; // 대댓글 본문
+    private String content; // 대댓글 본문
 }

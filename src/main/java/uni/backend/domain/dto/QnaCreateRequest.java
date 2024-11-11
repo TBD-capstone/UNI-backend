@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class QnaCreateRequest {
 
-  private String content; // 댓글 내용
+    private String content; // 댓글 내용
 }

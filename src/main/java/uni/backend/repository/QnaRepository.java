@@ -9,5 +9,5 @@ import uni.backend.domain.Qna;
 @Repository
 public interface QnaRepository extends JpaRepository<Qna, Integer> {
 
-  List<Qna> findByProfileOwnerUserId(Integer userId);
+    List<Qna> findByProfileOwnerUserId(Integer userId);
 }
