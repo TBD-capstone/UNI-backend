@@ -35,26 +35,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/home", "/api/auth/**", "/api/auth/login", "/ws/**", "/ws/chat/**", "/api/auth/loginCheck").permitAll()
-                        .anyRequest().authenticated())
-                .exceptionHandling()
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-                .and()
-                .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
-                .authenticationProvider(authenticationProvider());
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/home", "/api/auth/**", "/api/auth/login", "/ws/**",
+                    "/ws/chat/**", "/api/auth/loginCheck").permitAll()
+                .anyRequest().authenticated())
+            .exceptionHandling()
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .and()
+            .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(),
+                SecurityContextPersistenceFilter.class)
+            .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
 
 
-
     @Bean
-    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManagerBean(
+        AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -72,22 +74,27 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() throws Exception {
-        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(authenticationManagerBean(null));
+    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter()
+        throws Exception {
+        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(
+            authenticationManagerBean(null));
         filter.setFilterProcessesUrl("/api/auth/login"); // 로그인 경로 설정
 
         // 로그인 성공 시 세션을 생성하고 SecurityContext에 인증 정보 저장
         filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
             request.getSession(true);  // 세션 생성
-            SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContext에 인증 저장
+            SecurityContextHolder.getContext()
+                .setAuthentication(authentication);  // SecurityContext에 인증 저장
 
             // SecurityContext를 명시적으로 세션에 저장
-            request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            request.getSession()
+                .setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"success\", \"message\": \"logged in successfully\"}");
+            response.getWriter()
+                .write("{\"status\": \"success\", \"message\": \"logged in successfully\"}");
             response.getWriter().flush();
         });
 
@@ -96,7 +103,8 @@ public class SecurityConfig {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
+            response.getWriter()
+                .write("{\"status\": \"fail\", \"message\": \".wrong information\"}");
             response.getWriter().flush();
         });
 
