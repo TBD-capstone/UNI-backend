@@ -33,7 +33,7 @@ public class QnaController {
     }
 
     // 특정 유저의 Qna 목록 조회
-    @GetMapping("/users/{userId}/qnas")
+    @GetMapping("/user/{userId}/qnas")
     public ResponseEntity<List<QnaResponse>> getUserQnas(@PathVariable Integer userId) {
         List<Qna> userQnas = qnaService.getQnasByUserId(userId);
 
@@ -78,7 +78,7 @@ public class QnaController {
 
 
     // 특정 유저의 Qna 작성
-    @PostMapping("/users/{userId}/qnas/{commenterId}")
+    @PostMapping("/user/{userId}/qnas/{commenterId}")
     public ResponseEntity<QnaCreateResponse> createQna(
         @PathVariable Integer userId,
         @PathVariable Integer commenterId,
