@@ -29,7 +29,7 @@ public class ReplyController {
     }
 
     // 특정 Qna에 대댓글 작성
-    @PostMapping("/users/{userId}/qnas/{qnaId}/replies/{commenterId}")
+    @PostMapping("/user/{userId}/qnas/{qnaId}/replies/{commenterId}")
     public ResponseEntity<ReplyCreateResponse> createReply(
         @PathVariable Integer userId,
         @PathVariable Integer qnaId,
