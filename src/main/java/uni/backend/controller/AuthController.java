@@ -1,6 +1,7 @@
 package uni.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
@@ -70,6 +72,16 @@ public class AuthController {
             // 실패 응답 전송
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Response("fail", "wrong information"));
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response, Authentication auth) {
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, response, auth);
+            return ResponseEntity.ok(Response.successMessage("logged out successfully"));
+        } else {
+            return ResponseEntity.status(400).body(Response.failMessage("logout failed"));
         }
     }
 
