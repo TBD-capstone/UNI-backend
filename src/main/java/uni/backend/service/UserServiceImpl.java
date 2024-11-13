@@ -1,6 +1,8 @@
 package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Role;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,8 +11,6 @@ import uni.backend.domain.User;
 import uni.backend.repository.UserRepository;
 
 import java.util.List;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +33,15 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findByEmail(user.getEmail()) != null) {
             throw new IllegalStateException("이미 가입된 회원입니다.");
         }
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return user;
     }
 
     @Override

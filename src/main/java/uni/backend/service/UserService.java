@@ -1,10 +1,11 @@
 package uni.backend.service;
 
+import org.springframework.security.core.userdetails.UserDetailsService;
 import uni.backend.domain.User;
 
 import java.util.List;
 
-public interface UserService {
+public interface UserService extends UserDetailsService {
 
     User saveUser(User user);
 
