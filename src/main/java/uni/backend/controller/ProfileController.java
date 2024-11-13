@@ -4,11 +4,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Profile;
+import uni.backend.domain.Qna;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.IndividualProfileResponse;
+import uni.backend.domain.dto.QnaResponse;
+import uni.backend.domain.dto.QnaUserResponse;
+import uni.backend.domain.dto.ReplyResponse;
+import uni.backend.service.AwsS3Service;
 import uni.backend.service.HashtagService;
 import uni.backend.service.ProfileService;
+import uni.backend.service.QnaService;
+import uni.backend.service.ReplyService;
 import uni.backend.service.UserService;
 
 import java.util.List;
@@ -22,88 +30,30 @@ public class ProfileController {
     private final ProfileService profileService;
     private final UserService userService;
     private final HashtagService hashtagService;
+    private final QnaService qnaService;
+    private final ReplyService replyService;
+    private final AwsS3Service awsS3Service;
 
-//    @GetMapping("/profile")
-//    public String viewProfile(Model model, Authentication authentication) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return "redirect:/login";
-//        }
-//
-//        String email = authentication.getName();
-//        User user = userService.findByEmail(email);
-//        Optional<Profile> profile = profileService.findProfileByUserId(user.getUserId());
-//
-//        if (profile.isEmpty()) {
-//            return "redirect:/profile-form";
-//        }
-//
-//        model.addAttribute("profile", profile.get());
-//        model.addAttribute("remoteUser", email);
-//
-//        return "profile";
-//    }
-//
-//    @GetMapping("/profile-form")
-//    public String showProfileForm(Model model, Authentication authentication) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return "redirect:/login";
-//        }
-//
-//        String email = authentication.getName();
-//        User user = userService.findByEmail(email);
-//        Profile profile = new Profile();
-//        profile.setUser(user);
-//        model.addAttribute("profile", profile);
-//
-//        return "profile-form";
-//    }
-//
-//    @PostMapping("/profile")
-//    public String saveProfile(Profile profile, Authentication authentication, @RequestParam List<String> mainCategories) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return "redirect:/login";
-//        }
-//
-//        String email = authentication.getName();
-//        User user = userService.findByEmail(email);
-//        profile.setUser(user);
-//        profileService.save(profile);
-//        hashtagService.addHashtagsToProfile(profile, mainCategories);
-//
-//        return "redirect:/profile";
-//    }
-//
-//    @GetMapping("/profile-edit")
-//    public String editProfile(Model model, Authentication authentication) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return "redirect:/login";
-//        }
-//
-//        String email = authentication.getName();
-//        User user = userService.findByEmail(email);
-//        Optional<Profile> profile = profileService.findProfileByUserId(user.getUserId());
-//
-//        if (profile.isEmpty()) {
-//            return "redirect:/profile-form";
-//        }
-//
-//        model.addAttribute("profile", profile.get());
-//        return "profile-edit";
-//    }
-//
-//    @PostMapping("/profile-edit")
-//    public String updateProfile(@ModelAttribute ProfileDTO profileDTO,
-//                                Authentication authentication) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return "redirect:/login";
-//        }
-//
-//        String email = authentication.getName();
-//        User user = userService.findByEmail(email);
-//        profileService.updateProfile(user.getUserId(), profileDTO); // mainCategories 제거
-//
-//        return "redirect:/profile";
-//    }
+    @PostMapping("user/{userId}/update-profile")
+    public ResponseEntity<IndividualProfileResponse> updateUserProfile(
+        @PathVariable Integer userId,
+        @RequestParam MultipartFile profileImage,
+        @RequestParam MultipartFile backgroundImage) {
+
+        // 이미지 업로드
+        String profileImageUrl = awsS3Service.upload(profileImage, "profile", userId);
+        String backgroundImageUrl = awsS3Service.upload(backgroundImage, "background", userId);
+
+        // 이미지 URL을 포함한 프로필 업데이트
+        IndividualProfileResponse updatedProfile = new IndividualProfileResponse();
+        updatedProfile.setUserId(userId);
+        updatedProfile.setImgProf(profileImageUrl);
+        updatedProfile.setImgBack(backgroundImageUrl);
+
+        profileService.updateProfile(userId, updatedProfile);
+
+        return ResponseEntity.ok(updatedProfile);
+    }
 
 
     @GetMapping("/user/{user_id}")

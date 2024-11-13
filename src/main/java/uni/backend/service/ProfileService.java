@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
 import uni.backend.domain.Profile;
-import uni.backend.domain.dto.HashtagResponse;
 import uni.backend.domain.dto.HomeDataResponse;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
@@ -25,14 +24,16 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final HashtagRepository hashtagRepository;
     private final HashtagService hashtagService;
+    private final AwsS3Service awsS3Service;
 
     @Autowired
     public ProfileService(ProfileRepository profileRepository,
         HashtagRepository hashtagRepository,
-        HashtagService hashtagService) {
+        HashtagService hashtagService, AwsS3Service awsS3Service) {
         this.profileRepository = profileRepository;
         this.hashtagRepository = hashtagRepository;
         this.hashtagService = hashtagService;  // HashtagService 초기화
+        this.awsS3Service = awsS3Service;
     }
 
     // 사용자 ID를 통해 Profile을 찾는 메서드
@@ -70,6 +71,11 @@ public class ProfileService {
 //        individualProfileResponse.setTime(profile.getCreatedAt().toString());
         individualProfileResponse.setTime(profile.getTime());
 
+        individualProfileResponse.setImgProf(
+            awsS3Service.getImageUrl(profile.getImgProf()));  // 프로필 이미지 URL 가져오기
+        individualProfileResponse.setImgBack(
+            awsS3Service.getImageUrl(profile.getImgBack()));  // 배경 이미지 URL 가져오기
+
         // 해시태그 매핑을 List<String>으로 변경
         List<String> hashtags = getHashtagListFromProfile(profile);
 
@@ -105,9 +111,10 @@ public class ProfileService {
         IndividualProfileResponse individualProfileResponse) {
         Profile profile = profileRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
+        // 이미지 URL을 프로필에 반영
+        profile.setImgProf(individualProfileResponse.getImgProf());  // 프로필 이미지 URL 설정
+        profile.setImgBack(individualProfileResponse.getImgBack());  // 배경 이미지 URL 설정
 
-        profile.setImgProf(individualProfileResponse.getImgProf());
-        profile.setImgBack(individualProfileResponse.getImgBack());
         profile.setRegion(individualProfileResponse.getRegion());
         profile.setTime(individualProfileResponse.getTime());
         profile.setDescription(individualProfileResponse.getDescription());
