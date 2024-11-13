@@ -1,6 +1,5 @@
 package uni.backend.config;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,16 +10,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import uni.backend.service.CustomUserDetailsService;
+import uni.backend.service.UserService;
 
 import java.util.List;
 
@@ -29,7 +25,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
+    private final UserService userService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
@@ -40,12 +36,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/home", "/api/auth/**", "/api/auth/login", "/ws/**", "/ws/chat/**", "/api/auth/loginCheck").permitAll()
+                        .requestMatchers("/api/home", "/api/auth/**", "/ws/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling()
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .and()
-                .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
+                //.addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
                 .authenticationProvider(authenticationProvider());
 
         return http.build();
@@ -61,7 +57,7 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);  // CustomUserDetailsService 설정
+        authProvider.setUserDetailsService(userService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -71,37 +67,37 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() throws Exception {
-        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(authenticationManagerBean(null));
-        filter.setFilterProcessesUrl("/api/auth/login"); // 로그인 경로 설정
-
-        // 로그인 성공 시 세션을 생성하고 SecurityContext에 인증 정보 저장
-        filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
-            request.getSession(true);  // 세션 생성
-            SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContext에 인증 저장
-
-            // SecurityContext를 명시적으로 세션에 저장
-            request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"success\", \"message\": \"logged in successfully\"}");
-            response.getWriter().flush();
-        });
-
-        // 로그인 실패 시 처리
-        filter.setAuthenticationFailureHandler((request, response, exception) -> {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
-            response.getWriter().flush();
-        });
-
-        return filter;
-    }
+//    @Bean
+//    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() throws Exception {
+//        JsonUsernamePasswordAuthenticationFilter filter = new JsonUsernamePasswordAuthenticationFilter(authenticationManagerBean(null));
+//        filter.setFilterProcessesUrl("/api/auth/login"); // 로그인 경로 설정
+//
+//        // 로그인 성공 시 세션을 생성하고 SecurityContext에 인증 정보 저장
+//        filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
+//            request.getSession(true);  // 세션 생성
+//            SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContext에 인증 저장
+//
+//            // SecurityContext를 명시적으로 세션에 저장
+//            request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+//
+//            response.setStatus(HttpServletResponse.SC_OK);
+//            response.setContentType("application/json");
+//            response.setCharacterEncoding("UTF-8");
+//            response.getWriter().write("{\"status\": \"success\", \"message\": \"logged in successfully\"}");
+//            response.getWriter().flush();
+//        });
+//
+//        // 로그인 실패 시 처리
+//        filter.setAuthenticationFailureHandler((request, response, exception) -> {
+//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//            response.setContentType("application/json");
+//            response.setCharacterEncoding("UTF-8");
+//            response.getWriter().write("{\"status\": \"fail\", \"message\": \"wrong information\"}");
+//            response.getWriter().flush();
+//        });
+//
+//        return filter;
+//    }
 
     // CORS 설정 메서드
     @Bean

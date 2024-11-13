@@ -1,5 +1,7 @@
 package uni.backend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -7,27 +9,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.CustomUserDetails;
-import uni.backend.domain.dto.LoginRequest;
-import uni.backend.domain.dto.Response;
-import uni.backend.domain.dto.SignupRequest;
+import uni.backend.domain.dto.*;
 import uni.backend.repository.UserRepository;
 import uni.backend.service.UserService;
-import uni.backend.service.UserServiceImpl;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000") // 프론트엔드 도메인 허용
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -37,7 +36,7 @@ public class AuthController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // SecurityConfig에 있는 passwordEncoder를 가져와야 함
 
-    @PostMapping("/auth/signup")
+    @PostMapping("/signup")
     public ResponseEntity<Response> signup(@RequestBody SignupRequest signupRequest) {
         User user = User.createUser(signupRequest, passwordEncoder);
         try {
@@ -49,46 +48,55 @@ public class AuthController {
         return ResponseEntity.ok(Response.successMessage("signed up successfully"));
     }
 
-    @GetMapping("/auth/loginCheck")
-    public ResponseEntity<String> loginCheck(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails != null) {
-            String responseMessage = String.format("User is logged in: %s", userDetails.getUsername());
-            return ResponseEntity.ok(responseMessage);
-        } else {
-            return ResponseEntity.status(401).body("User is not logged in.");
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        try {
+            // 인증 토큰 생성
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+
+            // 인증 시도
+            Authentication authentication = authenticationManager.authenticate(authToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 세션 생성 및 SecurityContext 설정
+            request.getSession(true).setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+            // 인증된 사용자 정보 가져오기
+            User user = (User) authentication.getPrincipal();
+
+            // 성공 응답 전송
+            return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
+                    user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
+        } catch (Exception e) {
+            // 실패 응답 전송
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new Response("fail", "wrong information"));
         }
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<Response> login(@RequestBody LoginRequest loginRequest) {
-//        // 사용자 인증 토큰 생성
-//        UsernamePasswordAuthenticationToken authToken =
-//                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
-//
-//        // 인증 시도
-//        Authentication authentication = authenticationManager.authenticate(authToken);
-//
-//        if (authentication.isAuthenticated()) {
-//            Response response = Response.successMessage("signed up successfully");
-//            return ResponseEntity.ok(response);
-//        }
-//        Response response = Response.failMessage("signed up failed");
-//        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-//    }
+    @PostMapping("/logout")
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response, Authentication auth) {
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, response, auth);
+            return ResponseEntity.ok(Response.successMessage("logged out successfully"));
+        } else {
+            return ResponseEntity.status(400).body(Response.failMessage("logout failed"));
+        }
+    }
 
-//    @GetMapping("/user-role")
-//    public ResponseEntity<?> getUserRole(Authentication authentication) {
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return ResponseEntity.status(401).body("Unauthorized");
-//        }
-//
-//        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-//        User user = userRepository.findByEmail(userDetails.getUsername());
-//
-//        if (user != null) {
-//            return ResponseEntity.ok(user.getRole().name());
-//        } else {
-//            return ResponseEntity.status(404).body("User not found");
-//        }
-//    }
+    @GetMapping("/loginCheck")
+    public ResponseEntity<?> loginCheck(@AuthenticationPrincipal User user) {
+        if (user == null) { // 인증되지 않은 경우
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not logged in.");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getUserId());
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole() != null ? user.getRole().toString() : "ROLE_NOT_SET");
+        return ResponseEntity.ok(response);
+    }
+
 }
