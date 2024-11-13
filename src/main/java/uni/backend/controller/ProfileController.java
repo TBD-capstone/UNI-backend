@@ -34,17 +34,30 @@ public class ProfileController {
     private final ReplyService replyService;
     private final AwsS3Service awsS3Service;
 
-    @PostMapping("user/{userId}/update-profile")
-    public ResponseEntity<IndividualProfileResponse> updateUserProfile(
+    @PostMapping("/user/{userId}/update-profile")
+    public ResponseEntity<IndividualProfileResponse> updateProfile(
         @PathVariable Integer userId,
-        @RequestParam MultipartFile profileImage,
-        @RequestParam MultipartFile backgroundImage) {
+        @RequestParam(required = false) MultipartFile profileImage,
+        @RequestParam(required = false) MultipartFile backgroundImage) {
 
-        // 이미지 업로드
-        String profileImageUrl = awsS3Service.upload(profileImage, "profile", userId);
-        String backgroundImageUrl = awsS3Service.upload(backgroundImage, "background", userId);
+        // 기존 프로필 조회
+        Profile profile = profileService.findProfileByUserId(userId)
+            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
-        // 이미지 URL을 포함한 프로필 업데이트
+        // 기존 프로필 이미지 URL
+        String existingProfileImageUrl = profile.getImgProf();
+        String existingBackgroundImageUrl = profile.getImgBack();
+
+        String profileImageUrl = existingProfileImageUrl;
+        if (profileImage != null) {
+            profileImageUrl = awsS3Service.upload(profileImage, "profile", userId);
+        }
+
+        String backgroundImageUrl = existingBackgroundImageUrl;
+        if (backgroundImage != null) {
+            backgroundImageUrl = awsS3Service.upload(backgroundImage, "background", userId);
+        }
+
         IndividualProfileResponse updatedProfile = new IndividualProfileResponse();
         updatedProfile.setUserId(userId);
         updatedProfile.setImgProf(profileImageUrl);
