@@ -1,5 +1,6 @@
 package uni.backend.repository;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
@@ -8,10 +9,12 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-  User findByEmail(String email);
+    User findByEmail(String email);
 
-  List<User> findByRole(Role role); // Role 기반 조회
+    List<User> findByRole(Role role); // Role 기반 조회
 
-  boolean existsByEmail(String email);
+    boolean existsByEmail(String email);
+
+    Optional<User> findById(Integer userId);
 
 }
