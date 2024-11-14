@@ -27,9 +27,13 @@ public class AwsS3Controller {
 
     @PostMapping("/upload")
     public ResponseEntity<?> s3Upload(
-        @RequestParam(value = "image", required = false) MultipartFile image) {
+        @RequestParam(value = "image", required = false) MultipartFile image,
+        @RequestParam(value = "type", required = true) String type,
+        @RequestParam(value = "userId", required = true) Integer userId) { // 유저 ID 추가
+
         try {
-            String imageUrl = awsS3Service.upload(image);
+            // 업로드 후 이미지 URL 반환
+            String imageUrl = awsS3Service.upload(image, type, userId);
             AwsS3UploadResponse awsS3UploadResponse = new AwsS3UploadResponse(imageUrl);
             return ResponseEntity.ok(awsS3UploadResponse);
         } catch (AwsS3Exception e) {
@@ -37,9 +41,7 @@ public class AwsS3Controller {
             Response response = Response.failMessage(e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
-
     }
-
     // 삭제할 일이 없어보입니다..
 //    @DeleteMapping("/delete")
 //    public ResponseEntity<?> s3Delete(@RequestParam String addr) {
