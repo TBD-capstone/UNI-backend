@@ -11,6 +11,8 @@ import uni.backend.domain.dto.MatchingResponse;
 import uni.backend.repository.MatchingRepository;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -114,5 +116,77 @@ class MatchingServiceTest {
         // then
         assertEquals(Optional.empty(), resultOpt);
         verify(matchingRepository, never()).save(any(Matching.class));
+    }
+
+    @Test
+    void 요청자_ID로_매칭_목록_조회() {
+        // given
+        int requesterId = 1;
+        User requester = new User();
+        requester.setUserId(requesterId);
+
+        Matching matching1 = Matching.builder()
+                .requestId(1)
+                .requester(requester)
+                .receiver(new User())
+                .status(Matching.Status.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Matching matching2 = Matching.builder()
+                .requestId(2)
+                .requester(requester)
+                .receiver(new User())
+                .status(Matching.Status.ACCEPTED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(matchingRepository.findByRequester_UserId(requesterId))
+                .thenReturn(Arrays.asList(matching1, matching2));
+
+        // when
+        List<Matching> result = matchingService.getMatchingListByRequesterId(requesterId);
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals(requesterId, result.get(0).getRequester().getUserId());
+        assertEquals(requesterId, result.get(1).getRequester().getUserId());
+        verify(matchingRepository, times(1)).findByRequester_UserId(requesterId);
+    }
+
+    @Test
+    void 수신자_ID로_매칭_목록_조회() {
+        // given
+        int receiverId = 2;
+        User receiver = new User();
+        receiver.setUserId(receiverId);
+
+        Matching matching1 = Matching.builder()
+                .requestId(1)
+                .requester(new User())
+                .receiver(receiver)
+                .status(Matching.Status.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Matching matching2 = Matching.builder()
+                .requestId(2)
+                .requester(new User())
+                .receiver(receiver)
+                .status(Matching.Status.ACCEPTED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(matchingRepository.findByReceiver_UserId(receiverId))
+                .thenReturn(Arrays.asList(matching1, matching2));
+
+        // when
+        List<Matching> result = matchingService.getMatchingListByReceiverId(receiverId);
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals(receiverId, result.get(0).getReceiver().getUserId());
+        assertEquals(receiverId, result.get(1).getReceiver().getUserId());
+        verify(matchingRepository, times(1)).findByReceiver_UserId(receiverId);
     }
 }
