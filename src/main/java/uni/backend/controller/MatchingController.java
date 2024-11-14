@@ -7,11 +7,15 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Matching;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.MatchingListResponse;
 import uni.backend.domain.dto.MatchingRequest;
 import uni.backend.domain.dto.MatchingResponse;
 import uni.backend.service.MatchingService;
 import uni.backend.service.UserService;
+
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/match")
@@ -92,5 +96,19 @@ public class MatchingController {
         }
 
         return matchingResponse;
+    }
+
+    @GetMapping("/list/requester/{requesterId}")
+    public List<MatchingListResponse> getMatchingListByRequester(@PathVariable Integer requesterId) {
+        return matchingService.getMatchingListByRequesterId(requesterId).stream()
+                .map(MatchingListResponse::fromMatching)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/list/receiver/{receiverId}")
+    public List<MatchingListResponse> getMatchingListByReceiver(@PathVariable Integer receiverId) {
+        return matchingService.getMatchingListByReceiverId(receiverId).stream()
+                .map(MatchingListResponse::fromMatching)
+                .collect(Collectors.toList());
     }
 }
