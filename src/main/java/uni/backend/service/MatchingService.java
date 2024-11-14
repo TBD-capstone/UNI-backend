@@ -8,6 +8,7 @@ import uni.backend.domain.User;
 import uni.backend.domain.dto.MatchingResponse;
 import uni.backend.repository.MatchingRepository;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,5 +36,13 @@ public class MatchingService {
             matchingRepository.save(request);
         });
         return requestOpt;
+    }
+
+    public List<Matching> getMatchingListByRequesterId(Integer requesterId) {
+        return matchingRepository.findByRequester_UserId(requesterId);
+    }
+
+    public List<Matching> getMatchingListByReceiverId(Integer receiverId) {
+        return matchingRepository.findByReceiver_UserId(receiverId);
     }
 }
