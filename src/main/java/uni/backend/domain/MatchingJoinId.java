@@ -6,5 +6,5 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class MatchingJoinId implements Serializable {
     private Integer user;
-    private Integer request;
+    private Integer matching;
 }
