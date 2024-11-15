@@ -8,6 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class MatchingUpdateRequest {
-    private Integer requestId;
+    private Integer matchingId;
     private boolean accepted;
 }
