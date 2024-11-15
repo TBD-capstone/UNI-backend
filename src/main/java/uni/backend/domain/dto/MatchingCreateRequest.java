@@ -7,8 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatchingRequest {
-    private Integer requestId;
+public class MatchingCreateRequest {
     private Integer requesterId;
     private Integer receiverId;
 }
