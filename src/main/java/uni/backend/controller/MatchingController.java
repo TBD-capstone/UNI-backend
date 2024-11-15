@@ -7,9 +7,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Matching;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.MatchingListResponse;
-import uni.backend.domain.dto.MatchingRequest;
-import uni.backend.domain.dto.MatchingResponse;
+import uni.backend.domain.dto.*;
 import uni.backend.service.MatchingService;
 import uni.backend.service.UserService;
 
@@ -31,9 +29,9 @@ public class MatchingController {
     private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/request")
-    public MatchingRequest createMatchRequest(@RequestBody MatchingRequest matchingRequest) {
-        User requester = userService.findById(matchingRequest.getRequesterId());
-        User receiver = userService.findById(matchingRequest.getReceiverId());
+    public MatchingCreateResponse createMatchRequest(@RequestBody MatchingCreateRequest matchingCreateRequest) {
+        User requester = userService.findById(matchingCreateRequest.getRequesterId());
+        User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
         Matching request = Matching.builder()
                 .requester(requester)
@@ -43,30 +41,31 @@ public class MatchingController {
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
-        messagingTemplate.convertAndSend("/sub/match-request/" + matchingRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
+        messagingTemplate.convertAndSend("/sub/match-request/" + matchingCreateRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
 
-        matchingRequest.setRequestId(savedRequest.getRequestId());
-        return matchingRequest;
+        return MatchingCreateResponse.from(savedRequest);
     }
 
     @PostMapping("/respond")
-    public String respondToMatchRequest(@RequestBody MatchingResponse matchingResponse) {
-        Optional<Matching> requestOpt = matchingService.updateRequestStatus(matchingResponse);
+    public MatchingUpdateResponse respondToMatchRequest(@RequestBody MatchingUpdateRequest matchingUpdateRequest) {
+        Optional<Matching> requestOpt = matchingService.updateRequestStatus(matchingUpdateRequest);
 
         if (requestOpt.isPresent()) {
             Matching request = requestOpt.get();
-            messagingTemplate.convertAndSend("/sub/match-response/" + request.getRequester().getUserId(),
-                    matchingResponse.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.");
-            return "응답 처리 완료";
+            String responseMessage = matchingUpdateRequest.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.";
+            messagingTemplate.convertAndSend("/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
+
+            return MatchingUpdateResponse.from(request);
         }
-        return "요청을 찾을 수 없습니다.";
+        throw new IllegalArgumentException("요청을 찾을 수 없습니다.");
     }
 
     @MessageMapping("/match/request")
     @SendTo("/sub/match/request")
-    public MatchingRequest handleMatchRequest(MatchingRequest matchingRequest) {
-        User requester = userService.findById(matchingRequest.getRequesterId());
-        User receiver = userService.findById(matchingRequest.getReceiverId());
+    public MatchingCreateResponse handleMatchRequest(MatchingCreateRequest matchingCreateRequest) {
+
+        User requester = userService.findById(matchingCreateRequest.getRequesterId());
+        User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
         Matching request = Matching.builder()
                 .requester(requester)
@@ -75,28 +74,32 @@ public class MatchingController {
                 .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
-        matchingRequest.setRequestId(savedRequest.getRequestId());
 
-        messagingTemplate.convertAndSend("/sub/match-request/" + receiver.getUserId(), matchingRequest);
+        MatchingCreateResponse response = MatchingCreateResponse.from(savedRequest);
 
+        messagingTemplate.convertAndSend("/sub/match-request/" + receiver.getUserId(), response);
 
-        return matchingRequest;
+        return response;
     }
 
     @MessageMapping("/match/respond")
     @SendTo("/sub/match/response")
-    public MatchingResponse handleMatchResponse(MatchingResponse matchingResponse) {
-        Optional<Matching> requestOpt = matchingService.updateRequestStatus(matchingResponse);
+    public MatchingUpdateResponse handleMatchResponse(MatchingUpdateRequest matchingUpdateRequest) {
+
+        Optional<Matching> requestOpt = matchingService.updateRequestStatus(matchingUpdateRequest);
 
         if (requestOpt.isPresent()) {
             Matching request = requestOpt.get();
-            String responseMessage = matchingResponse.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.";
+            String responseMessage = matchingUpdateRequest.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.";
 
             messagingTemplate.convertAndSend("/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
+
+            return MatchingUpdateResponse.from(request);
         }
 
-        return matchingResponse;
+        throw new IllegalArgumentException("요청을 찾을 수 없습니다.");
     }
+
 
     @GetMapping("/list/requester/{requesterId}")
     public List<MatchingListResponse> getMatchingListByRequester(@PathVariable Integer requesterId) {
