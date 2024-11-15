@@ -1,19 +1,34 @@
 package uni.backend.service;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import org.hibernate.usertype.BaseUserTypeSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriBuilder;
+import uni.backend.domain.dto.CreateGlossaryRequest;
+import uni.backend.domain.dto.CreateGlossaryResponse;
+import uni.backend.domain.dto.GlossariesListResponse;
+import uni.backend.domain.dto.SingleGlossaryResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
+import uni.backend.enums.LanguageAbbrev;
 
 @Service
 public class TranslationService {
 
+    private static final String DEFAULT_LANGUAGE = "en";
+    private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en", "ko", "zh");
+    private static final String DEEPL_TRANSLATE_URL = "https://api-free.deepl.com/v2/translate";
+    private static final String DEEPL_GLOSSARY_URL = "https://api-free.deepl.com/v2/glossaries";
+    private static final String DEEPL_GLOSSARY_ENTRY_URL = "https://api-free.deepl.com/v2/glossaries";
+
     @Autowired
     private final RestClient restClient;
-
-    private static final String DEEPL_TRANSLATE_URL = "https://api-free.deepl.com/v2/translate";
 
     @Value("${DeepL.key}")
     private String authKey;
@@ -22,10 +37,29 @@ public class TranslationService {
         this.restClient = restClient;
     }
 
-    public TranslationResponse translate(TranslationRequest request) {
-        String targetLang = String.valueOf(request.getTarget_lang());
+    public String determineTargetLanguage(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.isEmpty()) {
+            return DEFAULT_LANGUAGE;
+        }
 
-        System.out.println(request.toString());
+        return Arrays.stream(acceptLanguage.split(","))
+            .map(lang -> lang.split(";")[0].trim())
+            .filter(SUPPORTED_LANGUAGES::contains)
+            .findFirst()
+            .orElse(DEFAULT_LANGUAGE);
+    }
+
+    public TranslationResponse translate(TranslationRequest request, String sourceLang,
+        String targetLang) {
+
+        if (sourceLang != null) {
+//            request.setSource_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
+            request.setTarget_lang(targetLang);
+        }
+        if (targetLang != null) {
+//            request.setTarget_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
+            request.setSource_lang(sourceLang);
+        }
 
         TranslationResponse response = restClient
             .post()
@@ -35,8 +69,37 @@ public class TranslationService {
             .retrieve()
             .body(TranslationResponse.class);
 
-        System.out.println(response);
+        return response;
+    }
+
+    public CreateGlossaryResponse createGlossary(CreateGlossaryRequest request) {
+        CreateGlossaryResponse response = restClient
+            .post()
+            .uri(DEEPL_GLOSSARY_URL)
+            .header("Authorization", "DeepL-Auth-Key " + authKey)
+            .body(request)
+            .retrieve()
+            .body(CreateGlossaryResponse.class);
 
         return response;
+    }
+
+    public GlossariesListResponse getGlossariesList() {
+
+        return restClient
+            .get()
+            .uri(DEEPL_GLOSSARY_URL)
+            .header("Authorization", "DeepL-Auth-Key " + authKey)
+            .retrieve()
+            .body(GlossariesListResponse.class);
+    }
+
+    public SingleGlossaryResponse retrieveGlossaryEntry(String glossaryId) {
+        return restClient
+            .get()
+            .uri(DEEPL_GLOSSARY_ENTRY_URL + "/" + glossaryId + "/entries")
+            .header("Authorization", "DeepL-Auth-Key " + authKey)
+            .retrieve()
+            .body(SingleGlossaryResponse.class);
     }
 }
