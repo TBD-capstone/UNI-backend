@@ -14,8 +14,8 @@ import uni.backend.enums.LanguageAbbrev;
 public class TranslationRequest {
 
     private List<String> text;
-    private LanguageAbbrev source_lang;
-    private LanguageAbbrev target_lang;
+    private String source_lang;
+    private String target_lang;
     private String context;
     private String split_sentences;
     private Boolean preserve_formatting;

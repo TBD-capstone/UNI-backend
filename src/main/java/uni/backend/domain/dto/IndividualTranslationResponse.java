@@ -12,6 +12,6 @@ import uni.backend.enums.LanguageAbbrev;
 @ToString
 public class IndividualTranslationResponse {
 
-    private LanguageAbbrev detected_source_language;
+    private String detected_source_language;
     private String text;
 }
