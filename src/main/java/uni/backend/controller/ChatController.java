@@ -44,7 +44,7 @@ public class ChatController {
                 .map(chatRoom -> ChatRoomResponse.builder()
                         .chatRoomId(chatRoom.getChatRoomId())
                         .myId(currentUser.getUserId())
-                        .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                        .otherId(chatService.getOtherUserId(chatRoom, currentUser))
                         .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
                         .build())
                 .toList();
@@ -61,7 +61,7 @@ public class ChatController {
         ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getChatRoomId())
                 .myId(currentUser.getUserId())
-                .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                .otherId(chatService.getOtherUserId(chatRoom, currentUser))
                 .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
                 .build();
 
@@ -72,7 +72,7 @@ public class ChatController {
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<ChatMessageResponse>> getChatRoomMessages(@PathVariable Integer roomId, Principal principal) {
         List<ChatMessageResponse> chatMessages = chatService.getChatMessages(roomId);
-        return ResponseEntity.ok(chatMessages); // HTTP 200 OK 상태와 함께 메시지 목록 반환
+        return ResponseEntity.ok(chatMessages);
     }
 
 
