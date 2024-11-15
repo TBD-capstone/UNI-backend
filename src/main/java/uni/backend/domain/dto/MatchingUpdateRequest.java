@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatchingResponse {
+public class MatchingUpdateRequest {
     private Integer requestId;
     private boolean accepted;
 }
