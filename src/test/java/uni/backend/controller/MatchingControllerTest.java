@@ -54,7 +54,7 @@ class MatchingControllerTest {
         receiver.setUserId(2);
 
         matching1 = Matching.builder()
-                .requestId(1)
+                .matchingId(1)
                 .requester(requester)
                 .receiver(receiver)
                 .status(Matching.Status.PENDING)
@@ -62,7 +62,7 @@ class MatchingControllerTest {
                 .build();
 
         matching2 = Matching.builder()
-                .requestId(2)
+                .matchingId(2)
                 .requester(requester)
                 .receiver(receiver)
                 .status(Matching.Status.ACCEPTED)
