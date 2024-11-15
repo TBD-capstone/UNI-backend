@@ -9,12 +9,12 @@ import uni.backend.domain.Matching;
 @AllArgsConstructor
 @Builder
 public class MatchingUpdateResponse {
-    private Integer requestId;
+    private Integer matchingId;
     private String status;
 
     public static MatchingUpdateResponse from(Matching matching) {
         return MatchingUpdateResponse.builder()
-                .requestId(matching.getRequestId())
+                .matchingId(matching.getMatchingId())
                 .status(matching.getStatus().name())
                 .build();
     }
