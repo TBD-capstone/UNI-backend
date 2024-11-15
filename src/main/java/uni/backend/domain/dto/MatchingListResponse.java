@@ -18,7 +18,7 @@ public class MatchingListResponse {
 
     public static MatchingListResponse fromMatching(Matching matching) {
         return MatchingListResponse.builder()
-                .matchingId(matching.getRequestId())
+                .matchingId(matching.getMatchingId())
                 .requesterId(matching.getRequester().getUserId())
                 .receiverId(matching.getReceiver().getUserId())
                 .status(matching.getStatus().name())
