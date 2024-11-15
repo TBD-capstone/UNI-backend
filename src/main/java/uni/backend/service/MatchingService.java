@@ -30,7 +30,7 @@ public class MatchingService {
 
     @Transactional
     public Optional<Matching> updateRequestStatus(MatchingUpdateRequest matchingUpdateRequest) {
-        Optional<Matching> requestOpt = matchingRepository.findById(matchingUpdateRequest.getRequestId());
+        Optional<Matching> requestOpt = matchingRepository.findById(matchingUpdateRequest.getMatchingId());
         requestOpt.ifPresent(request -> {
             request.setStatus(matchingUpdateRequest.isAccepted() ? Matching.Status.ACCEPTED : Matching.Status.REJECTED);
             matchingRepository.save(request);
