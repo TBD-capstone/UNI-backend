@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import uni.backend.domain.Matching;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.MatchingResponse;
+import uni.backend.domain.dto.MatchingUpdateRequest;
 import uni.backend.repository.MatchingRepository;
 
 import java.time.LocalDateTime;
@@ -65,7 +65,7 @@ class MatchingServiceTest {
         Matching matching = new Matching();
         matching.setStatus(Matching.Status.PENDING);
 
-        MatchingResponse response = new MatchingResponse();
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
         response.setRequestId(requestId);
         response.setAccepted(true);
 
@@ -86,7 +86,7 @@ class MatchingServiceTest {
         Matching matching = new Matching();
         matching.setStatus(Matching.Status.PENDING);
 
-        MatchingResponse response = new MatchingResponse();
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
         response.setRequestId(requestId);
         response.setAccepted(false);
 
@@ -104,7 +104,7 @@ class MatchingServiceTest {
     void 매칭_요청_찾을_수_없음() {
         // given
         int requestId = 3;
-        MatchingResponse response = new MatchingResponse();
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
         response.setRequestId(requestId);
         response.setAccepted(true);
 
