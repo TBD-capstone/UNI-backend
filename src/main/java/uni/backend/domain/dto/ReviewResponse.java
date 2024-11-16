@@ -10,6 +10,7 @@ import lombok.Getter;
 @Builder
 public class ReviewResponse {
 
+    private Integer matchingId;
     private Integer reviewId;
     private Integer profileOwnerId;
     private String profileOwnerName;

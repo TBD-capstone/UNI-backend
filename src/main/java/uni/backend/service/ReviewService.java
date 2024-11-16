@@ -35,21 +35,30 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review createReview(Integer userId, Integer commenterId, String content, Integer star) {
-        User profileOwner = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("프로필 주인을 찾을 수 없습니다. ID: " + userId));
+    public Review createReview(Integer matchingId, Integer profileOwnerId, Integer commenterId,
+        String content, Integer star) {
+        Matching matching = matchingRepository.findById(matchingId)
+            .orElseThrow(() -> new IllegalArgumentException("해당 매칭을 찾을 수 없습니다."));
+
+        if (matching.getReview() != null) {
+            throw new IllegalArgumentException("이미 리뷰가 존재합니다.");
+        }
+
+        User profileOwner = userRepository.findById(profileOwnerId)
+            .orElseThrow(() -> new IllegalArgumentException("프로필 주인을 찾을 수 없습니다."));
 
         User commenter = userRepository.findById(commenterId)
-            .orElseThrow(
-                () -> new IllegalArgumentException("리뷰 작성자를 찾을 수 없습니다. ID: " + commenterId));
+            .orElseThrow(() -> new IllegalArgumentException("리뷰 작성자를 찾을 수 없습니다."));
 
         Review review = Review.builder()
+            .matching(matching)
             .profileOwner(profileOwner)
             .commenter(commenter)
             .content(content)
             .star(star)
             .build();
 
+        matching.setReview(review);
         return reviewRepository.save(review);
     }
 

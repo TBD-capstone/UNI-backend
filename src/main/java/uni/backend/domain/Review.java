@@ -30,11 +30,12 @@ public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer reviewId; // 필드명 수정: ReviewId -> reviewId (소문자로 시작하는 필드명)
+    private Integer reviewId;
 
-//    @OneToOne
-//    @JoinColumn(name = "matching_id", nullable = false)
-//    private Matching matching;
+
+    @OneToOne
+    @JoinColumn(name = "matching_id", nullable = false)
+    private Matching matching;
 
 
     @ManyToOne
@@ -54,6 +55,7 @@ public class Review {
     @Max(value = 5, message = "별점은 최대 5점이어야 합니다.")
     private Integer star; // 별점 (1~5)
 
+    @Builder.Default
     @Column(nullable = false)
     private Long likes = 0L;
     private Boolean deleted = false; // 삭제 여부

@@ -29,13 +29,15 @@ public class ReviewController {
     private final UserServiceImpl userService;
 
 
-    @PostMapping("/user/{userId}/review/{commenterId}")
+    @PostMapping("/user/{userId}/review/{commenterId}/matching/{matchingId}")
     public ResponseEntity<ReviewCreateResponse> createReview(
         @PathVariable Integer userId,
         @PathVariable Integer commenterId,
+        @PathVariable Integer matchingId, // 매칭 ID 추가
         @RequestBody ReviewCreateRequest request) {
 
         Review review = reviewService.createReview(
+            matchingId,
             userId,
             commenterId,
             request.getContent(),
@@ -44,6 +46,7 @@ public class ReviewController {
 
         ReviewResponse response = ReviewResponse.builder()
             .reviewId(review.getReviewId())
+            .matchingId(review.getMatching().getMatchingId()) // 매칭 ID 추가
             .profileOwnerId(review.getProfileOwner().getUserId())
             .profileOwnerName(review.getProfileOwner().getName())
             .commenterId(review.getCommenter().getUserId())
@@ -86,6 +89,7 @@ public class ReviewController {
                                 isReplyDeleted ? null : reply.getContent()) // 삭제된 경우 content는 null
                             .deleted(reply.getDeleted())
                             .deletedTime(reply.getDeletedTime())
+                            .updatedTime(reply.getUpdatedTime())
                             .deleteMessage(isReplyDeleted ? "삭제된 대댓글입니다." : null) // 삭제된 경우 메시지
                             .likes(reply.getLikes())
                             .build();
@@ -94,6 +98,8 @@ public class ReviewController {
 
                 return ReviewResponse.builder()
                     .reviewId(review.getReviewId())
+                    .matchingId(review.getMatching() != null ? review.getMatching().getMatchingId()
+                        : null) // 매칭 ID 추가
                     .content(isDeleted ? null : review.getContent()) // 삭제된 경우 content는 null
                     .star(isDeleted ? null : review.getStar()) // 삭제된 경우 star는 null
                     .likes(review.getLikes())
