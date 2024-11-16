@@ -21,6 +21,7 @@ import uni.backend.domain.dto.SingleGlossaryResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
 import uni.backend.enums.LanguageAbbrev;
+import uni.backend.exception.DeeplWrongFormatException;
 
 @Slf4j
 @Service
@@ -53,48 +54,52 @@ public class TranslationService {
             return DEFAULT_LANGUAGE;
         }
 
-        return Arrays.stream(acceptLanguage.split(","))
-            .map(lang -> lang.split(";")[0].trim())
-            .filter(SUPPORTED_LANGUAGES::contains)
-            .findFirst()
-            .orElse(DEFAULT_LANGUAGE);
+        return Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0].trim())
+            .filter(SUPPORTED_LANGUAGES::contains).findFirst().orElse(DEFAULT_LANGUAGE);
     }
 
-    public TranslationResponse translate(TranslationRequest request, String sourceLang,
+    public TranslationResponse translate(TranslationRequest request) {
+
+        final String sourceLang = request.getSource_lang();
+        final String targetLang = request.getTarget_lang();
+
+        if (targetLang == null) {
+            throw new DeeplWrongFormatException("Needs source_lang");
+        }
+        normalizeLanguages(request);
+        applyGlossaryIfNeeded(request, sourceLang, targetLang);
+
+        return sendTranslationRequest(request);
+    }
+
+    private void normalizeLanguages(TranslationRequest request) {
+        request.setTarget_lang(request.getTarget_lang().toUpperCase());
+        if (request.getSource_lang() != null) {
+            request.setSource_lang(request.getSource_lang().toUpperCase());
+        }
+    }
+
+    private void applyGlossaryIfNeeded(TranslationRequest request, String sourceLang,
         String targetLang) {
-
-        if (sourceLang != null) {
-            request.setSource_lang(sourceLang.toUpperCase());
-//              request.setSource_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
+        if (sourceLang != null && sourceLang.equalsIgnoreCase("KO")) {
+            if (targetLang.equalsIgnoreCase("EN")) {
+                request.setGlossary_id(glossaryEn);
+            } else if (targetLang.equalsIgnoreCase("ZH")) {
+                request.setGlossary_id(glossaryZh);
+            }
         }
-        request.setTarget_lang(targetLang.toUpperCase());
-
-        if (request.getTarget_lang().equals("EN")) {
-            request.setGlossary_id(glossaryEn);
-        } else if (request.getTarget_lang().equals("ZH")) {
-            request.setGlossary_id(glossaryZh);
-        }
-        log.info(request.getTarget_lang());
-        log.info(request.getGlossary_id());
-
-        TranslationResponse response = restClient
-            .post()
-            .uri(DEEPL_TRANSLATE_URL)
-            .header("Authorization", "DeepL-Auth-Key " + authKey)
-            .body(request)
-            .retrieve()
-            .body(TranslationResponse.class);
-
-        return response;
     }
+
+    private TranslationResponse sendTranslationRequest(TranslationRequest request) {
+        return restClient.post().uri(DEEPL_TRANSLATE_URL)
+            .header("Authorization", "DeepL-Auth-Key " + authKey).body(request).retrieve()
+            .body(TranslationResponse.class);
+    }
+
 
     public CreateGlossaryResponse createGlossary(CreateGlossaryRequest request) {
-        CreateGlossaryResponse response = restClient
-            .post()
-            .uri(DEEPL_GLOSSARY_URL)
-            .header("Authorization", "DeepL-Auth-Key " + authKey)
-            .body(request)
-            .retrieve()
+        CreateGlossaryResponse response = restClient.post().uri(DEEPL_GLOSSARY_URL)
+            .header("Authorization", "DeepL-Auth-Key " + authKey).body(request).retrieve()
             .body(CreateGlossaryResponse.class);
 
         return response;
@@ -102,20 +107,14 @@ public class TranslationService {
 
     public GlossariesListResponse getGlossariesList() {
 
-        return restClient
-            .get()
-            .uri(DEEPL_GLOSSARY_URL)
-            .header("Authorization", "DeepL-Auth-Key " + authKey)
-            .retrieve()
+        return restClient.get().uri(DEEPL_GLOSSARY_URL)
+            .header("Authorization", "DeepL-Auth-Key " + authKey).retrieve()
             .body(GlossariesListResponse.class);
     }
 
     public SingleGlossaryResponse retrieveGlossaryEntry(String glossaryId) {
-        return restClient
-            .get()
-            .uri(DEEPL_GLOSSARY_ENTRY_URL + "/" + glossaryId + "/entries")
-            .header("Authorization", "DeepL-Auth-Key " + authKey)
-            .retrieve()
+        return restClient.get().uri(DEEPL_GLOSSARY_ENTRY_URL + "/" + glossaryId + "/entries")
+            .header("Authorization", "DeepL-Auth-Key " + authKey).retrieve()
             .body(SingleGlossaryResponse.class);
     }
 }

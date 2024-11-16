@@ -36,9 +36,10 @@ class TranslationController {
         HttpServletRequest httpRequest) {
         String targetLanguage = translationService.determineTargetLanguage(
             httpRequest.getHeader("Accept-Language"));
-        final String sourceLanguage = "ko";
-        TranslationResponse response = translationService.translate(request, sourceLanguage,
-            targetLanguage);
+        request.setTarget_lang(targetLanguage);
+        request.setSource_lang("KO");
+
+        TranslationResponse response = translationService.translate(request);
         return ResponseEntity.ok(response);
     }
 
