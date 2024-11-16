@@ -13,7 +13,7 @@ public class QnaLikes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "qna_id", nullable = false)

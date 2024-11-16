@@ -42,6 +42,10 @@ public class Matching {
         this.createdAt = LocalDateTime.now();
     }
 
+    @OneToOne(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Review review;
+
+
     public enum Status {
         PENDING, ACCEPTED, REJECTED
     }
