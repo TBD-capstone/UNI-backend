@@ -3,7 +3,10 @@ package uni.backend.service;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.hibernate.usertype.BaseUserTypeSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +24,7 @@ import uni.backend.enums.LanguageAbbrev;
 @Service
 public class TranslationService {
 
-    private static final String DEFAULT_LANGUAGE = "en";
+    public static final String DEFAULT_LANGUAGE = "ko";
     private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en", "ko", "zh");
     private static final String DEEPL_TRANSLATE_URL = "https://api-free.deepl.com/v2/translate";
     private static final String DEEPL_GLOSSARY_URL = "https://api-free.deepl.com/v2/glossaries";
@@ -32,6 +35,12 @@ public class TranslationService {
 
     @Value("${DeepL.key}")
     private String authKey;
+
+    @Value("${DeepL.glossary.en}")
+    private String glossaryEn;
+
+    @Value("${DeepL.glossary.zh}")
+    private String glossaryZh;
 
     public TranslationService(RestClient restClient) {
         this.restClient = restClient;
@@ -53,12 +62,18 @@ public class TranslationService {
         String targetLang) {
 
         if (sourceLang != null) {
-//            request.setSource_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
-            request.setTarget_lang(targetLang);
+            request.setSource_lang(sourceLang);
+//              request.setSource_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
         }
         if (targetLang != null) {
-//            request.setTarget_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
-            request.setSource_lang(sourceLang);
+            request.setTarget_lang(targetLang);
+//              request.setTarget_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
+        }
+
+        if (request.getTarget_lang() == "en") {
+            request.setGlossary_id(glossaryEn);
+        } else if (request.getTarget_lang() == "zh") {
+            request.setGlossary_id(glossaryZh);
         }
 
         TranslationResponse response = restClient

@@ -30,6 +30,7 @@ class TranslationController {
     @Autowired
     private TranslationService translationService;
 
+    // 단순 번역
     @PostMapping("/translate")
     public ResponseEntity<TranslationResponse> translate(@RequestBody TranslationRequest request,
         HttpServletRequest httpRequest) {
