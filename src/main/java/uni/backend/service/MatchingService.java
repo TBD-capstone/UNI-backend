@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Matching;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.MatchingResponse;
+import uni.backend.domain.dto.MatchingUpdateRequest;
 import uni.backend.repository.MatchingRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,10 +29,10 @@ public class MatchingService {
     }
 
     @Transactional
-    public Optional<Matching> updateRequestStatus(MatchingResponse matchingResponse) {
-        Optional<Matching> requestOpt = matchingRepository.findById(matchingResponse.getRequestId());
+    public Optional<Matching> updateRequestStatus(MatchingUpdateRequest matchingUpdateRequest) {
+        Optional<Matching> requestOpt = matchingRepository.findById(matchingUpdateRequest.getMatchingId());
         requestOpt.ifPresent(request -> {
-            request.setStatus(matchingResponse.isAccepted() ? Matching.Status.ACCEPTED : Matching.Status.REJECTED);
+            request.setStatus(matchingUpdateRequest.isAccepted() ? Matching.Status.ACCEPTED : Matching.Status.REJECTED);
             matchingRepository.save(request);
         });
         return requestOpt;

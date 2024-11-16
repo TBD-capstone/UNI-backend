@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import uni.backend.domain.Matching;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.MatchingResponse;
+import uni.backend.domain.dto.MatchingUpdateRequest;
 import uni.backend.repository.MatchingRepository;
 
 import java.time.LocalDateTime;
@@ -61,15 +61,15 @@ class MatchingServiceTest {
     @Test
     void 매칭_요청_수락() {
         // given
-        int requestId = 1;
+        int matchingId = 1;
         Matching matching = new Matching();
         matching.setStatus(Matching.Status.PENDING);
 
-        MatchingResponse response = new MatchingResponse();
-        response.setRequestId(requestId);
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
+        response.setMatchingId(matchingId);
         response.setAccepted(true);
 
-        when(matchingRepository.findById(requestId)).thenReturn(Optional.of(matching));
+        when(matchingRepository.findById(matchingId)).thenReturn(Optional.of(matching));
 
         // when
         Optional<Matching> resultOpt = matchingService.updateRequestStatus(response);
@@ -82,15 +82,15 @@ class MatchingServiceTest {
     @Test
     void 매칭_요청_거절() {
         // given
-        int requestId = 2;
+        int matchingId = 2;
         Matching matching = new Matching();
         matching.setStatus(Matching.Status.PENDING);
 
-        MatchingResponse response = new MatchingResponse();
-        response.setRequestId(requestId);
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
+        response.setMatchingId(matchingId);
         response.setAccepted(false);
 
-        when(matchingRepository.findById(requestId)).thenReturn(Optional.of(matching));
+        when(matchingRepository.findById(matchingId)).thenReturn(Optional.of(matching));
 
         // when
         Optional<Matching> resultOpt = matchingService.updateRequestStatus(response);
@@ -103,12 +103,12 @@ class MatchingServiceTest {
     @Test
     void 매칭_요청_찾을_수_없음() {
         // given
-        int requestId = 3;
-        MatchingResponse response = new MatchingResponse();
-        response.setRequestId(requestId);
+        int matchingId = 3;
+        MatchingUpdateRequest response = new MatchingUpdateRequest();
+        response.setMatchingId(matchingId);
         response.setAccepted(true);
 
-        when(matchingRepository.findById(requestId)).thenReturn(Optional.empty());
+        when(matchingRepository.findById(matchingId)).thenReturn(Optional.empty());
 
         // when
         Optional<Matching> resultOpt = matchingService.updateRequestStatus(response);
@@ -126,7 +126,7 @@ class MatchingServiceTest {
         requester.setUserId(requesterId);
 
         Matching matching1 = Matching.builder()
-                .requestId(1)
+                .matchingId(1)
                 .requester(requester)
                 .receiver(new User())
                 .status(Matching.Status.PENDING)
@@ -134,7 +134,7 @@ class MatchingServiceTest {
                 .build();
 
         Matching matching2 = Matching.builder()
-                .requestId(2)
+                .matchingId(2)
                 .requester(requester)
                 .receiver(new User())
                 .status(Matching.Status.ACCEPTED)
@@ -162,7 +162,7 @@ class MatchingServiceTest {
         receiver.setUserId(receiverId);
 
         Matching matching1 = Matching.builder()
-                .requestId(1)
+                .matchingId(1)
                 .requester(new User())
                 .receiver(receiver)
                 .status(Matching.Status.PENDING)
@@ -170,7 +170,7 @@ class MatchingServiceTest {
                 .build();
 
         Matching matching2 = Matching.builder()
-                .requestId(2)
+                .matchingId(2)
                 .requester(new User())
                 .receiver(receiver)
                 .status(Matching.Status.ACCEPTED)
