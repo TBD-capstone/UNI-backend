@@ -16,8 +16,8 @@ public class Matching {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "request_id")
-    private Integer requestId;
+    @Column(name = "matching_id")
+    private Integer matchingId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -34,13 +34,17 @@ public class Matching {
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MatchingJoin> matchingJoins;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @OneToOne(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Review review;
+
 
     public enum Status {
         PENDING, ACCEPTED, REJECTED

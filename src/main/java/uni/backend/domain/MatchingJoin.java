@@ -19,6 +19,6 @@ public class MatchingJoin {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "request_id", nullable = false)
-    private Matching request;
+    @JoinColumn(name = "matching_id", nullable = false)
+    private Matching matching;
 }

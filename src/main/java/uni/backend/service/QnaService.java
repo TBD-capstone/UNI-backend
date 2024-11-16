@@ -49,15 +49,6 @@ public class QnaService {
         return qnaRepository.save(qna);
     }
 
-    // 좋아요 증가
-//  @Transactional
-//  public Qna likeQna(Integer qnaId) {
-//    Qna qna = qnaRepository.findById(qnaId)
-//        .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다. ID: " + qnaId));
-//    qna.increaseLikes();
-//    return qna;
-//  }
-
 
     @Transactional
     public Qna toggleLike(Integer qnaId, User user) {
@@ -81,15 +72,6 @@ public class QnaService {
 
         return qnaRepository.save(qna); // 업데이트된 Qna 반환
     }
-
-    // 좋아요 감소
-//  @Transactional
-//  public Qna unlikeQna(Integer qnaId) {
-//    Qna qna = qnaRepository.findById(qnaId)
-//        .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다. ID: " + qnaId));
-//    qna.decreaseLikes();
-//    return qna;
-//  }
 
     // 댓글 삭제
     @Transactional
