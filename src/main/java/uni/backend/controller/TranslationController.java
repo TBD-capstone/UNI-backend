@@ -1,6 +1,7 @@
 package uni.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +24,8 @@ import uni.backend.service.TranslationService;
 
 @RestController
 @RequestMapping("/api")
+@Slf4j
 class TranslationController {
-
-    private static final Logger log = LoggerFactory.getLogger(TranslationController.class);
 
     @Autowired
     private TranslationService translationService;
@@ -36,8 +36,9 @@ class TranslationController {
         HttpServletRequest httpRequest) {
         String targetLanguage = translationService.determineTargetLanguage(
             httpRequest.getHeader("Accept-Language"));
-
-        TranslationResponse response = translationService.translate(request, "KO", targetLanguage);
+        final String sourceLanguage = "ko";
+        TranslationResponse response = translationService.translate(request, sourceLanguage,
+            targetLanguage);
         return ResponseEntity.ok(response);
     }
 

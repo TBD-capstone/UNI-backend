@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.usertype.BaseUserTypeSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
 import uni.backend.enums.LanguageAbbrev;
 
+@Slf4j
 @Service
 public class TranslationService {
 
@@ -62,19 +64,18 @@ public class TranslationService {
         String targetLang) {
 
         if (sourceLang != null) {
-            request.setSource_lang(sourceLang);
+            request.setSource_lang(sourceLang.toUpperCase());
 //              request.setSource_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
         }
-        if (targetLang != null) {
-            request.setTarget_lang(targetLang);
-//              request.setTarget_lang(LanguageAbbrev.valueOf(targetLang.toUpperCase()));
-        }
+        request.setTarget_lang(targetLang.toUpperCase());
 
-        if (request.getTarget_lang() == "en") {
+        if (request.getTarget_lang().equals("EN")) {
             request.setGlossary_id(glossaryEn);
-        } else if (request.getTarget_lang() == "zh") {
+        } else if (request.getTarget_lang().equals("ZH")) {
             request.setGlossary_id(glossaryZh);
         }
+        log.info(request.getTarget_lang());
+        log.info(request.getGlossary_id());
 
         TranslationResponse response = restClient
             .post()
