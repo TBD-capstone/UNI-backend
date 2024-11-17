@@ -30,6 +30,7 @@ public class TranslationService {
     public static final String DEFAULT_LANGUAGE = "ko";
     private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en", "ko", "zh");
     private static final String DEEPL_TRANSLATE_URL = "https://api-free.deepl.com/v2/translate";
+    private static final String DEEPL_TRANSLATE_DOCUMENT_URL = "https://api-free.deepl.com/v2/document";
     private static final String DEEPL_GLOSSARY_URL = "https://api-free.deepl.com/v2/glossaries";
     private static final String DEEPL_GLOSSARY_ENTRY_URL = "https://api-free.deepl.com/v2/glossaries";
 
@@ -88,6 +89,10 @@ public class TranslationService {
                 request.setGlossary_id(glossaryZh);
             }
         }
+    }
+
+    public translateHtml() {
+        
     }
 
     private TranslationResponse sendTranslationRequest(TranslationRequest request) {

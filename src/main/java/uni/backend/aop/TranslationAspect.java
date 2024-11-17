@@ -68,6 +68,22 @@ public class TranslationAspect {
         }
     }
 
+    private List<String> extractUnivHashtag(String univName, List<String> hashtags,
+        String acceptLanguage) {
+        TranslationRequest translationRequest = new TranslationRequest();
+        List<String> newList = new ArrayList<>(hashtags);
+        newList.addFirst(univName);
+        translationRequest.setText(newList);
+        translationRequest.setSource_lang("KO");
+        translationRequest.setTarget_lang(acceptLanguage);
+        TranslationResponse translationResponse = translationService.translate(
+            translationRequest);
+        return translationResponse.getTranslations()
+            .stream()
+            .map(IndividualTranslationResponse::getText)
+            .collect(Collectors.toList());
+    }
+
     private void translateHomeDataResponse(HomeDataResponse homeDataResponse,
         String acceptLanguage) {
         if (homeDataResponse == null || homeDataResponse.getData() == null) {
@@ -75,27 +91,26 @@ public class TranslationAspect {
         }
 
         for (HomeProfileResponse profile : homeDataResponse.getData()) {
-            TranslationRequest translationRequest = new TranslationRequest();
-            List<String> newList = new ArrayList<>(profile.getHashtags());
-            newList.addFirst(profile.getUnivName());
-            translationRequest.setText(newList);
-            translationRequest.setSource_lang("KO");
-            translationRequest.setTarget_lang(acceptLanguage);
-            TranslationResponse translationResponse = translationService.translate(
-                translationRequest);
-            List<IndividualTranslationResponse> data = translationResponse.getTranslations();
-            profile.setUnivName(data.getFirst().getText());
+            List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
+                acceptLanguage);
+            profile.setUnivName(data.getFirst());
             if (data.size() > 1) {
-                profile.setHashtags(data.subList(1, data.size())
-                    .stream()
-                    .map(IndividualTranslationResponse::getText)
-                    .collect(Collectors.toList()));
+                profile.setHashtags(data.subList(1, data.size()));
             }
         }
     }
 
     private void translateProfileResponse(IndividualProfileResponse individualProfileResponse,
         String acceptLanguage) {
+        if (individualProfileResponse == null) {
+            return;
+        }
 
+        List<String> data = extractUnivHashtag(individualProfileResponse.getUniv(),
+            individualProfileResponse.getHashtags(), acceptLanguage);
+        individualProfileResponse.setUniv(data.getFirst());
+        if (data.size() > 1) {
+            individualProfileResponse.setHashtags(data.subList(1, data.size()));
+        }
     }
 }
