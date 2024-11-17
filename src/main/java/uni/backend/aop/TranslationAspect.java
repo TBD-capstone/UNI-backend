@@ -3,6 +3,7 @@ package uni.backend.aop;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +50,12 @@ public class TranslationAspect {
     // 메서드 실행 후 응답 값을 번역
     @AfterReturning(pointcut = "toTranslateControllerMethods()", returning = "response")
     public void translateResponse(JoinPoint joinPoint, Object response) {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String acceptLanguage = Optional.ofNullable(request.getHeader("Accept-Language"))
-            .orElse(TranslationService.DEFAULT_LANGUAGE);
-
-        if (translationService.determineTargetLanguage(acceptLanguage)
-            .equals(TranslationService.DEFAULT_LANGUAGE)) {
+        HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
+            RequestContextHolder.getRequestAttributes())).getRequest();
+        String acceptLanguage = translationService.determineTargetLanguage(
+            Optional.ofNullable(request.getHeader("Accept-Language"))
+                .orElse(TranslationService.DEFAULT_LANGUAGE));
+        if (acceptLanguage.equals(TranslationService.DEFAULT_LANGUAGE)) {
             return;
         }
 
