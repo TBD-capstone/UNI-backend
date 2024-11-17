@@ -90,6 +90,7 @@ public class ChatController {
 
         // 클라이언트로 메시지 전송
         ChatMessageResponse response = ChatMessageResponse.builder()
+                .messageId(savedMessage.getMessageId())
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
                 .receiverId(savedMessage.getReceiver().getUserId())
@@ -121,6 +122,7 @@ public class ChatController {
         ChatMessage savedMessage = chatService.sendMessage(chatMessageRequest);
 
         ChatMessageResponse response = ChatMessageResponse.builder()
+                .messageId(savedMessage.getMessageId())
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
                 .receiverId(savedMessage.getReceiver().getUserId())
