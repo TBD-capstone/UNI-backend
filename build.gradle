@@ -21,7 +21,7 @@ configurations {
 
 repositories {
     mavenCentral()
-    maven{url 'https://jitpack.io'}
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -35,6 +35,8 @@ dependencies {
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.2'
     implementation 'com.github.in-seo:univcert:master-SNAPSHOT'
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    implementation 'com.deepl.api:deepl-java:1.6.0'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.3.4'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
 

@@ -7,5 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class AwsS3UploadResponse {
 
-    String imageUrl;
+    private String imageUrl;
 }
