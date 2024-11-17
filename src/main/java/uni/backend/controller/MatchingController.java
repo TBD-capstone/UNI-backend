@@ -31,39 +31,43 @@ public class MatchingController {
     private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/request")
-    public ResponseEntity<MatchingCreateResponse> createMatchRequest(@RequestBody MatchingCreateRequest matchingCreateRequest) {
+    public ResponseEntity<MatchingCreateResponse> createMatchRequest(
+        @RequestBody MatchingCreateRequest matchingCreateRequest) {
 
         User requester = userService.findById(matchingCreateRequest.getRequesterId());
         User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
         Matching request = Matching.builder()
-                .requester(requester)
-                .receiver(receiver)
-                .status(Matching.Status.PENDING)
-                .build();
+            .requester(requester)
+            .receiver(receiver)
+            .status(Matching.Status.PENDING)
+            .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
         MatchingCreateResponse response = MatchingCreateResponse.from(savedRequest);
 
-        messagingTemplate.convertAndSend("/sub/match-request/" + matchingCreateRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
+        messagingTemplate.convertAndSend(
+            "/sub/match-request/" + matchingCreateRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
 
         return ResponseEntity.ok(response);
     }
 
 
     @PostMapping("/respond")
-    public ResponseEntity<String> respondToMatchRequest(@RequestBody MatchingUpdateRequest matchingUpdateRequest) {
+    public ResponseEntity<String> respondToMatchRequest(
+        @RequestBody MatchingUpdateRequest matchingUpdateRequest) {
         Optional<Matching> requestOpt = matchingService.updateRequestStatus(matchingUpdateRequest);
 
         if (requestOpt.isPresent()) {
             Matching request = requestOpt.get();
 
             String responseMessage = matchingUpdateRequest.isAccepted()
-                    ? "매칭 요청이 수락되었습니다."
-                    : "매칭 요청이 거절되었습니다.";
+                ? "매칭 요청이 수락되었습니다."
+                : "매칭 요청이 거절되었습니다.";
 
-            messagingTemplate.convertAndSend("/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
+            messagingTemplate.convertAndSend(
+                "/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
 
             return ResponseEntity.ok("응답 처리 완료");
         }
@@ -80,10 +84,10 @@ public class MatchingController {
         User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
         Matching request = Matching.builder()
-                .requester(requester)
-                .receiver(receiver)
-                .status(Matching.Status.PENDING)
-                .build();
+            .requester(requester)
+            .receiver(receiver)
+            .status(Matching.Status.PENDING)
+            .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
@@ -102,9 +106,11 @@ public class MatchingController {
 
         if (requestOpt.isPresent()) {
             Matching request = requestOpt.get();
-            String responseMessage = matchingUpdateRequest.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.";
+            String responseMessage =
+                matchingUpdateRequest.isAccepted() ? "매칭 요청이 수락되었습니다." : "매칭 요청이 거절되었습니다.";
 
-            messagingTemplate.convertAndSend("/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
+            messagingTemplate.convertAndSend(
+                "/sub/match-response/" + request.getRequester().getUserId(), responseMessage);
 
             return MatchingUpdateResponse.from(request);
         }
@@ -114,16 +120,25 @@ public class MatchingController {
 
 
     @GetMapping("/list/requester/{requesterId}")
-    public List<MatchingListResponse> getMatchingListByRequester(@PathVariable Integer requesterId) {
+    public List<MatchingListResponse> getMatchingListByRequester(
+        @PathVariable Integer requesterId) {
         return matchingService.getMatchingListByRequesterId(requesterId).stream()
-                .map(MatchingListResponse::fromMatching)
-                .collect(Collectors.toList());
+            .map(MatchingListResponse::fromMatching)
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/list/receiver/{receiverId}")
     public List<MatchingListResponse> getMatchingListByReceiver(@PathVariable Integer receiverId) {
         return matchingService.getMatchingListByReceiverId(receiverId).stream()
-                .map(MatchingListResponse::fromMatching)
-                .collect(Collectors.toList());
+            .map(MatchingListResponse::fromMatching)
+            .collect(Collectors.toList());
     }
+
+    @GetMapping("/{matchingId}")
+    public ResponseEntity<MatchingResponse> getMatchingInfo(@PathVariable Integer matchingId) {
+        MatchingResponse response = matchingService.getMatchingInfo(matchingId);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
