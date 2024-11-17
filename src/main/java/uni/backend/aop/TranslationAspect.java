@@ -114,7 +114,9 @@ public class TranslationAspect {
             individualProfileResponse.getHashtags(), acceptLanguage,
             individualProfileResponse.getDescription());
         individualProfileResponse.setUniv(data.getFirst());
-        individualProfileResponse.setDescription(data.get(1));
+        if (data.size() > 1) {
+            individualProfileResponse.setDescription(data.get(1));
+        }
         if (data.size() > 2) {
             individualProfileResponse.setHashtags(data.subList(2, data.size()));
         }
