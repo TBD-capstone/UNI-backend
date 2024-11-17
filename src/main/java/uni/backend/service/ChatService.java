@@ -88,6 +88,7 @@ public class ChatService {
 
         return chatMessageRepository.findByChatRoom(chatRoom).stream()
                 .map(message -> ChatMessageResponse.builder()
+                        .messageId(message.getMessageId())
                         .content(message.getContent())
                         .senderId(message.getSender().getUserId())
                         .receiverId(message.getReceiver().getUserId())
