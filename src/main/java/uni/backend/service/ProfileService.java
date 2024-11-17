@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
 import uni.backend.domain.Profile;
+import uni.backend.domain.Role;
 import uni.backend.domain.dto.HomeDataResponse;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
@@ -97,14 +98,6 @@ public class ProfileService {
         profileRepository.save(profile);
     }
 
-//    "userId": Integer ,
-//            "imgProf": String ,
-//            "imgBack": String ,
-//            "region": Map ,
-//            "description": String ,
-//            "time": String ,
-//            "hashtags": List<String>
-
 
     @Transactional
     public Profile updateProfile(Integer userId,
@@ -142,11 +135,6 @@ public class ProfileService {
         return profileRepository.save(profile);
     }
 
-    private List<Profile> getAllProfiles() {
-        return profileRepository.findAll();
-    }
-
-
     private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
         HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
         List<String> hashtags = getHashtagListFromProfile(profile);
@@ -162,7 +150,7 @@ public class ProfileService {
 
     public HomeDataResponse getHomeDataProfiles() {
         HomeDataResponse homeDataResponse = new HomeDataResponse();
-        List<Profile> list = getAllProfiles();
+        List<Profile> list = profileRepository.findByUser_Role(Role.KOREAN);
 
         homeDataResponse.setData(list.stream()
             .map(ProfileService::profileToHomeProfileResponse)

@@ -1,9 +1,11 @@
 package uni.backend.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import uni.backend.domain.Profile;
+import uni.backend.domain.Role;
 import uni.backend.domain.User;
 
 import java.util.Optional;
@@ -14,6 +16,9 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
     @EntityGraph(attributePaths = {"mainCategories.hashtag"})
         // 해시태그를 포함하여 프로필 조회
     Optional<Profile> findByUser_UserId(Integer userId);
+
+    @EntityGraph(attributePaths = {"mainCategories.hashtag"})
+    List<Profile> findByUser_Role(Role role);
 
     Optional<Profile> findByUser(User user); // User 객체를 통해 Profile 조회
 }
