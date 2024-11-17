@@ -1,5 +1,6 @@
 package uni.backend.service;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -144,6 +145,7 @@ public class ProfileService {
         return profileRepository.save(profile);
     }
 
+
     @Transactional
     public void updateProfileStar(Integer profileOwnerId) {
         List<Review> reviews = reviewRepository.findByProfileOwnerUserId(profileOwnerId);
@@ -156,11 +158,14 @@ public class ProfileService {
             .filter(review -> !Boolean.TRUE.equals(review.getDeleted())) // 삭제되지 않은 리뷰만 포함
             .mapToInt(Review::getStar)
             .average()
-            .orElse(0.0); // 리뷰가 없으면 0.0 반환
+            .orElse(0.0);
+
+        // 소수점 둘째 자리로 반올림
+        double roundedAverageStar = Math.round(averageStar * 100.0) / 100.0;
 
         User profileOwner = userRepository.findById(profileOwnerId)
             .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-        profileOwner.getProfile().setStar(averageStar); // Double로 저장
+        profileOwner.getProfile().setStar(roundedAverageStar); // 반올림된 값 저장
     }
 
     private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
