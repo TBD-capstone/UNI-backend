@@ -80,6 +80,11 @@ public class ChatController {
     public void sendMessage(ChatMessageRequest messageRequest, Principal principal) {
         User sender = userService.findByEmail(principal.getName());
         messageRequest.setSenderId(sender.getUserId());
+        ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        Integer receiverId = chatRoom.getSender().getUserId().equals(messageRequest.getSenderId()) ?
+                chatRoom.getReceiver().getUserId() : chatRoom.getSender().getUserId();
+        messageRequest.setReceiverId(receiverId);
 
         // 디버그 로그: 메시지 수신
         logger.info("Received message from user: {}", sender.getUserId());
