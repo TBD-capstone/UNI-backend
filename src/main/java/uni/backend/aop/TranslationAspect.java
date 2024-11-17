@@ -69,9 +69,12 @@ public class TranslationAspect {
     }
 
     private List<String> extractUnivHashtag(String univName, List<String> hashtags,
-        String acceptLanguage) {
+        String acceptLanguage, String content) {
         TranslationRequest translationRequest = new TranslationRequest();
         List<String> newList = new ArrayList<>(hashtags);
+        if (content != null) {
+            newList.addFirst(content);
+        }
         newList.addFirst(univName);
         translationRequest.setText(newList);
         translationRequest.setSource_lang("KO");
@@ -92,7 +95,7 @@ public class TranslationAspect {
 
         for (HomeProfileResponse profile : homeDataResponse.getData()) {
             List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
-                acceptLanguage);
+                acceptLanguage, null);
             profile.setUnivName(data.getFirst());
             if (data.size() > 1) {
                 profile.setHashtags(data.subList(1, data.size()));
@@ -107,10 +110,12 @@ public class TranslationAspect {
         }
 
         List<String> data = extractUnivHashtag(individualProfileResponse.getUniv(),
-            individualProfileResponse.getHashtags(), acceptLanguage);
+            individualProfileResponse.getHashtags(), acceptLanguage,
+            individualProfileResponse.getDescription());
         individualProfileResponse.setUniv(data.getFirst());
-        if (data.size() > 1) {
-            individualProfileResponse.setHashtags(data.subList(1, data.size()));
+        individualProfileResponse.setDescription(data.get(1));
+        if (data.size() > 2) {
+            individualProfileResponse.setHashtags(data.subList(2, data.size()));
         }
     }
 }

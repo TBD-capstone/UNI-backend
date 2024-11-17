@@ -91,9 +91,9 @@ public class TranslationService {
         }
     }
 
-    public translateHtml() {
-        
-    }
+//    public translateHtml() {
+//
+//    }
 
     private TranslationResponse sendTranslationRequest(TranslationRequest request) {
         return restClient.post().uri(DEEPL_TRANSLATE_URL)
