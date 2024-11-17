@@ -1,6 +1,5 @@
 package uni.backend.service;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,14 +23,16 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
+    private final ProfileService profileService;
 
     public ReviewService(MatchingRepository matchingRepository, UserRepository userRepository,
-        ReviewRepository reviewRepository,
-        ReviewLikeRepository reviewLikeRepository) {
+        ReviewRepository reviewRepository, ReviewLikeRepository reviewLikeRepository,
+        ProfileService profileService) {
         this.matchingRepository = matchingRepository;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.reviewLikeRepository = reviewLikeRepository;
+        this.profileService = profileService;
     }
 
     @Transactional
@@ -59,9 +60,13 @@ public class ReviewService {
             .build();
 
         matching.setReview(review);
-        return reviewRepository.save(review);
-    }
+        Review savedReview = reviewRepository.save(review);
 
+        // 프로필 별점 업데이트
+        profileService.updateProfileStar(profileOwnerId);
+
+        return savedReview;
+    }
 
     public ReviewResponse convertToResponse(Review review) {
         boolean isDeleted = Boolean.TRUE.equals(review.getDeleted()); // 삭제 상태 확인
@@ -82,7 +87,6 @@ public class ReviewService {
             .build();
     }
 
-
     public List<Review> getReviewsByUserId(Integer userId) {
         return reviewRepository.findByProfileOwnerUserId(userId); // 모든 리뷰 조회
     }
@@ -93,7 +97,6 @@ public class ReviewService {
             .map(this::convertToResponse) // 리뷰 -> ReviewResponse 변환
             .collect(Collectors.toList());
     }
-
 
     @Transactional
     public Review toggleLike(Integer reviewId, User user) {
@@ -128,6 +131,9 @@ public class ReviewService {
 
         review.setDeleted(true); // 삭제 플래그 설정
         review.setDeletedTime(LocalDateTime.now()); // 삭제 시간 설정
+
+        // 프로필 별점 업데이트
+        profileService.updateProfileStar(review.getProfileOwner().getUserId());
     }
 
     @Transactional
@@ -141,7 +147,11 @@ public class ReviewService {
 
         review.updateContent(newContent); // 새로운 내용으로 업데이트
         review.setStar(star);             // 별점 업데이트
-        return reviewRepository.save(review); // 변경된 리뷰 저장
-    }
+        Review updatedReview = reviewRepository.save(review);
 
+        // 프로필 별점 업데이트
+        profileService.updateProfileStar(review.getProfileOwner().getUserId());
+
+        return updatedReview;
+    }
 }
