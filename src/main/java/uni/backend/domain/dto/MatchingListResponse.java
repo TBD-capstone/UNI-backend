@@ -13,6 +13,7 @@ public class MatchingListResponse {
     private Integer matchingId;
     private Integer requesterId;
     private Integer receiverId;
+    private String userName;
     private String status;
     private LocalDateTime createdAt;
 

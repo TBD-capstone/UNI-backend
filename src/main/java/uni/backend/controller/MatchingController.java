@@ -122,16 +122,32 @@ public class MatchingController {
     @GetMapping("/list/requester/{requesterId}")
     public List<MatchingListResponse> getMatchingListByRequester(
         @PathVariable Integer requesterId) {
-        return matchingService.getMatchingListByRequesterId(requesterId).stream()
-            .map(MatchingListResponse::fromMatching)
-            .collect(Collectors.toList());
+        String requesterName = userService.findById(requesterId).getName();
+
+        List<MatchingListResponse> matchingListResponses = matchingService.getMatchingListByRequesterId(requesterId).stream()
+                .map(MatchingListResponse::fromMatching)
+                .collect(Collectors.toList());
+
+        for (MatchingListResponse matchingListResponse : matchingListResponses) {
+            matchingListResponse.setUserName(requesterName);
+        }
+
+        return matchingListResponses;
     }
 
     @GetMapping("/list/receiver/{receiverId}")
     public List<MatchingListResponse> getMatchingListByReceiver(@PathVariable Integer receiverId) {
-        return matchingService.getMatchingListByReceiverId(receiverId).stream()
-            .map(MatchingListResponse::fromMatching)
-            .collect(Collectors.toList());
+        String receiverName = userService.findById(receiverId).getName();
+
+        List<MatchingListResponse> matchingListResponses = matchingService.getMatchingListByRequesterId(receiverId).stream()
+                .map(MatchingListResponse::fromMatching)
+                .collect(Collectors.toList());
+
+        for (MatchingListResponse matchingListResponse : matchingListResponses) {
+            matchingListResponse.setUserName(receiverName);
+        }
+
+        return matchingListResponses;
     }
 
     @GetMapping("/{matchingId}")
