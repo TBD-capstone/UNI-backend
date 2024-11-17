@@ -6,7 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
 import uni.backend.domain.Profile;
+import uni.backend.domain.Review;
 import uni.backend.domain.Role;
+import uni.backend.domain.User;
 import uni.backend.domain.dto.HomeDataResponse;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
@@ -18,6 +20,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import uni.backend.repository.ReviewRepository;
+import uni.backend.repository.UserRepository;
 
 @Service
 public class ProfileService {
@@ -26,15 +30,20 @@ public class ProfileService {
     private final HashtagRepository hashtagRepository;
     private final HashtagService hashtagService;
     private final AwsS3Service awsS3Service;
+    private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public ProfileService(ProfileRepository profileRepository,
         HashtagRepository hashtagRepository,
-        HashtagService hashtagService, AwsS3Service awsS3Service) {
+        HashtagService hashtagService, AwsS3Service awsS3Service, ReviewRepository reviewRepository,
+        UserRepository userRepository) {
         this.profileRepository = profileRepository;
         this.hashtagRepository = hashtagRepository;
         this.hashtagService = hashtagService;  // HashtagService 초기화
         this.awsS3Service = awsS3Service;
+        this.reviewRepository = reviewRepository;
+        this.userRepository = userRepository;
     }
 
     // 사용자 ID를 통해 Profile을 찾는 메서드
@@ -133,6 +142,25 @@ public class ProfileService {
 
         profile.setUpdatedAt(LocalDateTime.now());
         return profileRepository.save(profile);
+    }
+
+    @Transactional
+    public void updateProfileStar(Integer profileOwnerId) {
+        List<Review> reviews = reviewRepository.findByProfileOwnerUserId(profileOwnerId);
+
+        if (reviews.isEmpty()) {
+            throw new IllegalArgumentException("해당 유저에 대한 리뷰가 없습니다.");
+        }
+
+        double averageStar = reviews.stream()
+            .filter(review -> !Boolean.TRUE.equals(review.getDeleted())) // 삭제되지 않은 리뷰만 포함
+            .mapToInt(Review::getStar)
+            .average()
+            .orElse(0.0); // 리뷰가 없으면 0.0 반환
+
+        User profileOwner = userRepository.findById(profileOwnerId)
+            .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+        profileOwner.getProfile().setStar(averageStar); // Double로 저장
     }
 
     private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
