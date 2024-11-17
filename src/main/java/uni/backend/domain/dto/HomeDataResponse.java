@@ -8,5 +8,5 @@ import java.util.List;
 public class HomeDataResponse {
 
     //    String profileString;
-    List<HomeProfileResponse> data;
+    private List<HomeProfileResponse> data;
 }

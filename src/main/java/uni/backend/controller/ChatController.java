@@ -1,5 +1,6 @@
 package uni.backend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.ChatMessage;
 import uni.backend.domain.ChatRoom;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.ChatMessageRequest;
-import uni.backend.domain.dto.ChatMessageResponse;
-import uni.backend.domain.dto.ChatRoomRequest;
-import uni.backend.domain.dto.ChatRoomResponse;
+import uni.backend.domain.dto.*;
 import uni.backend.repository.ChatRoomRepository;
 import uni.backend.service.ChatService;
+import uni.backend.service.TranslationService;
 import uni.backend.service.UserService;
 
 import java.security.Principal;
@@ -33,6 +32,7 @@ public class ChatController {
     private final UserService userService;
     private final ChatRoomRepository chatRoomRepository;
     private final SimpMessageSendingOperations messagingTemplate;
+    private final TranslationService translationService;
 
     // 채팅방 목록 조회
     @GetMapping("/rooms")
@@ -75,7 +75,6 @@ public class ChatController {
         return ResponseEntity.ok(chatMessages);
     }
 
-
     // 클라이언트가 /pub/chat/message로 메시지를 보낼 때 처리
     @MessageMapping("/message")
     public void sendMessage(ChatMessageRequest messageRequest, Principal principal) {
@@ -102,9 +101,6 @@ public class ChatController {
 
         messagingTemplate.convertAndSend("/sub/user/" + messageRequest.getReceiverId(), response);
     }
-
-
-
 
     // RESTful POST 요청으로 메시지 전송 처리
     @PostMapping("/room/{roomId}/messages")
@@ -134,6 +130,30 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);  // HTTP 201 Created 상태와 함께 응답 반환
     }
 
+    // 메시지 번역
+    @GetMapping("/translate/{messageId}")
+    public ResponseEntity<String> translateChatMessage(@PathVariable Integer messageId, HttpServletRequest request) {
 
+        String acceptLanguage = request.getHeader("Accept-Language");
 
+        String targetLanguage = translationService.determineTargetLanguage(acceptLanguage);
+
+        String originalMessage = chatService.getMessageById(messageId);
+        if (originalMessage == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found");
+        }
+
+        TranslationRequest translationRequest = new TranslationRequest();
+        translationRequest.setText(List.of(originalMessage));
+        translationRequest.setTarget_lang(targetLanguage);
+
+        TranslationResponse translationResponse = translationService.translate(translationRequest);
+        if (translationResponse == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Translation failed");
+        }
+
+        String translatedText = translationResponse.getTranslations().get(0).getText();
+
+        return ResponseEntity.ok(translatedText);
+    }
 }

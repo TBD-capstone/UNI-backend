@@ -7,11 +7,11 @@ import java.util.List;
 @Data
 public class HomeProfileResponse {
 
-     String username;
-     String imgProf;
-     Double star;
-     String univName;
-     List<String> hashtags;
-     Integer userId;
+    private String username;
+    private String imgProf;
+    private Double star;
+    private String univName;
+    private List<String> hashtags;
+    private Integer userId;
 
 }

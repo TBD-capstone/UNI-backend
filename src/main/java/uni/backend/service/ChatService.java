@@ -109,4 +109,10 @@ public class ChatService {
                 chatRoom.getReceiver().getUserId() :
                 chatRoom.getSender().getUserId();
     }
+
+    public String getMessageById(Integer messageId) {
+        return chatMessageRepository.findById(messageId)
+                .map(ChatMessage::getContent)
+                .orElse(null);
+    }
 }
