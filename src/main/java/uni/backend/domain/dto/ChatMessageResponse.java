@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 public class ChatMessageResponse {
 
+    private Integer messageId;
     private String content;
     private Integer senderId;
+    private Integer receiverId;
     private LocalDateTime sendAt;
 }

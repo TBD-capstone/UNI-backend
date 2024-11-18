@@ -44,7 +44,7 @@ public class ChatController {
                 .map(chatRoom -> ChatRoomResponse.builder()
                         .chatRoomId(chatRoom.getChatRoomId())
                         .myId(currentUser.getUserId())
-                        .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                        .otherId(chatService.getOtherUserId(chatRoom, currentUser))
                         .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
                         .build())
                 .toList();
@@ -61,7 +61,7 @@ public class ChatController {
         ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getChatRoomId())
                 .myId(currentUser.getUserId())
-                .otherId(chatService.getOtherUserId(chatRoom, currentUser)) // 다른 사용자 ID
+                .otherId(chatService.getOtherUserId(chatRoom, currentUser))
                 .chatMessages(chatService.getChatMessagesForRoom(chatRoom.getChatRoomId()))
                 .build();
 
@@ -72,7 +72,7 @@ public class ChatController {
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<ChatMessageResponse>> getChatRoomMessages(@PathVariable Integer roomId, Principal principal) {
         List<ChatMessageResponse> chatMessages = chatService.getChatMessages(roomId);
-        return ResponseEntity.ok(chatMessages); // HTTP 200 OK 상태와 함께 메시지 목록 반환
+        return ResponseEntity.ok(chatMessages);
     }
 
     // 클라이언트가 /pub/chat/message로 메시지를 보낼 때 처리
@@ -80,6 +80,11 @@ public class ChatController {
     public void sendMessage(ChatMessageRequest messageRequest, Principal principal) {
         User sender = userService.findByEmail(principal.getName());
         messageRequest.setSenderId(sender.getUserId());
+        ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        Integer receiverId = chatRoom.getSender().getUserId().equals(messageRequest.getSenderId()) ?
+                chatRoom.getReceiver().getUserId() : chatRoom.getSender().getUserId();
+        messageRequest.setReceiverId(receiverId);
 
         // 디버그 로그: 메시지 수신
         logger.info("Received message from user: {}", sender.getUserId());
@@ -90,13 +95,17 @@ public class ChatController {
 
         // 클라이언트로 메시지 전송
         ChatMessageResponse response = ChatMessageResponse.builder()
+                .messageId(savedMessage.getMessageId())
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
+                .receiverId(savedMessage.getReceiver().getUserId())
                 .sendAt(savedMessage.getSendAt())
                 .build();
 
         messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
         logger.info("Message sent to clients: {}", response);
+
+        messagingTemplate.convertAndSend("/sub/user/" + messageRequest.getReceiverId(), response);
     }
 
     // RESTful POST 요청으로 메시지 전송 처리
@@ -109,11 +118,19 @@ public class ChatController {
         chatMessageRequest.setRoomId(roomId);
         chatMessageRequest.setSenderId(chatService.getSenderIdFromPrincipal(principal));
 
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        Integer receiverId = chatRoom.getSender().getUserId().equals(chatMessageRequest.getSenderId()) ?
+                chatRoom.getReceiver().getUserId() : chatRoom.getSender().getUserId();
+        chatMessageRequest.setReceiverId(receiverId);
+
         ChatMessage savedMessage = chatService.sendMessage(chatMessageRequest);
 
         ChatMessageResponse response = ChatMessageResponse.builder()
+                .messageId(savedMessage.getMessageId())
                 .content(savedMessage.getContent())
                 .senderId(savedMessage.getSender().getUserId())
+                .receiverId(savedMessage.getReceiver().getUserId())
                 .sendAt(savedMessage.getSendAt())
                 .build();
 
