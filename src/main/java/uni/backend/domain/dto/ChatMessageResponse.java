@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class ChatMessageResponse {
 
     private Integer messageId;
+    private Integer roomId;
     private String content;
     private Integer senderId;
     private Integer receiverId;

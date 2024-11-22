@@ -1,21 +1,16 @@
 package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.ChatMessage;
 import uni.backend.domain.ChatRoom;
 import uni.backend.domain.User;
-import uni.backend.domain.dto.ChatMessageRequest;
-import uni.backend.domain.dto.ChatMessageResponse;
-import uni.backend.domain.dto.ChatRoomRequest;
+import uni.backend.domain.dto.*;
 import uni.backend.repository.ChatMessageRepository;
 import uni.backend.repository.ChatRoomRepository;
 import uni.backend.repository.UserRepository;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,96 +19,138 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
-
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final TranslationService translationService;
 
     // 채팅방 생성
     @Transactional
-    public ChatRoom createChatRoom(String senderEmail, ChatRoomRequest request) {
-        User sender = userRepository.findByEmail(senderEmail);
-        User receiver = userRepository.findById(request.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+    public ChatRoomResponse createChatRoom(String senderEmail, ChatRoomRequest request) {
+        User sender = findUserByEmail(senderEmail);
+        User receiver = findUserById(request.getReceiverId());
 
-        return chatRoomRepository.findBySenderAndReceiver(sender, receiver)
-                .orElseGet(() -> {
-                    ChatRoom chatRoom = new ChatRoom();
-                    chatRoom.setSender(sender);
-                    chatRoom.setReceiver(receiver);
-                    chatRoom.setCreatedAt(request.getCreatedAt());
-                    return chatRoomRepository.save(chatRoom);
-                });
+        ChatRoom chatRoom = chatRoomRepository.findBySenderAndReceiver(sender, receiver)
+                .orElseGet(() -> chatRoomRepository.save(
+                        ChatRoom.builder()
+                                .sender(sender)
+                                .receiver(receiver)
+                                .build()
+                ));
+
+        return toChatRoomResponse(chatRoom, sender);
     }
 
-    // Principal에서 유저의 이메일을 가져와 User ID 반환
-    public Integer getSenderIdFromPrincipal(Principal principal) {
-        User user = userRepository.findByEmail(principal.getName());
-        if (user == null) {
-            throw new IllegalStateException("User not found");
-        }
-        return user.getUserId();
-    }
-
+    // 메시지 전송
     @Transactional
-    public ChatMessage sendMessage(ChatMessageRequest messageRequest) {
-        ChatRoom chatRoom = chatRoomRepository.findById(messageRequest.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("Chat room not found"));
+    public ChatMessageResponse sendMessage(ChatMessageRequest request, String senderEmail, Integer roomId) {
+        User sender = findUserByEmail(senderEmail);
+        ChatRoom chatRoom = findChatRoomById(roomId != null ? roomId : request.getRoomId());
+        User receiver = findReceiver(chatRoom, sender);
 
-        User sender = userRepository.findById(messageRequest.getSenderId())
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+        ChatMessage message = chatMessageRepository.save(
+                ChatMessage.builder()
+                        .chatRoom(chatRoom)
+                        .sender(sender)
+                        .receiver(receiver)
+                        .content(request.getContent())
+                        .sendAt(LocalDateTime.now())
+                        .build()
+        );
 
-        User receiver = userRepository.findById(messageRequest.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
-
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setChatRoom(chatRoom);
-        chatMessage.setSender(sender);
-        chatMessage.setReceiver(receiver);
-        chatMessage.setContent(messageRequest.getContent());
-        chatMessage.setSendAt(LocalDateTime.now());
-
-        logger.info("Saving message: {}", chatMessage);
-
-        return chatMessageRepository.save(chatMessage);
+        return toChatMessageResponse(message);
     }
 
-
-    // 채팅방에 속한 메시지 조회
+    // 채팅방 조회
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getChatMessages(Integer roomId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid chat room ID"));
+    public List<ChatRoomResponse> getChatRoomsForUser(String email) {
+        User user = findUserByEmail(email);
+        List<ChatRoom> chatRooms = chatRoomRepository.findBySenderOrReceiver(user, user);
 
-        return chatMessageRepository.findByChatRoom(chatRoom).stream()
-                .map(message -> ChatMessageResponse.builder()
-                        .messageId(message.getMessageId())
-                        .content(message.getContent())
-                        .senderId(message.getSender().getUserId())
-                        .receiverId(message.getReceiver().getUserId())
-                        .sendAt(message.getSendAt())
-                        .build())
+        return chatRooms.stream()
+                .map(room -> toChatRoomResponse(room, user))
                 .collect(Collectors.toList());
     }
 
-    // 채팅방에 속한 메시지를 ChatMessageResponse 리스트로 반환
+    // 메시지 조회
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getChatMessagesForRoom(Integer chatRoomId) {
-        return getChatMessages(chatRoomId);
+    public List<ChatMessageResponse> getChatMessages(Integer roomId) {
+        ChatRoom chatRoom = findChatRoomById(roomId);
+        return chatMessageRepository.findByChatRoom(chatRoom).stream()
+                .map(this::toChatMessageResponse)
+                .collect(Collectors.toList());
     }
 
-    // 채팅방에서 상대방의 ID 반환
-    @Transactional(readOnly = true)
-    public Integer getOtherUserId(ChatRoom chatRoom, User currentUser) {
-        return chatRoom.getSender().equals(currentUser) ?
-                chatRoom.getReceiver().getUserId() :
-                chatRoom.getSender().getUserId();
+    // 메시지 번역
+    public String translateMessage(Integer messageId, String acceptLanguage) {
+        String targetLanguage = translationService.determineTargetLanguage(acceptLanguage);
+        String originalMessage = getMessageById(messageId);
+
+        if (originalMessage == null) {
+            return null;
+        }
+
+        TranslationRequest translationRequest = new TranslationRequest();
+        translationRequest.setText(List.of(originalMessage));
+        translationRequest.setTarget_lang(targetLanguage);
+        TranslationResponse response = translationService.translate(translationRequest);
+
+        if (response == null || response.getTranslations().isEmpty()) {
+            return null;
+        }
+
+        return response.getTranslations().getFirst().getText();
+    }
+
+    // Helper Methods
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+    }
+
+    private User findUserById(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+    }
+
+    private ChatRoom findChatRoomById(Integer roomId) {
+        return chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat room not found with ID: " + roomId));
     }
 
     public String getMessageById(Integer messageId) {
-        return chatMessageRepository.findById(messageId)
-                .map(ChatMessage::getContent)
-                .orElse(null);
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message with ID " + messageId + " not found"));
+        return chatMessage.getContent();
+    }
+
+    private User findReceiver(ChatRoom chatRoom, User sender) {
+        return chatRoom.getSender().equals(sender) ? chatRoom.getReceiver() : chatRoom.getSender();
+    }
+
+    private ChatRoomResponse toChatRoomResponse(ChatRoom chatRoom, User currentUser) {
+        User otherUser = findReceiver(chatRoom, currentUser);
+
+        return ChatRoomResponse.builder()
+                .chatRoomId(chatRoom.getChatRoomId())
+                .chatMessages(getChatMessages(chatRoom.getChatRoomId()))
+                .myId(currentUser.getUserId())
+                .myName(currentUser.getName())
+                .myImgProf(currentUser.getProfile() != null ? currentUser.getProfile().getImgProf() : null)
+                .otherId(otherUser.getUserId())
+                .otherName(otherUser.getName())
+                .otherImgProf(otherUser.getProfile() != null ? otherUser.getProfile().getImgProf() : null)
+                .build();
+    }
+
+    private ChatMessageResponse toChatMessageResponse(ChatMessage message) {
+        return ChatMessageResponse.builder()
+                .messageId(message.getMessageId())
+                .roomId(message.getChatRoom().getChatRoomId())
+                .content(message.getContent())
+                .senderId(message.getSender().getUserId())
+                .receiverId(message.getReceiver().getUserId())
+                .sendAt(message.getSendAt())
+                .build();
     }
 }
