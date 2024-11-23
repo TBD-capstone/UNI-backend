@@ -15,6 +15,8 @@ import uni.backend.repository.UserRepository;
 import uni.backend.service.QnaService;
 
 import java.util.List;
+import java.util.Optional;
+
 import uni.backend.service.UserService;
 
 @RestController
@@ -117,8 +119,8 @@ public class QnaController {
     @PostMapping("/qnas/{qnaId}/likes")
     public ResponseEntity<Response> toggleLike(@PathVariable Integer qnaId,
         Authentication authentication) {
-        User user = userService.findByEmail(authentication.getName()); // 로그인된 사용자 정보 가져오기
-        Qna updatedQna = qnaService.toggleLike(qnaId, user); // QnaService에서 좋아요 토글 처리
+        Optional<User> user = userService.findByEmail(authentication.getName()); // 로그인된 사용자 정보 가져오기
+        Qna updatedQna = qnaService.toggleLike(qnaId, user.orElse(null)); // QnaService에서 좋아요 토글 처리
         return ResponseEntity.ok(Response.successMessage("좋아요 상태가 변경되었습니다."));
     }
 

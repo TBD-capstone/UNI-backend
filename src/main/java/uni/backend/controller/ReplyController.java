@@ -13,6 +13,8 @@ import uni.backend.repository.UserRepository;
 import uni.backend.service.ReplyService;
 import uni.backend.service.UserService;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api")
 public class ReplyController {
@@ -68,8 +70,8 @@ public class ReplyController {
     @PostMapping("/replies/{replyId}/likes")
     public ResponseEntity<Response> toggleLikeReply(@PathVariable Integer replyId,
         Authentication authentication) {
-        User user = userRepository.findByEmail(authentication.getName()); // 로그인된 사용자 정보 가져오기
-        replyService.toggleLike(replyId, user); // User 객체를 전달하여 좋아요 상태 변경
+        Optional<User> user = userRepository.findByEmail(authentication.getName()); // 로그인된 사용자 정보 가져오기
+        replyService.toggleLike(replyId, user.orElse(null)); // User 객체를 전달하여 좋아요 상태 변경
         return ResponseEntity.ok(Response.successMessage("좋아요 상태가 변경되었습니다."));
     }
 
