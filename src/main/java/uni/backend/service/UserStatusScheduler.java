@@ -29,6 +29,11 @@ public class UserStatusScheduler {
         for (User user : bannedUsers) {
             user.setStatus(UserStatus.ACTIVE);
             user.setEndBanDate(null);
+
+            if (user.getProfile() != null) {
+                user.getProfile().setVisible(true);
+            }
+
             log.info("유저 ID={}의 밴 상태가 해제되었습니다.", user.getUserId());
         }
 
