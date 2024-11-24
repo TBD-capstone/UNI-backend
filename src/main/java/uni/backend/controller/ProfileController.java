@@ -34,6 +34,7 @@ public class ProfileController {
     private final ReplyService replyService;
     private final AwsS3Service awsS3Service;
 
+    
     @PostMapping("/user/{userId}/update-profile")
     public ResponseEntity<IndividualProfileResponse> updateProfile(
         @PathVariable Integer userId,
@@ -85,30 +86,25 @@ public class ProfileController {
     }
 
 
+    /**
+     * 특정 유저의 프로필 조회
+     *
+     * @param userId 사용자 ID
+     * @return 프로필 응답 DTO
+     */
     @GetMapping("/user/{user_id}")
     public ResponseEntity<IndividualProfileResponse> getUserProfile(
         @PathVariable("user_id") Integer userId) {
-        User user = userService.findById(userId);
-        IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
+        Profile profile = profileService.findProfileByUserId(userId)
+            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
-        individualProfileResponse.setUserId(user.getUserId());
-        individualProfileResponse.setUserName(user.getName());
-        individualProfileResponse.setImgProf(user.getProfile().getImgProf());
-        individualProfileResponse.setImgBack(user.getProfile().getImgBack());
-        individualProfileResponse.setUniv(user.getUnivName());
-        individualProfileResponse.setRegion(user.getProfile().getRegion());
-        individualProfileResponse.setDescription(user.getProfile().getDescription());
-        individualProfileResponse.setNumEmployment(user.getProfile().getNumEmployment());
-        individualProfileResponse.setStar(user.getProfile().getStar());
-        individualProfileResponse.setTime(user.getProfile().getTime());
+        // 프로필 노출 여부 확인
+        if (!profile.isVisible()) {
+            throw new IllegalStateException("해당 프로필은 비공개 상태입니다.");
+        }
 
-        // 해시태그 목록을 String으로 설정
-        List<String> hashtags = user.getProfile().getMainCategories().stream()
-            .map(mainCategory -> mainCategory.getHashtag().getHashtagName())
-            .collect(Collectors.toList());
-        individualProfileResponse.setHashtags(hashtags);
-
-        return ResponseEntity.ok(individualProfileResponse);
+        IndividualProfileResponse profileResponse = profileService.getProfileDTOByUserId(userId);
+        return ResponseEntity.ok(profileResponse);
     }
 
 

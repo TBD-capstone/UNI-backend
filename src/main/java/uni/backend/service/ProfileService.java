@@ -47,7 +47,13 @@ public class ProfileService {
         this.userRepository = userRepository;
     }
 
-    // 사용자 ID를 통해 Profile을 찾는 메서드
+    /**
+     * 사용자 ID를 통해 프로필 조회
+     *
+     * @param userId 사용자 ID
+     * @return 해당 유저의 프로필
+     */
+    @Transactional(readOnly = true)
     public Optional<Profile> findProfileByUserId(Integer userId) {
         return profileRepository.findByUser_UserId(userId);
     }
@@ -65,35 +71,37 @@ public class ProfileService {
         return hashtags;
     }
 
+    /**
+     * 사용자 ID를 통해 프로필 DTO 조회
+     *
+     * @param userId 사용자 ID
+     * @return 프로필 DTO
+     */
+    @Transactional(readOnly = true)
     public IndividualProfileResponse getProfileDTOByUserId(Integer userId) {
         Profile profile = profileRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
-        IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
-        individualProfileResponse.setUserId(userId);
-        individualProfileResponse.setUserName(profile.getUser().getName()); // userName 추가
-        individualProfileResponse.setImgProf(profile.getImgProf());
-        individualProfileResponse.setImgBack(profile.getImgBack());
-        individualProfileResponse.setUniv(profile.getUser().getUnivName());
-        individualProfileResponse.setRegion(profile.getRegion());
-        individualProfileResponse.setDescription(profile.getDescription());
-        individualProfileResponse.setNumEmployment(profile.getNumEmployment());
-        individualProfileResponse.setStar(profile.getStar());
-//        individualProfileResponse.setTime(profile.getCreatedAt().toString());
-        individualProfileResponse.setTime(profile.getTime());
+        if (!profile.isVisible()) {
+            throw new IllegalStateException("해당 프로필은 비공개 상태입니다.");
+        }
 
-        individualProfileResponse.setImgProf(
-            awsS3Service.getImageUrl(profile.getImgProf()));  // 프로필 이미지 URL 가져오기
-        individualProfileResponse.setImgBack(
-            awsS3Service.getImageUrl(profile.getImgBack()));  // 배경 이미지 URL 가져오기
-
-        // 해시태그 매핑을 List<String>으로 변경
-        List<String> hashtags = getHashtagListFromProfile(profile);
-
-        individualProfileResponse.setHashtags(hashtags); // DTO에 해시태그 세팅
-
-        return individualProfileResponse;
+        return IndividualProfileResponse.builder()
+            .userId(userId)
+            .userName(profile.getUser().getName())
+            .imgProf(profile.getImgProf())
+            .imgBack(profile.getImgBack())
+            .univ(profile.getUser().getUnivName())
+            .region(profile.getRegion())
+            .description(profile.getDescription())
+            .numEmployment(profile.getNumEmployment())
+            .star(profile.getStar())
+            .time(profile.getTime())
+            .hashtags(getHashtagListFromProfile(profile))
+            .isVisible(profile.isVisible())
+            .build();
     }
+
 
     public void addHashtagsToProfile(Profile profile, List<String> hashtags) {
         // 해시태그를 프로필에 추가
