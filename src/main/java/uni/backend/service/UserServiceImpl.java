@@ -1,6 +1,7 @@
 package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -8,10 +9,13 @@ import uni.backend.domain.Role;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Profile;
 import uni.backend.domain.User;
+import uni.backend.domain.UserStatus;
+import uni.backend.exception.UserStatusException;
 import uni.backend.repository.UserRepository;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -40,6 +44,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
+        }
+        if (user.getStatus() == UserStatus.BANNED) {
+            log.warn("Banned user {} tried to log in", user.getEmail());
+            throw new UserStatusException("이 계정은 제재 되었습니다.");
         }
         return user;
     }

@@ -17,7 +17,9 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
+import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.*;
+import uni.backend.exception.UserStatusException;
 import uni.backend.repository.UserRepository;
 import uni.backend.service.UserService;
 
@@ -49,34 +51,42 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
+        HttpServletRequest request) {
         try {
             // 인증 토큰 생성
             UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                    loginRequest.getPassword());
 
             // 인증 시도
             Authentication authentication = authenticationManager.authenticate(authToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // 세션 생성 및 SecurityContext 설정
-            request.getSession(true).setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            request.getSession(true)
+                .setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
             // 인증된 사용자 정보 가져오기
             User user = (User) authentication.getPrincipal();
 
             // 성공 응답 전송
             return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
-                    user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
+                user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
+        } catch (UserStatusException e) {
+            // 밴된 유저에 대한 응답 처리
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new Response("fail", e.getMessage()));
         } catch (Exception e) {
-            // 실패 응답 전송
+            // 일반적인 로그인 실패 처리
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new Response("fail", "wrong information"));
+                .body(new Response("fail", "wrong information"));
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response, Authentication auth) {
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response,
+        Authentication auth) {
         if (auth != null) {
             new SecurityContextLogoutHandler().logout(request, response, auth);
             return ResponseEntity.ok(Response.successMessage("logged out successfully"));
