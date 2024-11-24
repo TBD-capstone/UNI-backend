@@ -31,26 +31,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/home", "/api/auth/**", "/ws/**").permitAll()
-                        .anyRequest().authenticated())
-                .exceptionHandling()
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-                .and()
-                //.addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
-                .authenticationProvider(authenticationProvider());
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/home", "/api/auth/**", "/ws/**").permitAll()
+//                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .exceptionHandling()
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .and()
+            //.addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), SecurityContextPersistenceFilter.class)
+            .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
 
 
-
     @Bean
-    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManagerBean(
+        AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
