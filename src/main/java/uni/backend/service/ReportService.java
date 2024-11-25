@@ -28,6 +28,7 @@ public class ReportService {
                 "신고한 유저를 찾을 수 없습니다. ID: " + reportRequest.getReporterUserId()));
 
         Report report = Report.builder()
+            .title(reportRequest.getTitle())
             .reportedUser(reportedUser)
             .reporterUser(reporterUser)
             .reason(reportRequest.getReason())
