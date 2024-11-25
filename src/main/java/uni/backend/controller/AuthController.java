@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.*;
-import uni.backend.repository.UserRepository;
 import uni.backend.service.UserService;
 
 import java.util.HashMap;
@@ -29,7 +28,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
 
     @Autowired
