@@ -48,11 +48,13 @@ public class ReplyController {
                 () -> new IllegalArgumentException("댓글 작성자를 찾을 수 없습니다. ID: " + commenterId));
 
         String imgProf = commenter.getProfile().getImgProf(); // 댓글 작성자의 프로필 이미지
+        String commenterName = commenter.getName();
 
         // ReplyResponse 객체 생성
         ReplyResponse replyResponse = new ReplyResponse(
             newReply.getReplyId(),
             commenterId,
+            commenterName,
             newReply.getContent(),
             qnaId,
             imgProf,
@@ -70,7 +72,8 @@ public class ReplyController {
     @PostMapping("/replies/{replyId}/likes")
     public ResponseEntity<Response> toggleLikeReply(@PathVariable Integer replyId,
         Authentication authentication) {
-        Optional<User> user = userRepository.findByEmail(authentication.getName()); // 로그인된 사용자 정보 가져오기
+        Optional<User> user = userRepository.findByEmail(
+            authentication.getName()); // 로그인된 사용자 정보 가져오기
         replyService.toggleLike(replyId, user.orElse(null)); // User 객체를 전달하여 좋아요 상태 변경
         return ResponseEntity.ok(Response.successMessage("좋아요 상태가 변경되었습니다."));
     }
@@ -96,6 +99,7 @@ public class ReplyController {
             return ResponseEntity.ok(new ReplyResponse(
                 reply.getReplyId(),
                 null,  // userId는 null
+                null,  // commenterName은 null
                 "삭제된 댓글입니다.",
                 reply.getQna().getQnaId(),
                 null,  // imgProf는 null
@@ -108,6 +112,7 @@ public class ReplyController {
         return ResponseEntity.ok(new ReplyResponse(
             reply.getReplyId(),
             reply.getCommenter().getUserId(),
+            reply.getCommenter().getName(),
             reply.getContent(),
             reply.getQna().getQnaId(),
             reply.getCommenter().getProfile().getImgProf(),

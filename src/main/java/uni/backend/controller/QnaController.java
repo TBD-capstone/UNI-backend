@@ -53,6 +53,7 @@ public class QnaController {
                 return new ReplyResponse(
                     reply.getReplyId(),
                     reply.getCommenter().getUserId(),
+                    reply.getCommenter().getName(),
                     reply.getContent(),
                     reply.getQna().getQnaId(),
                     reply.getCommenter().getProfile().getImgProf(),
