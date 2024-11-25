@@ -1,6 +1,7 @@
 package uni.backend.service;
 
 
+import java.awt.print.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,19 +30,16 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final HashtagRepository hashtagRepository;
-    private final HashtagService hashtagService;
     private final AwsS3Service awsS3Service;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
 
     @Autowired
     public ProfileService(ProfileRepository profileRepository,
-        HashtagRepository hashtagRepository,
-        HashtagService hashtagService, AwsS3Service awsS3Service, ReviewRepository reviewRepository,
-        UserRepository userRepository) {
+        HashtagRepository hashtagRepository, AwsS3Service awsS3Service,
+        ReviewRepository reviewRepository, UserRepository userRepository) {
         this.profileRepository = profileRepository;
         this.hashtagRepository = hashtagRepository;
-        this.hashtagService = hashtagService;  // HashtagService 초기화
         this.awsS3Service = awsS3Service;
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
@@ -50,19 +48,6 @@ public class ProfileService {
     // 사용자 ID를 통해 Profile을 찾는 메서드
     public Optional<Profile> findProfileByUserId(Integer userId) {
         return profileRepository.findByUser_UserId(userId);
-    }
-
-    private static List<String> getHashtagListFromProfile(Profile profile) {
-        List<String> hashtags;
-        hashtags = profile.getMainCategories().stream()
-            .map(mainCategory -> {
-                Hashtag hashtag = mainCategory.getHashtag();
-                return hashtag != null ? hashtag.getHashtagName() : null;
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-
-        return hashtags;
     }
 
     public IndividualProfileResponse getProfileDTOByUserId(Integer userId) {
@@ -86,18 +71,9 @@ public class ProfileService {
             awsS3Service.getImageUrl(profile.getImgProf()));  // 프로필 이미지 URL 가져오기
         individualProfileResponse.setImgBack(
             awsS3Service.getImageUrl(profile.getImgBack()));  // 배경 이미지 URL 가져오기
-
-        // 해시태그 매핑을 List<String>으로 변경
-        List<String> hashtags = getHashtagListFromProfile(profile);
-
-        individualProfileResponse.setHashtags(hashtags); // DTO에 해시태그 세팅
+        individualProfileResponse.setHashtags(profile.getHashtagStringList());
 
         return individualProfileResponse;
-    }
-
-    public void addHashtagsToProfile(Profile profile, List<String> hashtags) {
-        // 해시태그를 프로필에 추가
-        hashtagService.addHashtagsToProfile(profile, hashtags);
     }
 
     // 사용자 저장
@@ -167,29 +143,4 @@ public class ProfileService {
             .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
         profileOwner.getProfile().setStar(roundedAverageStar); // 반올림된 값 저장
     }
-
-    private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
-        HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
-        List<String> hashtags = getHashtagListFromProfile(profile);
-        homeProfileResponse.setUsername(profile.getUser().getName());
-        homeProfileResponse.setImgProf(profile.getImgProf());
-        homeProfileResponse.setStar(profile.getStar());
-        homeProfileResponse.setUnivName(profile.getUser().getUnivName());
-        homeProfileResponse.setHashtags(hashtags);
-        homeProfileResponse.setUserId(profile.getUser().getUserId());
-
-        return homeProfileResponse;
-    }
-
-    public HomeDataResponse getHomeDataProfiles() {
-        HomeDataResponse homeDataResponse = new HomeDataResponse();
-        List<Profile> list = profileRepository.findByUser_Role(Role.KOREAN);
-
-        homeDataResponse.setData(list.stream()
-            .map(ProfileService::profileToHomeProfileResponse)
-            .collect(Collectors.toList()));
-
-        return homeDataResponse;
-    }
-
 }
