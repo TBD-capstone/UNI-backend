@@ -61,6 +61,7 @@ public class ReviewService {
             .build();
 
         matching.setReview(review);
+        matching.setStatus(Matching.Status.ENDED);
         Review savedReview = reviewRepository.save(review);
 
         // 프로필 별점 업데이트
