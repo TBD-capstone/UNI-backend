@@ -63,60 +63,65 @@ public class ReviewController {
         return ResponseEntity.ok(ReviewCreateResponse.success("Review가 성공적으로 작성되었습니다.", response));
     }
 
+//    @GetMapping("/review/{userId}")
+//    public ResponseEntity<List<ReviewResponse>> getReviewsByUserId(@PathVariable Integer userId) {
+//        // 특정 유저의 리뷰 목록 조회
+//        List<Review> reviews = reviewService.getReviewsByUserId(userId);
+//
+//        // Review -> ReviewResponse로 변환
+//        List<ReviewResponse> response = reviews.stream()
+//            .map(review -> {
+//                boolean isDeleted = Boolean.TRUE.equals(review.getDeleted()); // 리뷰 삭제 여부 확인
+//
+//                // 대댓글 리스트 변환
+//                List<ReviewReplyResponse> replyResponses = review.getReplies().stream()
+//                    .map(reply -> {
+//                        boolean isReplyDeleted = Boolean.TRUE.equals(
+//                            reply.getDeleted()); // 대댓글 삭제 여부 확인
+//                        return ReviewReplyResponse.builder()
+//                            .replyId(reply.getReplyId())
+//                            .reviewId(reply.getReview().getReviewId())
+//                            .commenterId(reply.getCommenter().getUserId())
+//                            .commenterName(reply.getCommenter().getName())
+//                            .commenterImgProf(reply.getCommenter().getProfile().getImgProf())
+//                            .content(
+//                                isReplyDeleted ? null : reply.getContent()) // 삭제된 경우 content는 null
+//                            .deleted(reply.getDeleted())
+//                            .deletedTime(reply.getDeletedTime())
+//                            .updatedTime(reply.getUpdatedTime())
+//                            .deleteMessage(isReplyDeleted ? "삭제된 대댓글입니다." : null) // 삭제된 경우 메시지
+//                            .likes(reply.getLikes())
+//                            .build();
+//                    })
+//                    .collect(Collectors.toList());
+//
+//                return ReviewResponse.builder()
+//                    .reviewId(review.getReviewId())
+//                    .matchingId(review.getMatching() != null ? review.getMatching().getMatchingId()
+//                        : null) // 매칭 ID 추가
+//                    .content(isDeleted ? null : review.getContent()) // 삭제된 경우 content는 null
+//                    .star(isDeleted ? null : review.getStar()) // 삭제된 경우 star는 null
+//                    .likes(review.getLikes())
+//                    .profileOwnerId(review.getProfileOwner().getUserId())
+//                    .profileOwnerName(review.getProfileOwner().getName())
+//                    .commenterId(review.getCommenter().getUserId())
+//                    .commenterName(review.getCommenter().getName())
+//                    .deleted(review.getDeleted())
+//                    .deletedTime(review.getDeletedTime())
+//                    .updatedTime(review.getUpdatedTime())
+//                    .deleteMessage(isDeleted ? "삭제된 리뷰입니다." : null) // 삭제된 경우 메시지 추가
+//                    .replies(replyResponses) // 대댓글 리스트 추가
+//                    .build();
+//            })
+//            .collect(Collectors.toList());
+//
+//        return ResponseEntity.ok(response);
+//    }
 
     @GetMapping("/review/{userId}")
     public ResponseEntity<List<ReviewResponse>> getReviewsByUserId(@PathVariable Integer userId) {
-        // 특정 유저의 리뷰 목록 조회
-        List<Review> reviews = reviewService.getReviewsByUserId(userId);
-
-        // Review -> ReviewResponse로 변환
-        List<ReviewResponse> response = reviews.stream()
-            .map(review -> {
-                boolean isDeleted = Boolean.TRUE.equals(review.getDeleted()); // 리뷰 삭제 여부 확인
-
-                // 대댓글 리스트 변환
-                List<ReviewReplyResponse> replyResponses = review.getReplies().stream()
-                    .map(reply -> {
-                        boolean isReplyDeleted = Boolean.TRUE.equals(
-                            reply.getDeleted()); // 대댓글 삭제 여부 확인
-                        return ReviewReplyResponse.builder()
-                            .replyId(reply.getReplyId())
-                            .reviewId(reply.getReview().getReviewId())
-                            .commenterId(reply.getCommenter().getUserId())
-                            .commenterName(reply.getCommenter().getName())
-                            .commenterImgProf(reply.getCommenter().getProfile().getImgProf())
-                            .content(
-                                isReplyDeleted ? null : reply.getContent()) // 삭제된 경우 content는 null
-                            .deleted(reply.getDeleted())
-                            .deletedTime(reply.getDeletedTime())
-                            .updatedTime(reply.getUpdatedTime())
-                            .deleteMessage(isReplyDeleted ? "삭제된 대댓글입니다." : null) // 삭제된 경우 메시지
-                            .likes(reply.getLikes())
-                            .build();
-                    })
-                    .collect(Collectors.toList());
-
-                return ReviewResponse.builder()
-                    .reviewId(review.getReviewId())
-                    .matchingId(review.getMatching() != null ? review.getMatching().getMatchingId()
-                        : null) // 매칭 ID 추가
-                    .content(isDeleted ? null : review.getContent()) // 삭제된 경우 content는 null
-                    .star(isDeleted ? null : review.getStar()) // 삭제된 경우 star는 null
-                    .likes(review.getLikes())
-                    .profileOwnerId(review.getProfileOwner().getUserId())
-                    .profileOwnerName(review.getProfileOwner().getName())
-                    .commenterId(review.getCommenter().getUserId())
-                    .commenterName(review.getCommenter().getName())
-                    .deleted(review.getDeleted())
-                    .deletedTime(review.getDeletedTime())
-                    .updatedTime(review.getUpdatedTime())
-                    .deleteMessage(isDeleted ? "삭제된 리뷰입니다." : null) // 삭제된 경우 메시지 추가
-                    .replies(replyResponses) // 대댓글 리스트 추가
-                    .build();
-            })
-            .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
+        List<ReviewResponse> responses = reviewService.getReviewResponsesByUserId(userId);
+        return ResponseEntity.ok(responses);
     }
 
 

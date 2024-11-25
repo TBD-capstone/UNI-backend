@@ -43,6 +43,10 @@ public class ReviewReply {
     @Column(nullable = false)
     private Boolean deleted = false; // 삭제 여부
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isBlind = false;
+
     private LocalDateTime deletedTime; // 삭제 시간
     private LocalDateTime updatedTime; // 수정 시간
 

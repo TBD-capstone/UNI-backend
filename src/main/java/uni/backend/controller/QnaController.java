@@ -66,7 +66,7 @@ public class QnaController {
                 qna.getQnaId(),
                 ownerResponse,
                 commentAuthorResponse,
-                qna.getContent(),
+                qna.getBlindQna(),
                 replyResponses, // 변환된 대댓글 리스트 추가
                 profileOwner.getProfile().getImgProf(), // 프로필 이미지
                 qna.getDeleted(), // 삭제 여부

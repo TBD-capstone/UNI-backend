@@ -10,6 +10,7 @@ import uni.backend.domain.Matching;
 import uni.backend.domain.Review;
 import uni.backend.domain.ReviewLikes;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.repository.MatchingRepository;
 import uni.backend.repository.ReviewLikeRepository;
@@ -69,12 +70,26 @@ public class ReviewService {
     }
 
     public ReviewResponse convertToResponse(Review review) {
-        boolean isDeleted = Boolean.TRUE.equals(review.getDeleted()); // 삭제 상태 확인
+        boolean isDeleted = Boolean.TRUE.equals(review.getDeleted());
+        boolean isBlind = Boolean.TRUE.equals(review.getIsBlind());
+
+        String content = null;
+        String deleteMessage = null;
+        Integer star = null;
+
+        if (isDeleted) {
+            deleteMessage = "삭제된 리뷰입니다.";
+        } else if (isBlind) {
+            content = "블라인드 처리된 리뷰입니다.";
+        } else {
+            content = review.getContent();
+            star = review.getStar();
+        }
 
         return ReviewResponse.builder()
             .reviewId(review.getReviewId())
-            .content(isDeleted ? null : review.getContent()) // 삭제된 경우 content는 null
-            .star(isDeleted ? null : review.getStar()) // 삭제된 경우 star는 null
+            .content(content)
+            .star(star)
             .likes(review.getLikes())
             .profileOwnerId(review.getProfileOwner().getUserId())
             .profileOwnerName(review.getProfileOwner().getName())
@@ -83,12 +98,51 @@ public class ReviewService {
             .deleted(review.getDeleted())
             .deletedTime(review.getDeletedTime())
             .updatedTime(review.getUpdatedTime())
-            .deleteMessage(isDeleted ? "삭제된 리뷰입니다." : null) // 삭제 메시지 설정
+            .deleteMessage(deleteMessage)
+            .replies(getReplyResponses(review)) // 대댓글 리스트 변환 추가
             .build();
     }
 
+    // 대댓글 변환 로직
+    private List<ReviewReplyResponse> getReplyResponses(Review review) {
+        return review.getReplies().stream()
+            .map(reply -> {
+                boolean isReplyDeleted = Boolean.TRUE.equals(reply.getDeleted());
+                boolean isReplyBlind = Boolean.TRUE.equals(reply.getIsBlind());
+
+                String content = null;
+                String deleteMessage = null;
+
+                if (isReplyDeleted) {
+                    deleteMessage = "삭제된 대댓글입니다.";
+                } else if (isReplyBlind) {
+                    deleteMessage = "블라인드 처리된 대댓글입니다.";
+                } else {
+                    content = reply.getContent();
+                }
+
+                return ReviewReplyResponse.builder()
+                    .replyId(reply.getReplyId())
+                    .reviewId(reply.getReview().getReviewId())
+                    .commenterId(reply.getCommenter().getUserId())
+                    .commenterName(reply.getCommenter().getName())
+                    .commenterImgProf(reply.getCommenter().getProfile().getImgProf())
+                    .content(content)
+                    .deleted(reply.getDeleted())
+                    .deletedTime(reply.getDeletedTime())
+                    .updatedTime(reply.getUpdatedTime())
+                    .deleteMessage(deleteMessage)
+                    .likes(reply.getLikes())
+                    .build();
+            })
+            .collect(Collectors.toList());
+    }
+
+
+    //List<Review>를 반환
+    @Transactional(readOnly = true)
     public List<Review> getReviewsByUserId(Integer userId) {
-        return reviewRepository.findByProfileOwnerUserId(userId); // 모든 리뷰 조회
+        return reviewRepository.findByProfileOwnerUserId(userId);
     }
 
     public List<ReviewResponse> getReviewResponsesByUserId(Integer userId) {

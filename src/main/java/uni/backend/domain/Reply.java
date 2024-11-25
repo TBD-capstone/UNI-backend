@@ -30,6 +30,9 @@ public class Reply {
     @Column(nullable = false)
     private Boolean deleted = false; // 삭제 여부
 
+    @Column(nullable = false)
+    private Boolean isBlind = false; // 블라인드 여부
+
     private LocalDateTime deletedTime; // 삭제 시간
     private LocalDateTime updatedTime; // 수정 시간
 
@@ -61,6 +64,18 @@ public class Reply {
         this.content = content;
     }
 
+
+    // 블라인드 처리 메서드
+    public void blindReply() {
+        this.isBlind = true;
+    }
+
+    // 블라인드 해제 메서드
+    public void unblindReply() {
+        this.isBlind = false;
+    }
+
+    
     public Reply() {
     }
 }
