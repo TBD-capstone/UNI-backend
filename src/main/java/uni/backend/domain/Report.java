@@ -47,5 +47,9 @@ public class Report {
 
     @Column(nullable = false)
     private LocalDateTime reportedAt; // 신고 날짜
+
+    @Column(nullable = false)
+    @Size(min = 5, message = "신고 제목은 최소 5자 이상이어야 합니다.")
+    private String title; // 신고 제목 추가
 }
 
