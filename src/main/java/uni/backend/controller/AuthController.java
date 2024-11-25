@@ -117,4 +117,26 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Response> sendResetCode(@RequestBody ForgotPasswordRequest request) {
+        try {
+            userService.generateAndSendResetCode(request.getEmail());
+            return ResponseEntity.ok(Response.successMessage("Reset code sent to email"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Response.failMessage(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Response> resetPassword(@RequestBody ResetPasswordRequest request) {
+        if (!userService.verifyResetCode(request.getEmail(), request.getCode())) {
+            return ResponseEntity.badRequest().body(Response.failMessage("Invalid reset code"));
+        }
+        try {
+            userService.resetPassword(request.getEmail(), request.getNewPassword());
+            return ResponseEntity.ok(Response.successMessage("Password has been reset"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Response.failMessage(e.getMessage()));
+        }
+    }
 }

@@ -19,4 +19,10 @@ public interface UserService extends UserDetailsService {
     Optional<User> findByEmail(String email); // 이메일로 유저 조회
 
     User findById(Integer userId);
+
+    void generateAndSendResetCode(String email);
+
+    boolean verifyResetCode(String email, String code);
+
+    void resetPassword(String email, String newPassword);
 }
