@@ -78,6 +78,7 @@ public class UserServiceImpl implements UserService {
         resetCodes.put(email, code);
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("UNI <jdragon@uni-ajou.site>");
         message.setTo(email);
         message.setSubject("Password Reset Code");
         message.setText("Your password reset code is: " + code);
