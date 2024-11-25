@@ -117,4 +117,19 @@ public class CertificationController {
         }
     }
 
+
+    // 인증된 유저 목록 초기화 엔드포인트
+    @PostMapping("/clear")
+    public ResponseEntity<Map<String, String>> clearCertifiedUsers() {
+        boolean isCleared = certificationService.clearCertifiedUsers();
+
+        if (isCleared) {
+            return ResponseEntity.ok(
+                Map.of("status", "success", "message", "인증된 유저 목록이 초기화되었습니다."));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("status", "fail", "message", "인증된 유저 목록 초기화 실패"));
+        }
+    }
+
 }

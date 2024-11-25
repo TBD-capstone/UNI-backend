@@ -23,6 +23,7 @@ public class CertificationService {
     private static final String CERTIFY_API_URL = "https://univcert.com/api/v1/certify";
     private static final String CERTIFY_CODE_API_URL = "https://univcert.com/api/v1/certifycode";
     private static final String CERTIFY_USER_LIST_URL = "https://univcert.com/api/v1/certifiedlist";
+    private static final String CLEAR_CERTIFIED_USERS_URL = "https://univcert.com/api/v1/clear";
 
     @Value("${univCert.key}")
     private String API_KEY;
@@ -100,4 +101,21 @@ public class CertificationService {
         return List.of();
     }
 
+    // 인증된 유저 목록 초기화 메서드
+    public boolean clearCertifiedUsers() {
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("key", API_KEY);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                CLEAR_CERTIFIED_USERS_URL, requestBody, Map.class);
+            return Boolean.TRUE.equals(response.getBody().get("success"));
+        } catch (HttpClientErrorException ex) {
+            System.out.println("인증된 유저 목록 초기화 실패: " + ex.getResponseBodyAsString());
+            return false;
+        }
+    }
+
+
 }
+
