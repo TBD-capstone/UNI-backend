@@ -3,12 +3,15 @@ package uni.backend.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +29,7 @@ import uni.backend.service.UserService;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -73,12 +77,16 @@ public class AuthController {
             // 성공 응답 전송
             return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
                 user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
-        } catch (UserStatusException e) {
-            // 밴된 유저에 대한 응답 처리
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new Response("fail", e.getMessage()));
-        } catch (Exception e) {
-            // 일반적인 로그인 실패 처리
+        } catch (InternalAuthenticationServiceException e) {
+            if (e.getCause() instanceof UserStatusException) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new Response("fail", e.getCause().getMessage()));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new Response("fail", "wrong information"));
+        } catch (AuthenticationException e) {
+            // 일반적인 로그인 실패 처리 (잘못된 이메일이나 비밀번호)
+//            log.error("AuthenticationException occurred during login: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new Response("fail", "wrong information"));
         }
