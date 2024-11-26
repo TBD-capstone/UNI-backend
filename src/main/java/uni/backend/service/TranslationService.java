@@ -1,28 +1,20 @@
 package uni.backend.service;
 
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.usertype.BaseUserTypeSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriBuilder;
 import uni.backend.domain.dto.CreateGlossaryRequest;
 import uni.backend.domain.dto.CreateGlossaryResponse;
 import uni.backend.domain.dto.GlossariesListResponse;
 import uni.backend.domain.dto.SingleGlossaryResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
-import uni.backend.enums.LanguageAbbrev;
 import uni.backend.exception.DeeplWrongFormatException;
 
 @Slf4j
@@ -51,15 +43,6 @@ public class TranslationService {
     public TranslationService(RestClient restClient) {
         this.restClient = restClient;
     }
-
-//    public String determineTargetLanguage(String acceptLanguage) {
-//        if (acceptLanguage == null || acceptLanguage.isEmpty()) {
-//            return DEFAULT_LANGUAGE;
-//        }
-//
-//        return Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0].trim())
-//            .filter(SUPPORTED_LANGUAGES::contains).findFirst().orElse(DEFAULT_LANGUAGE);
-//    }
 
     public String determineTargetLanguage(String acceptLanguageHeader) {
         if (acceptLanguageHeader == null || acceptLanguageHeader.isBlank()) {
@@ -118,14 +101,18 @@ public class TranslationService {
 
     public TranslationResponse translate(TranslationRequest request) {
 
-        final String sourceLang = request.getSource_lang();
         final String targetLang = request.getTarget_lang();
+        final String sourceLang =
+            request.getSource_lang() == null ? (targetLang.equals(DEFAULT_LANGUAGE) ? "en"
+                : DEFAULT_LANGUAGE) : request.getSource_lang();
 
         if (targetLang == null) {
             throw new DeeplWrongFormatException("Needs source_lang");
         }
         normalizeLanguages(request);
-        applyGlossaryIfNeeded(request, sourceLang, targetLang);
+        if (!sourceLang.isEmpty() && !sourceLang.equalsIgnoreCase("KO")) {
+            applyGlossary(request, sourceLang, targetLang);
+        }
 
         return sendTranslationRequest(request);
     }
@@ -137,14 +124,12 @@ public class TranslationService {
         }
     }
 
-    private void applyGlossaryIfNeeded(TranslationRequest request, String sourceLang,
+    private void applyGlossary(TranslationRequest request, String sourceLang,
         String targetLang) {
-        if (sourceLang != null && sourceLang.equalsIgnoreCase("KO")) {
-            if (targetLang.equalsIgnoreCase("EN")) {
-                request.setGlossary_id(glossaryEn);
-            } else if (targetLang.equalsIgnoreCase("ZH")) {
-                request.setGlossary_id(glossaryZh);
-            }
+        if (targetLang.equalsIgnoreCase("EN")) {
+            request.setGlossary_id(glossaryEn);
+        } else if (targetLang.equalsIgnoreCase("ZH")) {
+            request.setGlossary_id(glossaryZh);
         }
     }
 
@@ -179,4 +164,5 @@ public class TranslationService {
             .header("Authorization", "DeepL-Auth-Key " + authKey).retrieve()
             .body(SingleGlossaryResponse.class);
     }
+
 }

@@ -8,6 +8,7 @@ import uni.backend.domain.QnaLikes;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.QnaResponse;
 import uni.backend.domain.dto.QnaUserResponse;
+import uni.backend.domain.dto.ReplyResponse;
 import uni.backend.repository.QnaLikeRepository;
 import uni.backend.repository.QnaRepository;
 
@@ -51,7 +52,6 @@ public class QnaService {
         qna.setProfileOwner(profileOwner);
         qna.setCommenter(commenter);
         qna.setContent(content);
-        qnaRepository.save(qna);
 
         // QnAResponse 생성
         return new QnaResponse(
@@ -98,6 +98,47 @@ public class QnaService {
             .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다. ID: " + qnaId));
         qna.delete();
         return qna;
+    }
+
+    public List<QnaResponse> getUserQnas(Integer userId) {
+        List<Qna> userQnas = getQnasByUserId(userId);
+
+        return userQnas.stream().map(qna -> {
+            User profileOwner = qna.getProfileOwner();
+            User commentAuthor = qna.getCommenter();
+
+            QnaUserResponse ownerResponse = new QnaUserResponse(profileOwner.getUserId(),
+                profileOwner.getName());
+            QnaUserResponse commentAuthorResponse = new QnaUserResponse(commentAuthor.getUserId(),
+                commentAuthor.getName());
+
+            // 대댓글 리스트를 ReplyResponse 리스트로 변환
+            List<ReplyResponse> replyResponses = qna.getReplies().stream().map(reply -> {
+                return new ReplyResponse(
+                    reply.getReplyId(),
+                    reply.getCommenter().getUserId(),
+                    reply.getCommenter().getName(),
+                    reply.getContent(),
+                    reply.getQna().getQnaId(),
+                    reply.getCommenter().getProfile().getImgProf(),
+                    reply.getDeleted(),
+                    reply.getDeleted() ? "삭제된 대댓글입니다." : null,
+                    reply.getLikes()
+                );
+            }).toList();
+
+            return new QnaResponse(
+                qna.getQnaId(),
+                ownerResponse,
+                commentAuthorResponse,
+                qna.getBlindQna(),
+                replyResponses, // 변환된 대댓글 리스트 추가
+                profileOwner.getProfile().getImgProf(), // 프로필 이미지
+                qna.getDeleted(), // 삭제 여부
+                qna.getDeleted() ? "삭제된 Qna입니다." : null, // 삭제된 경우 메시지
+                qna.getLikes()
+            );
+        }).toList();
     }
 
     // 댓글 본문 수정

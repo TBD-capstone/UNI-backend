@@ -2,14 +2,17 @@ package uni.backend.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import uni.backend.enums.LanguageAbbrev;
 
-@Getter
-@Setter
 @ToString
+@Data
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TranslationRequest {
 
