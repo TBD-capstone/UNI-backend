@@ -1,0 +1,70 @@
+package uni.backend.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import uni.backend.domain.dto.HomeDataResponse;
+import uni.backend.domain.dto.HomeProfileResponse;
+import uni.backend.domain.dto.IndividualProfileResponse;
+import uni.backend.domain.dto.IndividualTranslationResponse;
+import uni.backend.domain.dto.TranslationRequest;
+import uni.backend.domain.dto.TranslationResponse;
+
+@Service
+public class PageTranslationService {
+
+    private TranslationService translationService;
+
+    private List<String> extractUnivHashtag(String univName, List<String> hashtags,
+        String acceptLanguage, String content) {
+        TranslationRequest translationRequest = new TranslationRequest();
+        List<String> newList = new ArrayList<>(hashtags);
+        if (content != null) {
+            newList.addFirst(content);
+        }
+        newList.addFirst(univName);
+        translationRequest.setText(newList);
+        translationRequest.setTarget_lang(acceptLanguage);
+        TranslationResponse translationResponse = translationService.translate(
+            translationRequest);
+        return translationResponse.getTranslations()
+            .stream()
+            .map(IndividualTranslationResponse::getText)
+            .collect(Collectors.toList());
+    }
+
+    public void translateProfileResponse(IndividualProfileResponse individualProfileResponse,
+        String acceptLanguage) {
+        if (individualProfileResponse == null || acceptLanguage == null) {
+            return;
+        }
+
+        List<String> data = extractUnivHashtag(individualProfileResponse.getUniv(),
+            individualProfileResponse.getHashtags(), acceptLanguage,
+            individualProfileResponse.getDescription());
+        individualProfileResponse.setUniv(data.getFirst());
+        if (data.size() > 1) {
+            individualProfileResponse.setDescription(data.get(1));
+        }
+        if (data.size() > 2) {
+            individualProfileResponse.setHashtags(data.subList(2, data.size()));
+        }
+    }
+
+    private void translateHomeDataResponse(HomeDataResponse homeDataResponse,
+        String acceptLanguage) {
+        if (homeDataResponse == null || homeDataResponse.getData() == null) {
+            return;
+        }
+
+        for (HomeProfileResponse profile : homeDataResponse.getData()) {
+            List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
+                acceptLanguage, null);
+            profile.setUnivName(data.getFirst());
+            if (data.size() > 1) {
+                profile.setHashtags(data.subList(1, data.size()));
+            }
+        }
+    }
+}
