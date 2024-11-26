@@ -130,7 +130,6 @@ public class ReviewController {
         @PathVariable Integer reviewId,
         @PathVariable Integer userId) {
 
-        // userId로 User 엔티티를 조회 (서비스 계층에서 처리)
         User user = userService.findById(userId);
 
         // ReviewService에서 좋아요 상태 변경

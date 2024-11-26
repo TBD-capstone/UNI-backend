@@ -52,6 +52,7 @@ public class QnaService {
         qna.setProfileOwner(profileOwner);
         qna.setCommenter(commenter);
         qna.setContent(content);
+        Qna savedQna = qnaRepository.save(qna);
 
         // QnAResponse 생성
         return new QnaResponse(
@@ -133,7 +134,7 @@ public class QnaService {
                 commentAuthorResponse,
                 qna.getBlindQna(),
                 replyResponses, // 변환된 대댓글 리스트 추가
-                profileOwner.getProfile().getImgProf(), // 프로필 이미지
+                commentAuthor.getProfile().getImgProf(), // 프로필 이미지
                 qna.getDeleted(), // 삭제 여부
                 qna.getDeleted() ? "삭제된 Qna입니다." : null, // 삭제된 경우 메시지
                 qna.getLikes()

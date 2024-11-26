@@ -30,7 +30,6 @@ public class ReplyService {
     }
 
     // 새로운 Reply 작성
-    // 새로운 Reply 작성 및 작성자의 프로필 이미지 포함
     @Transactional
     public ReplyResponse createReply(Integer qnaId, Integer commenterId, String content) {
         // QnA 확인
