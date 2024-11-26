@@ -36,29 +36,14 @@ public class ReviewController {
         @PathVariable Integer matchingId, // 매칭 ID 추가
         @RequestBody ReviewCreateRequest request) {
 
-        Review review = reviewService.createReview(
+        // 리뷰 생성 및 응답 변환
+        ReviewResponse response = reviewService.createReview(
             matchingId,
             userId,
             commenterId,
             request.getContent(),
             request.getStar()
         );
-
-        ReviewResponse response = ReviewResponse.builder()
-            .reviewId(review.getReviewId())
-            .matchingId(review.getMatching().getMatchingId()) // 매칭 ID 추가
-            .profileOwnerId(review.getProfileOwner().getUserId())
-            .profileOwnerName(review.getProfileOwner().getName())
-            .commenterId(review.getCommenter().getUserId())
-            .commenterName(review.getCommenter().getName())
-            .commenterImgProf(review.getCommenter().getProfile().getImgProf())
-            .content(review.getContent())
-            .star(review.getStar())
-            .likes(review.getLikes())
-            .deleted(review.getDeleted())
-            .deletedTime(review.getDeletedTime())
-            .updatedTime(review.getUpdatedTime())
-            .build();
 
         return ResponseEntity.ok(ReviewCreateResponse.success("Review가 성공적으로 작성되었습니다.", response));
     }
