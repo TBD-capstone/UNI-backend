@@ -29,10 +29,14 @@ public class HomeController {
 
 
     @GetMapping("/home")
-    public Page<HomeDataResponse> searchByUnivNameAndHashtags(
+    public ResponseEntity<Page<HomeProfileResponse>> searchByUnivNameAndHashtags(
         @RequestParam(required = false) String univName,
         @RequestParam(required = false) List<String> hashtags,
-        @RequestParam(defaultValue = "1") int page) {
-        return homeService.searchByUnivNameAndHashtags(univName, hashtags, page - 1);
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "newest") String sort) {
+
+        Page<HomeProfileResponse> results = homeService.searchByUnivNameAndHashtags(univName,
+            hashtags, page, sort);
+        return ResponseEntity.ok(results);
     }
 }

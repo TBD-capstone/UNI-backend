@@ -1,22 +1,20 @@
 package uni.backend.controller;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Profile;
-import uni.backend.domain.Qna;
-import uni.backend.domain.User;
 import uni.backend.domain.dto.IndividualProfileResponse;
-import uni.backend.domain.dto.QnaResponse;
-import uni.backend.domain.dto.QnaUserResponse;
-import uni.backend.domain.dto.ReplyResponse;
 import uni.backend.service.AwsS3Service;
 import uni.backend.service.HashtagService;
+import uni.backend.service.PageTranslationService;
 import uni.backend.service.ProfileService;
 import uni.backend.service.QnaService;
 import uni.backend.service.ReplyService;
+import uni.backend.service.TranslationService;
 import uni.backend.service.UserService;
 
 import java.util.List;
@@ -28,11 +26,9 @@ import java.util.stream.Collectors;
 public class ProfileController {
 
     private final ProfileService profileService;
-    private final UserService userService;
-    private final HashtagService hashtagService;
-    private final QnaService qnaService;
-    private final ReplyService replyService;
     private final AwsS3Service awsS3Service;
+    private final PageTranslationService pageTranslationService;
+
 
     @PostMapping("/user/{userId}/update-profile")
     public ResponseEntity<IndividualProfileResponse> updateProfile(
@@ -85,30 +81,39 @@ public class ProfileController {
     }
 
 
+    /**
+     * 특정 유저의 프로필 조회
+     *
+     * @param userId 사용자 ID
+     * @return 프로필 응답 DTO
+     */
     @GetMapping("/user/{user_id}")
     public ResponseEntity<IndividualProfileResponse> getUserProfile(
-        @PathVariable("user_id") Integer userId) {
-        User user = userService.findById(userId);
-        IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
+        @PathVariable("user_id") Integer userId,
+        @RequestHeader(name = "Accept-Language", required = false) String acceptLanguage) {
+        Optional<Profile> optionalProfile = profileService.findProfileByUserId(userId);
+        if (optionalProfile.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-        individualProfileResponse.setUserId(user.getUserId());
-        individualProfileResponse.setUserName(user.getName());
-        individualProfileResponse.setImgProf(user.getProfile().getImgProf());
-        individualProfileResponse.setImgBack(user.getProfile().getImgBack());
-        individualProfileResponse.setUniv(user.getUnivName());
-        individualProfileResponse.setRegion(user.getProfile().getRegion());
-        individualProfileResponse.setDescription(user.getProfile().getDescription());
-        individualProfileResponse.setNumEmployment(user.getProfile().getNumEmployment());
-        individualProfileResponse.setStar(user.getProfile().getStar());
-        individualProfileResponse.setTime(user.getProfile().getTime());
+        if (acceptLanguage == null || acceptLanguage.isEmpty()) {
+            acceptLanguage = TranslationService.DEFAULT_LANGUAGE;
+        }
 
-        // 해시태그 목록을 String으로 설정
-        List<String> hashtags = user.getProfile().getMainCategories().stream()
-            .map(mainCategory -> mainCategory.getHashtag().getHashtagName())
-            .collect(Collectors.toList());
-        individualProfileResponse.setHashtags(hashtags);
+        Profile profile = optionalProfile.get();
+        if (!profile.isVisible()) {
+            if (acceptLanguage.equals("ko")) {
+                throw new IllegalStateException("해당 프로필은 비공개 상태입니다.");
+            } else if (acceptLanguage.equals("zh")) {
+                throw new IllegalStateException("该简历处于非公开状态。");
+            }
+            throw new IllegalStateException("This profile is private.");
+        }
 
-        return ResponseEntity.ok(individualProfileResponse);
+        IndividualProfileResponse profileResponse = profileService.getProfileDTOByUserId(userId);
+        pageTranslationService.translateProfileResponse(profileResponse, acceptLanguage);
+
+        return ResponseEntity.ok(profileResponse);
     }
 
 

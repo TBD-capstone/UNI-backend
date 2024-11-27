@@ -37,6 +37,20 @@ public class Qna {
     @OneToMany(mappedBy = "qna", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reply> replies; // 대댓글 리스트
 
+    @Column(nullable = false)
+    private boolean isBlind = false; // 블라인드 여부
+
+    public String getBlindQna() {
+        return isBlind ? "이 QnA는 블라인드 처리되었습니다." : content;
+    }
+
+    public void blindQna() {
+        this.isBlind = true;
+    }
+
+    public void unblindQna() {
+        this.isBlind = false;
+    }
 
     public void increaseLikes() {
         this.likes++;

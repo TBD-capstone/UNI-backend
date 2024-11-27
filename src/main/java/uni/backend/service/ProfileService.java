@@ -30,6 +30,7 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final HashtagRepository hashtagRepository;
+    private final HashtagService hashtagService;
     private final AwsS3Service awsS3Service;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
@@ -45,35 +46,65 @@ public class ProfileService {
         this.userRepository = userRepository;
     }
 
-    // 사용자 ID를 통해 Profile을 찾는 메서드
+    /**
+     * 사용자 ID를 통해 프로필 조회
+     *
+     * @param userId 사용자 ID
+     * @return 해당 유저의 프로필
+     */
+    @Transactional(readOnly = true)
     public Optional<Profile> findProfileByUserId(Integer userId) {
         return profileRepository.findByUser_UserId(userId);
     }
 
+    private static List<String> getHashtagListFromProfile(Profile profile) {
+        List<String> hashtags;
+        hashtags = profile.getMainCategories().stream()
+            .map(mainCategory -> {
+                Hashtag hashtag = mainCategory.getHashtag();
+                return hashtag != null ? hashtag.getHashtagName() : null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        return hashtags;
+    }
+
+    /**
+     * 사용자 ID를 통해 프로필 DTO 조회
+     *
+     * @param userId 사용자 ID
+     * @return 프로필 DTO
+     */
+    @Transactional(readOnly = true)
     public IndividualProfileResponse getProfileDTOByUserId(Integer userId) {
         Profile profile = profileRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
 
-        IndividualProfileResponse individualProfileResponse = new IndividualProfileResponse();
-        individualProfileResponse.setUserId(userId);
-        individualProfileResponse.setUserName(profile.getUser().getName()); // userName 추가
-        individualProfileResponse.setImgProf(profile.getImgProf());
-        individualProfileResponse.setImgBack(profile.getImgBack());
-        individualProfileResponse.setUniv(profile.getUser().getUnivName());
-        individualProfileResponse.setRegion(profile.getRegion());
-        individualProfileResponse.setDescription(profile.getDescription());
-        individualProfileResponse.setNumEmployment(profile.getNumEmployment());
-        individualProfileResponse.setStar(profile.getStar());
-//        individualProfileResponse.setTime(profile.getCreatedAt().toString());
-        individualProfileResponse.setTime(profile.getTime());
+        if (!profile.isVisible()) {
+            throw new IllegalStateException("해당 프로필은 비공개 상태입니다.");
+        }
 
-        individualProfileResponse.setImgProf(
-            awsS3Service.getImageUrl(profile.getImgProf()));  // 프로필 이미지 URL 가져오기
-        individualProfileResponse.setImgBack(
-            awsS3Service.getImageUrl(profile.getImgBack()));  // 배경 이미지 URL 가져오기
-        individualProfileResponse.setHashtags(profile.getHashtagStringList());
+        return IndividualProfileResponse.builder()
+            .userId(userId)
+            .userName(profile.getUser().getName())
+            .imgProf(profile.getImgProf())
+            .imgBack(profile.getImgBack())
+            .univ(profile.getUser().getUnivName())
+            .region(profile.getRegion())
+            .description(profile.getDescription())
+            .numEmployment(profile.getNumEmployment())
+            .star(profile.getStar())
+            .time(profile.getTime())
+            .hashtags(getHashtagListFromProfile(profile))
+            .isVisible(profile.isVisible())
+            .build();
+    }
 
-        return individualProfileResponse;
+
+    public void addHashtagsToProfile(Profile profile, List<String> hashtags) {
+        // 해시태그를 프로필에 추가
+        hashtagService.addHashtagsToProfile(profile, hashtags);
     }
 
     // 사용자 저장
@@ -143,4 +174,29 @@ public class ProfileService {
             .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
         profileOwner.getProfile().setStar(roundedAverageStar); // 반올림된 값 저장
     }
+
+    private static HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
+        HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
+        List<String> hashtags = getHashtagListFromProfile(profile);
+        homeProfileResponse.setUsername(profile.getUser().getName());
+        homeProfileResponse.setImgProf(profile.getImgProf());
+        homeProfileResponse.setStar(profile.getStar());
+        homeProfileResponse.setUnivName(profile.getUser().getUnivName());
+        homeProfileResponse.setHashtags(hashtags);
+        homeProfileResponse.setUserId(profile.getUser().getUserId());
+
+        return homeProfileResponse;
+    }
+
+    public HomeDataResponse getHomeDataProfiles() {
+        HomeDataResponse homeDataResponse = new HomeDataResponse();
+        List<Profile> list = profileRepository.findByUser_Role(Role.KOREAN);
+
+        homeDataResponse.setData(list.stream()
+            .map(ProfileService::profileToHomeProfileResponse)
+            .collect(Collectors.toList()));
+
+        return homeDataResponse;
+    }
+
 }

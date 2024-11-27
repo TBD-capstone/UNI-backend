@@ -7,5 +7,8 @@ import java.util.List;
 
 public interface ReviewReplyRepository extends JpaRepository<ReviewReply, Integer> {
 
+    List<ReviewReply> findByCommenter_UserId(Integer userId);
+    
+
     List<ReviewReply> findByReview_ReviewId(Integer reviewId);
 }

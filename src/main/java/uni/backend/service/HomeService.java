@@ -1,11 +1,12 @@
 package uni.backend.service;
 
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Profile;
 import uni.backend.domain.Role;
@@ -22,7 +23,7 @@ public class HomeService {
         this.profileRepository = profileRepository;
     }
 
-    private HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
+    public HomeProfileResponse profileToHomeProfileResponse(Profile profile) {
         HomeProfileResponse homeProfileResponse = new HomeProfileResponse();
         homeProfileResponse.setUsername(profile.getUser().getName());
         homeProfileResponse.setImgProf(profile.getImgProf());
@@ -35,13 +36,29 @@ public class HomeService {
     }
 
     public Page<HomeProfileResponse> searchByUnivNameAndHashtags(
-        List<String> hashtags, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
+        String univName, List<String> hashtags, int page, String sortCriteria) {
 
-        // UserProfile을 검색한 후 ProfileResponse로 변환
-        return profileRepository
-            .findByUnivNameAndHashtags(hashtags, hashtags.size(), pageable)
-            .map(this::profileToHomeProfileResponse);
+        // 정렬 조건 생성
+        Sort sort;
+        switch (sortCriteria) {
+            case "highest_rating":
+                sort = Sort.by(Sort.Direction.DESC, "star"); // 별점 높은 순
+                break;
+            case "lowest_rating":
+                sort = Sort.by(Sort.Direction.ASC, "star"); // 별점 낮은 순
+                break;
+            case "newest":
+            default:
+                sort = Sort.by(Sort.Direction.DESC, "createdAt"); // 최신순
+                break;
+        }
+
+        PageRequest pageable = PageRequest.of(page, 10, sort);
+
+        Page<Profile> profiles = profileRepository.findByUnivNameAndHashtags(univName, hashtags,
+            pageable);
+
+        return profiles.map(this::profileToHomeProfileResponse);
     }
 
 //    public HomeDataResponse searchByUnivNameAndHashtags(Pageable pageable) {

@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,11 +60,20 @@ public class Review {
     @Column(nullable = false)
     private Long likes = 0L;
     private Boolean deleted = false; // 삭제 여부
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isBlind = false;
+
+    public String getBlindReview() {
+        return isBlind ? "이 리뷰는 블라인드 처리되었습니다." : content;
+    }
+
     private LocalDateTime deletedTime; // 삭제 시간
     private LocalDateTime updatedTime; // 수정 시간
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewReply> replies; // ReviewReply와 연결
+    private List<ReviewReply> replies = new ArrayList<>();
 
 
     public void increaseLikes() {
@@ -82,6 +92,15 @@ public class Review {
     public void updateContent(String content) {
         this.content = content;
         this.updatedTime = LocalDateTime.now(); // 수정 시간 업데이트
+    }
+
+    public void blindReview() {
+        this.isBlind = true;
+    }
+
+    // 블라인드 해제
+    public void unblindReview() {
+        this.isBlind = false;
     }
 
 }

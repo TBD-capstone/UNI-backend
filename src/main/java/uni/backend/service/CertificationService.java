@@ -2,6 +2,7 @@ package uni.backend.service;
 
 import com.univcert.api.UnivCert;
 import java.security.PublicKey;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ public class CertificationService {
     private static final String CERTIFY_UNIV_URL = "https://univcert.com/api/v1/check";
     private static final String CERTIFY_API_URL = "https://univcert.com/api/v1/certify";
     private static final String CERTIFY_CODE_API_URL = "https://univcert.com/api/v1/certifycode";
+    private static final String CERTIFY_USER_LIST_URL = "https://univcert.com/api/v1/certifiedlist";
+    private static final String CLEAR_CERTIFIED_USERS_URL = "https://univcert.com/api/v1/clear";
 
     @Value("${univCert.key}")
     private String API_KEY;
@@ -80,4 +83,39 @@ public class CertificationService {
         }
     }
 
+    // 4 인증된 유저 리스트 조회 메서드
+
+    public List<Map<String, Object>> getCertifiedUserList(String key) {
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("key", API_KEY);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(CERTIFY_USER_LIST_URL,
+                requestBody, Map.class);
+            if (Boolean.TRUE.equals(response.getBody().get("success"))) {
+                return (List<Map<String, Object>>) response.getBody().get("data");
+            }
+        } catch (HttpClientErrorException ex) {
+            System.out.println("인증된 유저 리스트 가져오기 실패: " + ex.getResponseBodyAsString());
+        }
+        return List.of();
+    }
+
+    // 인증된 유저 목록 초기화 메서드
+    public boolean clearCertifiedUsers() {
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("key", API_KEY);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                CLEAR_CERTIFIED_USERS_URL, requestBody, Map.class);
+            return Boolean.TRUE.equals(response.getBody().get("success"));
+        } catch (HttpClientErrorException ex) {
+            System.out.println("인증된 유저 목록 초기화 실패: " + ex.getResponseBodyAsString());
+            return false;
+        }
+    }
+
+
 }
+

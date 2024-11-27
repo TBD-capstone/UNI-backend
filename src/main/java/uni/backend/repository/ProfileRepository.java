@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uni.backend.domain.Profile;
 import uni.backend.domain.Role;
@@ -28,6 +30,15 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
 
     Optional<Profile> findByUser(User user); // User 객체를 통해 Profile 조회
 
-    Remapper findByUnivNameAndHashtags(List<String> hashtags, int size, PageRequest pageable);
+    //    Remapper findByUnivNameAndHashtags(List<String> hashtags, int size, PageRequest pageable);
+    @Query("SELECT DISTINCT p FROM Profile p " +
+        "LEFT JOIN p.mainCategories mc " +
+        "LEFT JOIN mc.hashtag h " +
+        "WHERE (:univName IS NULL OR p.user.univName = :univName) " +
+        "AND (:hashtagNames IS NULL OR h.hashtagName IN :hashtagNames)")
+    Page<Profile> findByUnivNameAndHashtags(
+        @Param("univName") String univName,
+        @Param("hashtagNames") List<String> hashtagNames,
+        Pageable pageable);
 }
 
