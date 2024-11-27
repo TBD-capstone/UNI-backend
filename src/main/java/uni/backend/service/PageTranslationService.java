@@ -75,6 +75,7 @@ public class PageTranslationService {
     }
 
     public void translateQna(List<QnaResponse> response, String acceptLanguage) {
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
         TranslationRequest translationRequest = new TranslationRequest();
         translationRequest.setTarget_lang(acceptLanguage);
 
