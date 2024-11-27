@@ -1,6 +1,7 @@
 package uni.backend.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Matching;
 import uni.backend.domain.Review;
 import uni.backend.domain.ReviewLikes;
+import uni.backend.domain.ReviewReply;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.domain.dto.ReviewResponse;
@@ -37,8 +39,10 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review createReview(Integer matchingId, Integer profileOwnerId, Integer commenterId,
-        String content, Integer star) {
+    public ReviewResponse createReview(Integer matchingId, Integer profileOwnerId,
+        Integer commenterId, String content, Integer star) {
+
+        // 리뷰 생성
         Matching matching = matchingRepository.findById(matchingId)
             .orElseThrow(() -> new IllegalArgumentException("해당 매칭을 찾을 수 없습니다."));
 
@@ -67,7 +71,8 @@ public class ReviewService {
         // 프로필 별점 업데이트
         profileService.updateProfileStar(profileOwnerId);
 
-        return savedReview;
+        // 생성된 리뷰를 응답 객체로 변환
+        return convertToResponse(savedReview);
     }
 
     public ReviewResponse convertToResponse(Review review) {
@@ -96,6 +101,7 @@ public class ReviewService {
             .profileOwnerName(review.getProfileOwner().getName())
             .commenterId(review.getCommenter().getUserId())
             .commenterName(review.getCommenter().getName())
+            .commenterImgProf(review.getCommenter().getProfile().getImgProf())
             .deleted(review.getDeleted())
             .deletedTime(review.getDeletedTime())
             .updatedTime(review.getUpdatedTime())
@@ -106,7 +112,12 @@ public class ReviewService {
 
     // 대댓글 변환 로직
     private List<ReviewReplyResponse> getReplyResponses(Review review) {
-        return review.getReplies().stream()
+        List<ReviewReply> replies = review.getReplies(); // ReviewReply 사용
+        if (replies == null) {
+            return new ArrayList<>(); // null이면 빈 리스트 반환
+        }
+
+        return replies.stream()
             .map(reply -> {
                 boolean isReplyDeleted = Boolean.TRUE.equals(reply.getDeleted());
                 boolean isReplyBlind = Boolean.TRUE.equals(reply.getIsBlind());
@@ -124,7 +135,7 @@ public class ReviewService {
 
                 return ReviewReplyResponse.builder()
                     .replyId(reply.getReplyId())
-                    .reviewId(reply.getReview().getReviewId())
+                    .reviewId(reply.getReview().getReviewId()) // ReviewReply와 Review 간 관계
                     .commenterId(reply.getCommenter().getUserId())
                     .commenterName(reply.getCommenter().getName())
                     .commenterImgProf(reply.getCommenter().getProfile().getImgProf())
