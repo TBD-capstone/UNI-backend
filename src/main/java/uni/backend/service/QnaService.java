@@ -37,19 +37,35 @@ public class QnaService {
 
     //qna 작성
     @Transactional
-    public Qna createQna(Integer userId, Integer commenterId, String content) {
+    public QnaResponse createQna(Integer userId, Integer commenterId, String content) {
+        // QnA 소유자
         User profileOwner = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("프로필 유저를 찾을 수 없습니다. ID: " + userId));
+            .orElseThrow(() -> new IllegalArgumentException("프로필 주인을 찾을 수 없습니다. ID: " + userId));
+
+        // QnA 작성자
         User commenter = userRepository.findById(commenterId)
             .orElseThrow(
                 () -> new IllegalArgumentException("댓글 작성자를 찾을 수 없습니다. ID: " + commenterId));
 
+        // QnA 생성
         Qna qna = new Qna();
         qna.setProfileOwner(profileOwner);
         qna.setCommenter(commenter);
         qna.setContent(content);
+        Qna savedQna = qnaRepository.save(qna);
 
-        return qnaRepository.save(qna);
+        // QnAResponse 생성
+        return new QnaResponse(
+            qna.getQnaId(),
+            new QnaUserResponse(profileOwner.getUserId(), profileOwner.getName()),
+            new QnaUserResponse(commenter.getUserId(), commenter.getName()),
+            qna.getContent(),
+            null,
+            commenter.getProfile().getImgProf(), // QnA 작성자의 프로필 이미지
+            qna.getDeleted(),
+            qna.getDeleted() ? "삭제된 Qna입니다." : null,
+            qna.getLikes()
+        );
     }
 
 
@@ -118,7 +134,7 @@ public class QnaService {
                 commentAuthorResponse,
                 qna.getBlindQna(),
                 replyResponses, // 변환된 대댓글 리스트 추가
-                profileOwner.getProfile().getImgProf(), // 프로필 이미지
+                commentAuthor.getProfile().getImgProf(), // 프로필 이미지
                 qna.getDeleted(), // 삭제 여부
                 qna.getDeleted() ? "삭제된 Qna입니다." : null, // 삭제된 경우 메시지
                 qna.getLikes()

@@ -7,6 +7,7 @@ import uni.backend.domain.Qna;
 import uni.backend.domain.Reply;
 import uni.backend.domain.ReplyLikes;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.ReplyResponse;
 import uni.backend.repository.QnaRepository;
 import uni.backend.repository.ReplyLikeRepository;
 import uni.backend.repository.ReplyRepository;
@@ -30,16 +31,36 @@ public class ReplyService {
 
     // 새로운 Reply 작성
     @Transactional
-    public Reply createReply(Integer qnaId, Integer commenterId, String content) {
+    public ReplyResponse createReply(Integer qnaId, Integer commenterId, String content) {
+        // QnA 확인
         Qna qna = qnaRepository.findById(qnaId)
-            .orElseThrow(() -> new IllegalArgumentException("Qna를 찾을 수 없습니다. ID: " + qnaId));
+            .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다. ID: " + qnaId));
 
+        // 댓글 작성자 확인
         User commenter = userRepository.findById(commenterId)
             .orElseThrow(
                 () -> new IllegalArgumentException("댓글 작성자를 찾을 수 없습니다. ID: " + commenterId));
 
+        // 답글 생성
         Reply reply = new Reply(qna, commenter, content);
-        return replyRepository.save(reply); // 저장 후 Reply 반환
+        replyRepository.save(reply);
+
+        // 작성자의 프로필 이미지 및 기타 정보
+        String imgProf = commenter.getProfile().getImgProf(); // 작성자의 프로필 이미지
+        String commenterName = commenter.getName();
+
+        // ReplyResponse 생성 및 반환
+        return new ReplyResponse(
+            reply.getReplyId(),
+            commenterId,
+            commenterName,
+            reply.getContent(),
+            qnaId,
+            imgProf,
+            reply.getDeleted(),
+            reply.getDeleted() ? "삭제된 댓글입니다." : null,
+            reply.getLikes()
+        );
     }
 
     // 좋아요 증가

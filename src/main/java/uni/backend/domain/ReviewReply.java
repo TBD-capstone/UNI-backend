@@ -40,6 +40,7 @@ public class ReviewReply {
 
     private Long likes = 0L; // 좋아요 수
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean deleted = false; // 삭제 여부
 

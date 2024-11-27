@@ -59,34 +59,10 @@ public class QnaController {
         @PathVariable Integer commenterId,
         @RequestBody QnaCreateRequest request) {
 
-        Qna newQna = qnaService.createQna(userId, commenterId, request.getContent());
-
-        User profileOwner = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("프로필 주인을 찾을 수 없습니다. ID: " + userId));
-        QnaUserResponse ownerResponse = new QnaUserResponse(profileOwner.getUserId(),
-            profileOwner.getName());
-
-        User commenter = userRepository.findById(commenterId)
-            .orElseThrow(
-                () -> new IllegalArgumentException("댓글 작성자를 찾을 수 없습니다. ID: " + commenterId));
-        QnaUserResponse commentAuthorResponse = new QnaUserResponse(commenter.getUserId(),
-            commenter.getName());
-
-        QnaResponse qnaResponse = new QnaResponse(
-            newQna.getQnaId(),
-            ownerResponse,
-            commentAuthorResponse,
-            newQna.getContent(),
-            null,
-            profileOwner.getProfile().getImgProf(),
-            newQna.getDeleted(),
-            newQna.getDeleted() ? "삭제된 Qna입니다." : null,
-            newQna.getLikes()
-        );
-
+        // 서비스 호출 및 결과 반환
+        QnaResponse qnaResponse = qnaService.createQna(userId, commenterId, request.getContent());
         return ResponseEntity.ok(QnaCreateResponse.success("Qna가 성공적으로 작성되었습니다.", qnaResponse));
     }
-
 
     // Qna 좋아요
     @PostMapping("/qnas/{qnaId}/likes")

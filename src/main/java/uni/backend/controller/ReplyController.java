@@ -36,34 +36,10 @@ public class ReplyController {
         @PathVariable Integer userId,
         @PathVariable Integer qnaId,
         @PathVariable Integer commenterId,
-        @RequestBody ReplyCreateRequest request) { // ReplyCreateRequest로 변경
+        @RequestBody ReplyCreateRequest request) {
 
-        // 대댓글 생성
-        Reply newReply = replyService.createReply(qnaId, commenterId,
-            request.getContent()); // 요청에서 content를 가져옴
-
-        // 댓글 작성자의 프로필 이미지 가져오기
-        User commenter = userRepository.findById(commenterId)
-            .orElseThrow(
-                () -> new IllegalArgumentException("댓글 작성자를 찾을 수 없습니다. ID: " + commenterId));
-
-        String imgProf = commenter.getProfile().getImgProf(); // 댓글 작성자의 프로필 이미지
-        String commenterName = commenter.getName();
-
-        // ReplyResponse 객체 생성
-        ReplyResponse replyResponse = new ReplyResponse(
-            newReply.getReplyId(),
-            commenterId,
-            commenterName,
-            newReply.getContent(),
-            qnaId,
-            imgProf,
-            newReply.getDeleted(), // 삭제 여부
-            newReply.getDeleted() ? "삭제된 댓글입니다." : null,// 삭제 메시지
-            newReply.getLikes()
-        );
-
-        // ReplyCreateResponse 반환
+        ReplyResponse replyResponse = replyService.createReply(qnaId, commenterId,
+            request.getContent());
         return ResponseEntity.ok(ReplyCreateResponse.success("대댓글이 작성되었습니다.", replyResponse));
     }
 

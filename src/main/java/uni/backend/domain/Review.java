@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -72,7 +73,7 @@ public class Review {
     private LocalDateTime updatedTime; // 수정 시간
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewReply> replies; // ReviewReply와 연결
+    private List<ReviewReply> replies = new ArrayList<>();
 
 
     public void increaseLikes() {
