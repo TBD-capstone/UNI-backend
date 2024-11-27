@@ -100,6 +100,7 @@ public class PageTranslationService {
     }
 
     public void translateReview(List<ReviewResponse> response, String acceptLanguage) {
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
         TranslationRequest translationRequest = new TranslationRequest();
         translationRequest.setTarget_lang(acceptLanguage);
 
