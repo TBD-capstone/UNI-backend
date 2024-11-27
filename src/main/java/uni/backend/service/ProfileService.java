@@ -4,6 +4,7 @@ package uni.backend.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Hashtag;
 import uni.backend.domain.MainCategory;
 import uni.backend.domain.Profile;
@@ -36,12 +37,12 @@ public class ProfileService {
 
     @Autowired
     public ProfileService(ProfileRepository profileRepository,
-        HashtagRepository hashtagRepository,
-        HashtagService hashtagService, AwsS3Service awsS3Service, ReviewRepository reviewRepository,
-        UserRepository userRepository) {
+        HashtagRepository hashtagRepository, HashtagService hashtagService,
+        AwsS3Service awsS3Service,
+        ReviewRepository reviewRepository, UserRepository userRepository) {
         this.profileRepository = profileRepository;
         this.hashtagRepository = hashtagRepository;
-        this.hashtagService = hashtagService;  // HashtagService 초기화
+        this.hashtagService = hashtagService;
         this.awsS3Service = awsS3Service;
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
@@ -116,27 +117,46 @@ public class ProfileService {
         profileRepository.save(profile);
     }
 
-
     @Transactional
-    public Profile updateProfile(Integer userId,
-        IndividualProfileResponse individualProfileResponse) {
+    public Profile updateProfileImage(Integer userId, MultipartFile profileImage,
+        MultipartFile backgroundImage) {
+        // 기존 프로필 조회
         Profile profile = profileRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
-        // 이미지 URL을 프로필에 반영
-        profile.setImgProf(individualProfileResponse.getImgProf());  // 프로필 이미지 URL 설정
-        profile.setImgBack(individualProfileResponse.getImgBack());  // 배경 이미지 URL 설정
 
-        profile.setRegion(individualProfileResponse.getRegion());
-        profile.setTime(individualProfileResponse.getTime());
-        profile.setDescription(individualProfileResponse.getDescription());
+        // 프로필 이미지 업로드 및 업데이트
+        if (profileImage != null) {
+            String profileImageUrl = awsS3Service.upload(profileImage, "profile", userId);
+            profile.setImgProf(profileImageUrl);
+        }
+
+        // 배경 이미지 업로드 및 업데이트
+        if (backgroundImage != null) {
+            String backgroundImageUrl = awsS3Service.upload(backgroundImage, "background", userId);
+            profile.setImgBack(backgroundImageUrl);
+        }
+
+        profile.setUpdatedAt(LocalDateTime.now());
+        return profileRepository.save(profile);
+    }
+
+    @Transactional
+    public Profile updateProfile(Integer userId, IndividualProfileResponse profileDto) {
+        // 기존 프로필 조회
+        Profile profile = profileRepository.findByUser_UserId(userId)
+            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
+
+        // 이미지 관련 필드는 수정하지 않음 (별도로 분리)
+        profile.setRegion(profileDto.getRegion());
+        profile.setTime(profileDto.getTime());
+        profile.setDescription(profileDto.getDescription());
 
         // 해시태그 업데이트
-        if (individualProfileResponse.getHashtags() != null) {
-            profile.getMainCategories().clear(); // 기존 카테고리 삭제
-            for (String hashtagName : individualProfileResponse.getHashtags()) {
+        if (profileDto.getHashtags() != null) {
+            profile.getMainCategories().clear(); // 기존 해시태그 삭제
+            for (String hashtagName : profileDto.getHashtags()) {
                 Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
-                        // 해시태그가 없을 경우 기본 해시태그 추가
                         Hashtag newHashtag = new Hashtag();
                         newHashtag.setHashtagName(hashtagName);
                         return hashtagRepository.save(newHashtag);
@@ -145,7 +165,7 @@ public class ProfileService {
                 MainCategory mainCategory = new MainCategory();
                 mainCategory.setHashtag(hashtag);
                 mainCategory.setProfile(profile);
-                profile.addMainCategory(mainCategory); // 새로운 카테고리 추가
+                profile.addMainCategory(mainCategory); // 새 해시태그 추가
             }
         }
 
