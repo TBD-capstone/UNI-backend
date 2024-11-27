@@ -76,7 +76,9 @@ public class AuthController {
 
             // 성공 응답 전송
             return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
-                user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
+                user.getName(), user.getUserId(),
+                user.getRole() == Role.KOREAN, user.getProfile().getImgProf(),
+                user.getProfile().getImgBack()));
         } catch (InternalAuthenticationServiceException e) {
             if (e.getCause() instanceof UserStatusException) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
