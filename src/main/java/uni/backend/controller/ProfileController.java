@@ -36,48 +36,11 @@ public class ProfileController {
         @RequestParam(required = false) MultipartFile profileImage,
         @RequestParam(required = false) MultipartFile backgroundImage) {
 
-        // 기존 프로필 조회
-        Profile profile = profileService.findProfileByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("프로필이 존재하지 않습니다. : " + userId));
+        Profile updatedProfile = profileService.updateProfileImage(userId, profileImage,
+            backgroundImage);
 
-        // 기존 프로필 이미지 URL
-        String existingProfileImageUrl = profile.getImgProf();
-        String existingBackgroundImageUrl = profile.getImgBack();
-
-        // 이미지가 있다면 새로 업로드하고, 없다면 기존 이미지 URL을 사용
-        String profileImageUrl = profileImage != null
-            ? awsS3Service.upload(profileImage, "profile", userId)
-            : existingProfileImageUrl;
-
-        String backgroundImageUrl = backgroundImage != null
-            ? awsS3Service.upload(backgroundImage, "background", userId)
-            : existingBackgroundImageUrl;
-
-        // 새로운 프로필 객체에 기존 프로필 값들을 유지하면서 수정된 정보 반영
-        IndividualProfileResponse updatedProfile = new IndividualProfileResponse();
-        updatedProfile.setUserId(userId);
-        updatedProfile.setImgProf(profileImageUrl);  // 프로필 이미지 수정
-        updatedProfile.setImgBack(backgroundImageUrl);  // 배경 이미지 수정
-
-        // 기존 프로필의 나머지 정보는 그대로 유지
-        updatedProfile.setUserName(profile.getUser().getName());
-        updatedProfile.setUniv(profile.getUser().getUnivName());
-        updatedProfile.setRegion(profile.getRegion());
-        updatedProfile.setDescription(profile.getDescription());
-        updatedProfile.setNumEmployment(profile.getNumEmployment());
-        updatedProfile.setStar(profile.getStar());
-        updatedProfile.setTime(profile.getTime());
-
-        // 해시태그 목록을 String으로 설정
-        List<String> hashtags = profile.getMainCategories().stream()
-            .map(mainCategory -> mainCategory.getHashtag().getHashtagName())
-            .collect(Collectors.toList());
-        updatedProfile.setHashtags(hashtags);
-
-        // 프로필 업데이트
-        profileService.updateProfile(userId, updatedProfile);
-
-        return ResponseEntity.ok(updatedProfile);
+        IndividualProfileResponse response = profileService.getProfileDTOByUserId(userId);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -118,11 +81,12 @@ public class ProfileController {
 
 
     @PostMapping("/user/{userId}")
-    public ResponseEntity<IndividualProfileResponse> updateUserProfile(@PathVariable String userId,
+    public ResponseEntity<IndividualProfileResponse> updateUserProfile(
+        @PathVariable String userId,
         @RequestBody IndividualProfileResponse profileDto) {
         Profile updatedProfile = profileService.updateProfile(Integer.valueOf(userId), profileDto);
-        IndividualProfileResponse individualProfileResponse = profileService.getProfileDTOByUserId(
-            Integer.valueOf(userId));
+        IndividualProfileResponse individualProfileResponse =
+            profileService.getProfileDTOByUserId(Integer.valueOf(userId));
         return ResponseEntity.ok(individualProfileResponse);
     }
 
