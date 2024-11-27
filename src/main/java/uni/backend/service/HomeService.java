@@ -52,7 +52,7 @@ public class HomeService {
                 break;
         }
 
-        Pageable pageable = PageRequest.of(page, 10, sort);
+        Pageable pageable = PageRequest.of(page - 1, 10, sort);
 
         // hashtags가 null이 아니면 size 전달
         int hashtagsSize = hashtags != null ? hashtags.size() : 0;

@@ -39,26 +39,12 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
         @RequestParam(required = false) UserStatus status,
-        Pageable pageable) {
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size) {
 
-        Page<User> users = adminService.getAllUsers(status, pageable);
-        Page<UserResponse> userDtos = users.map(user -> {
-            return new UserResponse(
-                user.getUserId(),
-                user.getEmail(),
-                user.getName(),
-                user.getStatus() != null ? user.getStatus().name() : null, // NPE 방지
-                user.getUnivName(),
-                user.getRole() != null ? user.getRole().name() : null, // NPE 방지
-                user.getLastReportReason(),
-                user.getReportCount(),
-                user.getEndBanDate()
-            );
-        });
-
-        return ResponseEntity.ok(userDtos);
+        Page<UserResponse> users = adminService.getAllUsers(status, page, size);
+        return ResponseEntity.ok(users);
     }
-
 
     /**
      * 유저 상태 변경 및 제재 날짜 설정
@@ -72,13 +58,9 @@ public class AdminController {
     public ResponseEntity<String> updateUserStatus(
         @PathVariable Integer userId,
         @RequestParam UserStatus status,
-        @RequestParam(required = false) Integer banDays
-    ) {
-        LocalDateTime banEndDate = null;
-        if (banDays != null) {
-            banEndDate = LocalDateTime.now().plusDays(banDays);  // plusDays() 메서드 사용으로 변경
-        }
-        adminService.updateUserStatus(userId, status, banEndDate);
+        @RequestParam(required = false) Integer banDays) {
+
+        adminService.updateUserStatus(userId, status, banDays);
         return ResponseEntity.ok("유저 상태가 성공적으로 업데이트되었습니다.");
     }
 
@@ -89,8 +71,11 @@ public class AdminController {
      * @return 신고된 유저 리스트 (신고 사유 포함)
      */
     @GetMapping("/reported-users")
-    public ResponseEntity<Page<ReportedUserResponse>> getReportedUsers(Pageable pageable) {
-        Page<ReportedUserResponse> reportedUsers = adminService.getReportedUsers(pageable);
+    public ResponseEntity<Page<ReportedUserResponse>> getReportedUsers(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size) {
+
+        Page<ReportedUserResponse> reportedUsers = adminService.getReportedUsers(page, size);
         return ResponseEntity.ok(reportedUsers);
     }
 

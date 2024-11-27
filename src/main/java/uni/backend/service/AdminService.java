@@ -21,6 +21,7 @@ import uni.backend.domain.User;
 import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.ReportedUserResponse;
 import uni.backend.domain.dto.ReportedUserResponse.ReportDetail;
+import uni.backend.domain.dto.UserResponse;
 import uni.backend.domain.util.AdminAccountUtil;
 import uni.backend.repository.ProfileRepository;
 import uni.backend.repository.QnaRepository;
@@ -66,20 +67,24 @@ public class AdminService {
      * @return 페이징 처리된 유저 리스트
      */
     @Transactional(readOnly = true)
-    public Page<User> getAllUsers(UserStatus status, Pageable pageable) {
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-            Sort.by("email").ascending());
-        Page<User> result;
+    public Page<UserResponse> getAllUsers(UserStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("email").ascending());
+        Page<User> users = (status != null)
+            ? userRepository.findByStatus(status, pageable)
+            : userRepository.findAll(pageable);
 
-        if (status != null) {
-            result = userRepository.findByStatus(status, pageRequest);
-            log.info("유저 리스트 조회: 상태={}, 페이지={}", status, pageable.getPageNumber());
-        } else {
-            result = userRepository.findAll(pageRequest);
-            log.info("전체 유저 리스트 조회: 페이지={}", pageable.getPageNumber());
-        }
-
-        return result;
+        log.info("유저 리스트 조회: 상태={}, 페이지={}", status, page);
+        return users.map(user -> new UserResponse(
+            user.getUserId(),
+            user.getEmail(),
+            user.getName(),
+            user.getStatus() != null ? user.getStatus().name() : null,
+            user.getUnivName(),
+            user.getRole() != null ? user.getRole().name() : null,
+            user.getLastReportReason(),
+            user.getReportCount(),
+            user.getEndBanDate()
+        ));
     }
 
     /**
@@ -90,12 +95,13 @@ public class AdminService {
      * @param banEndDate 제재 해제일
      */
     @Transactional
-    public void updateUserStatus(Integer userId, UserStatus status, LocalDateTime banEndDate) {
+    public void updateUserStatus(Integer userId, UserStatus status, Integer banDays) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (banEndDate != null && banEndDate.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("제재 종료날짜는 과거로 설정할 수 업습니다..");
+        LocalDateTime banEndDate = null;
+        if (banDays != null) {
+            banEndDate = LocalDateTime.now().plusDays(banDays);
         }
 
         user.setStatus(status);
@@ -103,13 +109,13 @@ public class AdminService {
         userRepository.save(user);
 
         qnaRepository.setBlindStatusByUserId(userId, status == UserStatus.BANNED);
+
         if (status == UserStatus.BANNED) {
-            blindAllContentByUser(userId); //  블라인드 처리 통합 메서드
+            blindAllContentByUser(userId);
         } else if (status == UserStatus.ACTIVE) {
-            unblindAllContentByUser(userId); // 블라인드 해제 통합 메서드
+            unblindAllContentByUser(userId);
         }
 
-        // 프로필 노출 설정
         profileRepository.findByUser_UserId(userId)
             .ifPresent(profile -> profile.setVisible(status != UserStatus.BANNED));
 
@@ -123,11 +129,10 @@ public class AdminService {
      * @return 페이징 처리된 신고된 유저 리스트
      */
     @Transactional(readOnly = true)
-    public Page<ReportedUserResponse> getReportedUsers(Pageable pageable) {
-        // 모든 신고된 유저의 데이터를 가져옵니다.
+    public Page<ReportedUserResponse> getReportedUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
         List<Report> allReports = reportRepository.findAll();
 
-        // 유저별로 신고를 그룹화하고, ReportedUserResponse 형태로 변환합니다.
         Map<Integer, List<Report>> groupedReports = allReports.stream()
             .collect(Collectors.groupingBy(report -> report.getReportedUser().getUserId()));
 
@@ -136,21 +141,21 @@ public class AdminService {
                 Integer userId = entry.getKey();
                 List<Report> reports = entry.getValue();
 
-                // 신고당한 유저의 정보와 신고된 내역들을 DTO로 변환합니다.
                 return new ReportedUserResponse(
                     userId,
                     reports.get(0).getReportedUser().getEmail(),
                     (long) reports.size(),
-                    reports.stream().map(report -> new ReportedUserResponse.ReportDetail(
-                        report.getCategory().name(),
-                        report.getReason().name(),
-                        report.getDetailedReason()
-                    )).collect(Collectors.toList())
+                    reports.stream()
+                        .map(report -> new ReportedUserResponse.ReportDetail(
+                            report.getCategory().name(),
+                            report.getReason().name(),
+                            report.getDetailedReason()
+                        ))
+                        .collect(Collectors.toList())
                 );
             })
             .collect(Collectors.toList());
 
-        // 페이징 처리
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), reportedUserResponses.size());
         List<ReportedUserResponse> pagedReports = reportedUserResponses.subList(start, end);
