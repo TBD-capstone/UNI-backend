@@ -35,10 +35,16 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
         "LEFT JOIN p.mainCategories mc " +
         "LEFT JOIN mc.hashtag h " +
         "WHERE (:univName IS NULL OR p.user.univName = :univName) " +
-        "AND (:hashtagNames IS NULL OR h.hashtagName IN :hashtagNames)")
+        "AND (:hashtags IS NULL OR " +
+        "(SELECT COUNT(DISTINCT h2.hashtagName) " +
+        " FROM Profile p2 " +
+        " LEFT JOIN p2.mainCategories mc2 " +
+        " LEFT JOIN mc2.hashtag h2 " +
+        " WHERE p2.profileId = p.profileId AND h2.hashtagName IN :hashtags) = :hashtagsSize)")
     Page<Profile> findByUnivNameAndHashtags(
         @Param("univName") String univName,
-        @Param("hashtagNames") List<String> hashtagNames,
+        @Param("hashtags") List<String> hashtags,
+        @Param("hashtagsSize") int hashtagsSize,
         Pageable pageable);
 }
 

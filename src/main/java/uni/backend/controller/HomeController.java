@@ -1,6 +1,7 @@
 package uni.backend.controller;
 
 import java.awt.print.Pageable;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,11 @@ public class HomeController {
         @RequestParam(required = false) List<String> hashtags,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "newest") String sort) {
+
+        univName = (univName != null) ? univName.trim() : null;
+        if (hashtags != null) {
+            hashtags = hashtags.stream().map(String::trim).collect(Collectors.toList());
+        }
 
         Page<HomeProfileResponse> results = homeService.searchByUnivNameAndHashtags(univName,
             hashtags, page, sort);

@@ -38,26 +38,27 @@ public class HomeService {
     public Page<HomeProfileResponse> searchByUnivNameAndHashtags(
         String univName, List<String> hashtags, int page, String sortCriteria) {
 
-        // 정렬 조건 생성
         Sort sort;
         switch (sortCriteria) {
             case "highest_rating":
-                sort = Sort.by(Sort.Direction.DESC, "star"); // 별점 높은 순
+                sort = Sort.by(Sort.Direction.DESC, "star");
                 break;
             case "lowest_rating":
-                sort = Sort.by(Sort.Direction.ASC, "star"); // 별점 낮은 순
+                sort = Sort.by(Sort.Direction.ASC, "star");
                 break;
             case "newest":
             default:
-                sort = Sort.by(Sort.Direction.DESC, "createdAt"); // 최신순
+                sort = Sort.by(Sort.Direction.DESC, "createdAt");
                 break;
         }
 
-        PageRequest pageable = PageRequest.of(page, 10, sort);
+        Pageable pageable = PageRequest.of(page, 10, sort);
+
+        // hashtags가 null이 아니면 size 전달
+        int hashtagsSize = hashtags != null ? hashtags.size() : 0;
 
         Page<Profile> profiles = profileRepository.findByUnivNameAndHashtags(univName, hashtags,
-            pageable);
-
+            hashtagsSize, pageable);
         return profiles.map(this::profileToHomeProfileResponse);
     }
 
