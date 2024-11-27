@@ -40,7 +40,8 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
         " FROM Profile p2 " +
         " LEFT JOIN p2.mainCategories mc2 " +
         " LEFT JOIN mc2.hashtag h2 " +
-        " WHERE p2.profileId = p.profileId AND h2.hashtagName IN :hashtags) = :hashtagsSize)")
+        " WHERE p2.profileId = p.profileId AND h2.hashtagName IN :hashtags) = :hashtagsSize) " +
+        "AND p.user.role = 'KOREAN'")
     Page<Profile> findByUnivNameAndHashtags(
         @Param("univName") String univName,
         @Param("hashtags") List<String> hashtags,
