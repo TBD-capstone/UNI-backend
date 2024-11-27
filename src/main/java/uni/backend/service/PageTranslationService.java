@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.dto.HomeDataResponse;
 import uni.backend.domain.dto.HomeProfileResponse;
@@ -117,6 +118,22 @@ public class PageTranslationService {
             int i = 1;
             for (ReviewReplyResponse individualReplyResponse : individualReviewResponse.getReplies()) {
                 individualReplyResponse.setContent(translations.get(i++).getText());
+            }
+        }
+
+    }
+
+    public void translateHomeResponse(Page<HomeProfileResponse> results, String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.isEmpty()) {
+            return;
+        }
+
+        for (HomeProfileResponse profile : results.getContent()) {
+            List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
+                acceptLanguage, null);
+            profile.setUnivName(data.getFirst());
+            if (data.size() > 1) {
+                profile.setHashtags(data.subList(1, data.size()));
             }
         }
 

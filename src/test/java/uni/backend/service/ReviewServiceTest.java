@@ -18,6 +18,7 @@ import uni.backend.domain.Matching;
 import uni.backend.domain.Review;
 import uni.backend.domain.ReviewLikes;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.repository.MatchingRepository;
 import uni.backend.repository.ReviewLikeRepository;
 import uni.backend.repository.ReviewRepository;
@@ -98,7 +99,7 @@ public class ReviewServiceTest {
             invocation -> invocation.getArgument(0));
 
         // when
-        Review createdReview = reviewService.createReview(
+        ReviewResponse createdReview = reviewService.createReview(
             matching.getMatchingId(),
             profileOwner.getUserId(),
             commenter.getUserId(),
