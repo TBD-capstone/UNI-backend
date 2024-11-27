@@ -14,6 +14,7 @@ import uni.backend.domain.dto.ReviewCreateRequest;
 import uni.backend.domain.dto.ReviewCreateResponse;
 import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.domain.dto.ReviewResponse;
+import uni.backend.service.PageTranslationService;
 import uni.backend.service.ReviewService;
 import java.util.List;
 import uni.backend.service.UserService;
@@ -27,6 +28,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final UserServiceImpl userService;
+    private final PageTranslationService pageTranslationService;
 
 
     @PostMapping("/user/{userId}/review/{commenterId}/matching/{matchingId}")
@@ -104,9 +106,16 @@ public class ReviewController {
 //    }
 
     @GetMapping("/review/{userId}")
-    public ResponseEntity<List<ReviewResponse>> getReviewsByUserId(@PathVariable Integer userId) {
-        List<ReviewResponse> responses = reviewService.getReviewResponsesByUserId(userId);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<List<ReviewResponse>> getReviewsByUserId(@PathVariable Integer userId,
+        @RequestHeader(name = "Accept-Language", required = false) String acceptLanguage) {
+
+        List<ReviewResponse> response = reviewService.getReviewResponsesByUserId(userId);
+
+        if (acceptLanguage != null && !acceptLanguage.isEmpty() && !acceptLanguage.equals("ko")) {
+            pageTranslationService.translateReview(response, acceptLanguage);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
 

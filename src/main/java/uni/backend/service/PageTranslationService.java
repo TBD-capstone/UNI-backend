@@ -11,6 +11,8 @@ import uni.backend.domain.dto.IndividualProfileResponse;
 import uni.backend.domain.dto.IndividualTranslationResponse;
 import uni.backend.domain.dto.QnaResponse;
 import uni.backend.domain.dto.ReplyResponse;
+import uni.backend.domain.dto.ReviewReplyResponse;
+import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
 
@@ -73,6 +75,7 @@ public class PageTranslationService {
     }
 
     public void translateQna(List<QnaResponse> response, String acceptLanguage) {
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
         TranslationRequest translationRequest = new TranslationRequest();
         translationRequest.setTarget_lang(acceptLanguage);
 
@@ -93,5 +96,29 @@ public class PageTranslationService {
                 individualReplyResponse.setContent(translations.get(i++).getText());
             }
         }
+    }
+
+    public void translateReview(List<ReviewResponse> response, String acceptLanguage) {
+        TranslationRequest translationRequest = new TranslationRequest();
+        translationRequest.setTarget_lang(acceptLanguage);
+
+        for (ReviewResponse individualReviewResponse : response) {
+            List<String> text = new ArrayList<>(List.of());
+            text.add(individualReviewResponse.getContent());
+            for (ReviewReplyResponse individualReplyResponse : individualReviewResponse.getReplies()) {
+                text.add(individualReplyResponse.getContent());
+            }
+            translationRequest.setText(text);
+            TranslationResponse translationResponse = translationService.translate(
+                translationRequest);
+            List<IndividualTranslationResponse> translations = translationResponse.getTranslations();
+            individualReviewResponse.setContent(translations.getFirst().getText());
+
+            int i = 1;
+            for (ReviewReplyResponse individualReplyResponse : individualReviewResponse.getReplies()) {
+                individualReplyResponse.setContent(translations.get(i++).getText());
+            }
+        }
+
     }
 }

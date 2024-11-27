@@ -28,6 +28,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final AwsS3Service awsS3Service;
     private final PageTranslationService pageTranslationService;
+    private final TranslationService translationService;
 
 
     @PostMapping("/user/{userId}/update-profile")
@@ -61,6 +62,8 @@ public class ProfileController {
 
         if (acceptLanguage == null || acceptLanguage.isEmpty()) {
             acceptLanguage = TranslationService.DEFAULT_LANGUAGE;
+        } else {
+            acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
         }
 
         Profile profile = optionalProfile.get();
