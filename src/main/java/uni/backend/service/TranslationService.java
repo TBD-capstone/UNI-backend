@@ -110,7 +110,8 @@ public class TranslationService {
             throw new DeeplWrongFormatException("Needs source_lang");
         }
         normalizeLanguages(request);
-        if (!sourceLang.isEmpty() && !sourceLang.equalsIgnoreCase("KO")) {
+        if (sourceLang.equalsIgnoreCase("KO")) {
+            request.setSource_lang(sourceLang.toUpperCase());
             applyGlossary(request, sourceLang, targetLang);
         }
 

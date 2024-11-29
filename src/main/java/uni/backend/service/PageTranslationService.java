@@ -32,6 +32,7 @@ public class PageTranslationService {
         }
         newList.addFirst(univName);
         translationRequest.setText(newList);
+        translationRequest.setSource_lang("ko");
         translationRequest.setTarget_lang(acceptLanguage);
         TranslationResponse translationResponse = translationService.translate(
             translationRequest);
@@ -46,7 +47,7 @@ public class PageTranslationService {
         if (individualProfileResponse == null || acceptLanguage == null) {
             return;
         }
-
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
         List<String> data = extractUnivHashtag(individualProfileResponse.getUniv(),
             individualProfileResponse.getHashtags(), acceptLanguage,
             individualProfileResponse.getDescription());
@@ -128,6 +129,7 @@ public class PageTranslationService {
         if (acceptLanguage == null || acceptLanguage.isEmpty()) {
             return;
         }
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
 
         for (HomeProfileResponse profile : results.getContent()) {
             List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
