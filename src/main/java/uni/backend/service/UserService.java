@@ -4,6 +4,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import uni.backend.domain.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserService extends UserDetailsService {
 
@@ -15,7 +16,13 @@ public interface UserService extends UserDetailsService {
 
     List<User> findKoreanUsers(); // 한국 대학생만 조회
 
-    User findByEmail(String email); // 이메일로 유저 조회
+    Optional<User> findByEmail(String email); // 이메일로 유저 조회
 
     User findById(Integer userId);
+
+    void generateAndSendResetCode(String email);
+
+    boolean verifyResetCode(String email, String code);
+
+    void resetPassword(String email, String newPassword);
 }

@@ -29,28 +29,16 @@ public class ReviewReplyController {
         @PathVariable Integer commenterId,
         @RequestBody ReviewReplyCreateRequest request) {
 
-        // 서비스 호출 시 요청에서 content 추출
-        ReviewReply reply = reviewReplyService.createReply(reviewId, commenterId,
-            request.getContent());
-
-        // 응답 DTO 생성
-        ReviewReplyResponse response = ReviewReplyResponse.builder()
-            .replyId(reply.getReplyId())
-            .reviewId(reply.getReview().getReviewId())
-            .commenterId(reply.getCommenter().getUserId())
-            .commenterName(reply.getCommenter().getName())
-            .commenterImgProf(reply.getCommenter().getProfile().getImgProf())
-            .content(reply.getContent()) // 이 부분은 단순 문자열 처리
-            .likes(reply.getLikes())
-            .deleted(reply.getDeleted())
-            .deletedTime(reply.getDeletedTime())
-            .updatedTime(reply.getUpdatedTime())
-            .build();
+        // 서비스에서 응답 생성
+        ReviewReplyResponse response = reviewReplyService.createReviewReply(
+            reviewId,
+            commenterId,
+            request.getContent()
+        );
 
         return ResponseEntity.ok(
             ReviewReplyCreateResponse.success("대댓글이 성공적으로 작성되었습니다.", response));
     }
-
 
     // **대댓글 삭제**
     @DeleteMapping("/reply/{replyId}")

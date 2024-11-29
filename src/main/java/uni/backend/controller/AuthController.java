@@ -3,12 +3,15 @@ package uni.backend.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,13 +20,16 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.Role;
 import uni.backend.domain.User;
+import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.*;
+import uni.backend.exception.UserStatusException;
 import uni.backend.repository.UserRepository;
 import uni.backend.service.UserService;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -49,34 +55,48 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
+        HttpServletRequest request) {
         try {
             // 인증 토큰 생성
             UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                    loginRequest.getPassword());
 
             // 인증 시도
             Authentication authentication = authenticationManager.authenticate(authToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // 세션 생성 및 SecurityContext 설정
-            request.getSession(true).setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            request.getSession(true)
+                .setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
             // 인증된 사용자 정보 가져오기
             User user = (User) authentication.getPrincipal();
 
             // 성공 응답 전송
             return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
-                    user.getName(), user.getUserId(), user.getRole() == Role.KOREAN));
-        } catch (Exception e) {
-            // 실패 응답 전송
+                user.getName(), user.getUserId(),
+                user.getRole() == Role.KOREAN, user.getProfile().getImgProf(),
+                user.getProfile().getImgBack()));
+        } catch (InternalAuthenticationServiceException e) {
+            if (e.getCause() instanceof UserStatusException) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new Response("fail", e.getCause().getMessage()));
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new Response("fail", "wrong information"));
+                .body(new Response("fail", "wrong information"));
+        } catch (AuthenticationException e) {
+            // 일반적인 로그인 실패 처리 (잘못된 이메일이나 비밀번호)
+//            log.error("AuthenticationException occurred during login: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new Response("fail", "wrong information"));
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response, Authentication auth) {
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response,
+        Authentication auth) {
         if (auth != null) {
             new SecurityContextLogoutHandler().logout(request, response, auth);
             return ResponseEntity.ok(Response.successMessage("logged out successfully"));
@@ -99,4 +119,26 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Response> sendResetCode(@RequestBody ForgotPasswordRequest request) {
+        try {
+            userService.generateAndSendResetCode(request.getEmail());
+            return ResponseEntity.ok(Response.successMessage("Reset code sent to email"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Response.failMessage(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Response> resetPassword(@RequestBody ResetPasswordRequest request) {
+        if (!userService.verifyResetCode(request.getEmail(), request.getCode())) {
+            return ResponseEntity.badRequest().body(Response.failMessage("Invalid reset code"));
+        }
+        try {
+            userService.resetPassword(request.getEmail(), request.getNewPassword());
+            return ResponseEntity.ok(Response.successMessage("Password has been reset"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Response.failMessage(e.getMessage()));
+        }
+    }
 }

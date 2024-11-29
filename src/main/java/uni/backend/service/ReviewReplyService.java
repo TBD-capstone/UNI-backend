@@ -8,6 +8,7 @@ import uni.backend.domain.Review;
 import uni.backend.domain.ReviewReply;
 import uni.backend.domain.ReviewReplyLikes;
 import uni.backend.domain.User;
+import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.repository.ReviewReplyLikeRepository;
 import uni.backend.repository.ReviewReplyRepository;
 import uni.backend.repository.ReviewRepository;
@@ -33,15 +34,35 @@ public class ReviewReplyService {
 
     // **대댓글 작성**
     @Transactional
-    public ReviewReply createReply(Integer reviewId, Integer commenterId, String content) {
+    public ReviewReplyResponse createReviewReply(Integer reviewId, Integer commenterId,
+        String content) {
         Review review = reviewRepository.findById(reviewId)
             .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다. ID: " + reviewId));
 
         User commenter = userRepository.findById(commenterId)
             .orElseThrow(() -> new IllegalArgumentException("작성자를 찾을 수 없습니다. ID: " + commenterId));
 
-        ReviewReply reply = new ReviewReply(review, commenter, content);
-        return reviewReplyRepository.save(reply); // 저장 후 반환
+        // 대댓글 생성 및 저장
+        ReviewReply reply = ReviewReply.builder()
+            .review(review)
+            .commenter(commenter)
+            .content(content)
+            .build();
+        ReviewReply savedReply = reviewReplyRepository.save(reply);
+
+        // 응답 객체 생성
+        return ReviewReplyResponse.builder()
+            .replyId(savedReply.getReplyId())
+            .reviewId(savedReply.getReview().getReviewId())
+            .commenterId(savedReply.getCommenter().getUserId())
+            .commenterName(savedReply.getCommenter().getName())
+            .commenterImgProf(savedReply.getCommenter().getProfile().getImgProf())
+            .content(savedReply.getContent())
+            .likes(savedReply.getLikes())
+            .deleted(savedReply.getDeleted())
+            .deletedTime(savedReply.getDeletedTime())
+            .updatedTime(savedReply.getUpdatedTime())
+            .build();
     }
 
     // **대댓글 삭제**
