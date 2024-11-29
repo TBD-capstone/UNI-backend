@@ -1,5 +1,6 @@
 package uni.backend.controller;
 
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Profile;
 import uni.backend.domain.dto.IndividualProfileResponse;
+import uni.backend.domain.dto.MeResponse;
 import uni.backend.service.AwsS3Service;
 import uni.backend.service.HashtagService;
 import uni.backend.service.PageTranslationService;
@@ -19,6 +21,7 @@ import uni.backend.service.UserService;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import uni.backend.service.UserServiceImpl;
 
 @Controller
 @RequestMapping("/api")
@@ -29,7 +32,15 @@ public class ProfileController {
     private final AwsS3Service awsS3Service;
     private final PageTranslationService pageTranslationService;
     private final TranslationService translationService;
+    private final UserServiceImpl userService;
 
+
+    @GetMapping("/user/me")
+    public ResponseEntity<MeResponse> getCurrentUser() {
+        // 서비스에서 유저 정보를 가져와 응답
+        MeResponse userProfile = userService.getCurrentUserProfile();
+        return ResponseEntity.ok(userProfile);
+    }
 
     @PostMapping("/user/{userId}/update-profile")
     public ResponseEntity<IndividualProfileResponse> updateProfile(
