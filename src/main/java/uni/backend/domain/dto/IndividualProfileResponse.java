@@ -1,6 +1,9 @@
 package uni.backend.domain.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -8,6 +11,10 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+
 public class IndividualProfileResponse {
 
     private Integer userId;        // User ID
@@ -20,7 +27,16 @@ public class IndividualProfileResponse {
     private int numEmployment;     // 고용 횟수
     private double star;           // 별점
     private String time;           // 시간
+    @Builder.Default
+    private boolean isVisible = true;
     private List<String> hashtags = new ArrayList<>(); // 해시태그 목록
+
+
+    public static IndividualProfileResponse createDefault() {
+        return IndividualProfileResponse.builder()
+            .hashtags(new ArrayList<>()) // 기본 빈 리스트 설정
+            .build();
+    }
 //  private List<QnaResponse> qnas;
 
 //    private List<MainCategoryDTO> mainCategories = new ArrayList<>();  // 메인 카테고리 리스트

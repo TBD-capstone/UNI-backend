@@ -47,6 +47,6 @@ public class Matching {
 
 
     public enum Status {
-        PENDING, ACCEPTED, REJECTED
+        PENDING, ACCEPTED, REJECTED, ENDED
     }
 }
