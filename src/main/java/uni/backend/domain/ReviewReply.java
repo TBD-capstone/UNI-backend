@@ -38,6 +38,7 @@ public class ReviewReply {
     @Column(nullable = false)
     private String content; // 대댓글 본문
 
+    @Builder.Default
     private Long likes = 0L; // 좋아요 수
 
     @Builder.Default
