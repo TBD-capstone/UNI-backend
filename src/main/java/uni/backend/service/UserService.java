@@ -3,7 +3,6 @@ package uni.backend.service;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import uni.backend.domain.User;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface UserService extends UserDetailsService {
