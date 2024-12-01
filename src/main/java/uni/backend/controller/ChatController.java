@@ -77,4 +77,19 @@ public class ChatController {
         return ResponseEntity.ok(translation);
     }
 
+    //개별 메시지 읽음 처리
+    @MessageMapping("/read")
+    public void handleIncomingMessage(@Payload ChatMessageRequest messageRequest, Principal principal) {
+        ChatMessageResponse response = chatService.sendMessage(messageRequest, principal.getName(), null);
+
+        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
+
+        chatService.markMessageAsRead(response.getMessageId(), messageRequest.getRoomId(), principal.getName());
+    }
+
+    //특정 채팅방 메시지 읽음 처리
+    @MessageMapping("/enter")
+    public void markMessagesAsRead(@Payload Integer roomId, Principal principal) {
+        chatService.markMessagesAsRead(roomId, principal.getName());
+    }
 }

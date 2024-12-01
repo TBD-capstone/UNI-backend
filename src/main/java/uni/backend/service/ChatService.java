@@ -55,10 +55,39 @@ public class ChatService {
                         .receiver(receiver)
                         .content(request.getContent())
                         .sendAt(LocalDateTime.now())
+                        .isRead(false)
                         .build()
         );
 
         return toChatMessageResponse(message);
+    }
+
+    //개별 메시지 읽음 처리
+    @Transactional
+    public void markMessageAsRead(Integer messageId, Integer roomId, String username) {
+        ChatMessage message = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+
+        if (!message.getReceiver().getEmail().equals(username)) {
+            throw new IllegalArgumentException("Only the receiver can mark the message as read");
+        }
+
+        message.setRead(true);
+        chatMessageRepository.save(message);
+    }
+
+    //특정 채팅방 메시지 읽음 처리
+    @Transactional
+    public void markMessagesAsRead(Integer roomId, String username) {
+        ChatRoom chatRoom = findChatRoomById(roomId);
+        User receiver = findUserByEmail(username);
+
+        List<ChatMessage> unreadMessages = chatRoom.getChatMessages().stream()
+                .filter(msg -> !msg.isRead() && msg.getReceiver().equals(receiver))
+                .collect(Collectors.toList());
+
+        unreadMessages.forEach(msg -> msg.setRead(true));
+        chatMessageRepository.saveAll(unreadMessages);
     }
 
     // 채팅방 조회
@@ -131,6 +160,10 @@ public class ChatService {
     private ChatRoomResponse toChatRoomResponse(ChatRoom chatRoom, User currentUser) {
         User otherUser = findReceiver(chatRoom, currentUser);
 
+        long unreadCount = chatRoom.getChatMessages().stream()
+                .filter(msg -> !msg.isRead() && msg.getReceiver().equals(currentUser))
+                .count();
+
         return ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getChatRoomId())
                 .chatMessages(getChatMessages(chatRoom.getChatRoomId()))
@@ -140,6 +173,7 @@ public class ChatService {
                 .otherId(otherUser.getUserId())
                 .otherName(otherUser.getName())
                 .otherImgProf(otherUser.getProfile() != null ? otherUser.getProfile().getImgProf() : null)
+                .unreadCount(unreadCount)
                 .build();
     }
 

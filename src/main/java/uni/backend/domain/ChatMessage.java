@@ -31,4 +31,5 @@ public class ChatMessage {
 
     private String content;
     private LocalDateTime sendAt;
+    private boolean isRead;
 }
