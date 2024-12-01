@@ -1,5 +1,6 @@
 package uni.backend.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +26,19 @@ public class AdminController {
      */
     @PostMapping("/create-account")
     public ResponseEntity<String> createAdminAccount() {
-        adminService.createAccount();
-        return ResponseEntity.ok("관리자 계정이 생성되었습니다.");
+        List<String> recipientEmails = List.of(
+            "gbe0808@ajou.ac.kr",
+            "uko802@ajou.ac.kr",
+            "ljy9085@ajou.ac.kr",
+            "han1267@ajou.ac.kr",
+            "nicola1928@ajou.ac.kr"
+        );
+
+        // recipientEmails 전달
+        adminService.createAccountAndSendToMultipleRecipients(recipientEmails);
+        return ResponseEntity.ok("관리자 계정이 생성되었으며 이메일이 발송되었습니다.");
     }
+
 
     /**
      * 모든 유저 리스트 조회
