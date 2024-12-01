@@ -1,5 +1,7 @@
 package uni.backend.service;
 
+import static uni.backend.domain.util.AdminAccountUtil.createEmailForm;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +12,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Qna;
@@ -41,7 +45,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AdminService {
 
-    // 필드
+    private final JavaMailSender javaMailSender;
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
     private final AdminAccountUtil adminAccountUtil;
@@ -52,14 +56,22 @@ public class AdminService {
     private final ReplyRepository replyRepository;
 
     /**
-     * 관리자 계정 생성 관리자 계정을 생성하고, 생성된 계정 정보를 로그로 기록합니다.
+     * 관리자 계정 생성 관리자 계정을 생성하고, 생성된 계정 정보를 로그로 기록, 및 팀원에게 이메일 전송
      */
     @Transactional
-    public void createAccount() {
+    public void createAccountAndSendToMultipleRecipients(List<String> recipientEmails) {
         String rawPassword = adminAccountUtil.createAdminPassword();
         User admin = adminAccountUtil.createAdminAccount(rawPassword);
         userRepository.save(admin);
-        log.info("관리자 계정이 생성되었습니다.");
+
+        recipientEmails.forEach(recipientEmail -> {
+            SimpleMailMessage message = AdminAccountUtil.createEmailForm(
+                recipientEmail, admin.getEmail(), rawPassword);
+            message.setFrom("jdragon@uni-ajou.site");
+            javaMailSender.send(message);
+        });
+
+        log.info("관리자 계정이 생성되었으며, 이메일이 발송되었습니다.");
     }
 
     /**
