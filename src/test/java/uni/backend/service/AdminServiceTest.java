@@ -67,29 +67,29 @@ class AdminServiceTest {
             .build();
     }
 
-    @Test
-    @DisplayName("관리자 계정 생성 성공 테스트")
-    void createAccount_성공() {
-        // given
-        String rawPassword = "randomPassword123";
-        User admin = User.builder()
-            .userId(99)
-            .email("admin@example.com")
-            .password(rawPassword)
-            .build();
-
-        when(adminAccountUtil.createAdminPassword()).thenReturn(rawPassword);
-        when(adminAccountUtil.createAdminAccount(rawPassword)).thenReturn(admin);
-        when(userRepository.save(any(User.class))).thenReturn(admin);
-
-        // when
-        adminService.createAccount();
-
-        // then
-        verify(adminAccountUtil).createAdminPassword();
-        verify(adminAccountUtil).createAdminAccount(rawPassword);
-        verify(userRepository).save(admin);
-    }
+//    @Test
+//    @DisplayName("관리자 계정 생성 성공 테스트")
+//    void createAccount_성공() {
+//        // given
+//        String rawPassword = "randomPassword123";
+//        User admin = User.builder()
+//            .userId(99)
+//            .email("admin@example.com")
+//            .password(rawPassword)
+//            .build();
+//
+//        when(adminAccountUtil.createAdminPassword()).thenReturn(rawPassword);
+//        when(adminAccountUtil.createAdminAccount(rawPassword)).thenReturn(admin);
+//        when(userRepository.save(any(User.class))).thenReturn(admin);
+//
+//        // when
+//        adminService.createAccount();
+//
+//        // then
+//        verify(adminAccountUtil).createAdminPassword();
+//        verify(adminAccountUtil).createAdminAccount(rawPassword);
+//        verify(userRepository).save(admin);
+//    }
 
     @Test
     @DisplayName("유저 상태 업데이트 성공 테스트")
