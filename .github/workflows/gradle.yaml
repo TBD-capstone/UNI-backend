@@ -20,12 +20,13 @@ jobs:
           java-version: '21'
           distribution: "temurin"
 
-      - name: Make application-private.properties
+      - name: Make private properties
         run: |
+          touch ./.env
+          echo "${{ secrets.ENV }}" | base64 --decode > ./.env
           cd ./src/main/resources
           touch ./application.properties
           echo "${{ secrets.PROPERTIES }}" | base64 --decode > ./application-private.properties
-          echo "${{ secrets.ENV }}" | base64 --decode > ./.env
         shell: bash
 
       - name: Build with Gradle
@@ -35,7 +36,7 @@ jobs:
 
       - name: Docker build & push to Docker Hub
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
           docker build -t ${{ secrets.DOCKER_REPO }}/uni-backend .
           docker push ${{ secrets.DOCKER_REPO }}/uni-backend
 
