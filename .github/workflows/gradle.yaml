@@ -48,5 +48,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.AWS_EC2_KEY }}
           script: |
-            sudo docker compose pull ${{ secrets.DOCKER_REPO }}/uni-backend 
-            ./app/run.sh init
+            echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            docker pull ${{ secrets.DOCKER_REPO }}/uni-backend 
+            cd /home/ec2-user/uni
+            /home/ec2-user/uni/run.sh init
