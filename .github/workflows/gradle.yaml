@@ -46,6 +46,6 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.AWS_EC2_KEY }}
-        script: |
+        run: |
           sudo docker compose pull ${{ secrets.DOCKER_REPO }}/uni-backend 
           ./app/run.sh init
