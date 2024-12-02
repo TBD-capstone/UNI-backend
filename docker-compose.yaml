@@ -1,0 +1,12 @@
+services:
+  app:
+    image: ${DOCKER_REPO}/uni-backend:latest  # Docker Hub에서 Pull할 이미지
+    container_name: backend-container       # 컨테이너 이름
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    restart: always                         # 컨테이너가 종료되면 자동으로 재시작
+    env_file:
+      - .env
