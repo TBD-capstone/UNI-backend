@@ -36,7 +36,7 @@ jobs:
 
       - name: Docker build & push to Docker Hub
         run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+          echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
           docker build -t ${{ secrets.DOCKER_REPO }}/uni-backend .
           docker push ${{ secrets.DOCKER_REPO }}/uni-backend
 
