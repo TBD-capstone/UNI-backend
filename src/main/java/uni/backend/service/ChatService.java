@@ -12,6 +12,7 @@ import uni.backend.repository.ChatRoomRepository;
 import uni.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -160,7 +161,11 @@ public class ChatService {
     private ChatRoomResponse toChatRoomResponse(ChatRoom chatRoom, User currentUser) {
         User otherUser = findReceiver(chatRoom, currentUser);
 
-        long unreadCount = chatRoom.getChatMessages().stream()
+        List<ChatMessage> messages = chatRoom.getChatMessages() != null
+                ? chatRoom.getChatMessages()
+                : new ArrayList<>();
+
+        long unreadCount = messages.stream()
                 .filter(msg -> !msg.isRead() && msg.getReceiver().equals(currentUser))
                 .count();
 
