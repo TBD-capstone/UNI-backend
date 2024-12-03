@@ -25,12 +25,12 @@ COPY ./build/libs/backend-0.0.1-SNAPSHOT.jar app.jar
 # 환경 변수 설정
 ENV LANG=C.UTF-8
 ENV JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto
-ENV SPRING_PROFILES_ACTIVE=local
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/uni
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/uni?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+
 # username과 password는 추후 .env 파일로부터 가져오는 형식으로 수정 필요
 ENV SPRING_DATASOURCE_USERNAME=root
 ENV SPRING_DATASOURCE_PASSWORD=1234
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar", "--spring.profiles.active=ci"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
