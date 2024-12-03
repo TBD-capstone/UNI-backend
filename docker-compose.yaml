@@ -4,6 +4,7 @@ services:
     container_name: backend-container       # 컨테이너 이름
     ports:
       - "8080:8080"
+      - "3306:3306"
     environment:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}

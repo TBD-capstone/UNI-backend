@@ -25,7 +25,7 @@ jobs:
           touch ./.env
           echo "${{ secrets.ENV }}" | base64 --decode > ./.env
           cd ./src/main/resources
-          touch ./application.properties
+          touch ./application-private.properties
           echo "${{ secrets.PROPERTIES }}" | base64 --decode > ./application-private.properties
         shell: bash
 
