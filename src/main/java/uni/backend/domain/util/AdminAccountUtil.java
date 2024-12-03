@@ -4,16 +4,17 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import uni.backend.config.SecurityConfig;
 import uni.backend.domain.User;
 import uni.backend.domain.Role;
 import uni.backend.domain.UserStatus;
 
 @Component
-@RequiredArgsConstructor
 public class AdminAccountUtil {
 
     private static final String TITLE_MESSAGE = "[UNI] PLEASE Don't expose your password";
@@ -22,6 +23,14 @@ public class AdminAccountUtil {
     private static final String ADMIN_PREFIX = "ADMIN"; // 관리자 계정 접두사
 
     private final PasswordEncoder passwordEncoder;
+    private final SecurityConfig securityConfig;
+
+    @Autowired
+    public AdminAccountUtil(PasswordEncoder passwordEncoder,
+        @Lazy SecurityConfig securityConfig) {
+        this.passwordEncoder = passwordEncoder;
+        this.securityConfig = securityConfig;
+    }
 
     /**
      * 관리자 계정 생성
