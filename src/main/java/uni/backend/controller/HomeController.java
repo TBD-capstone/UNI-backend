@@ -1,6 +1,7 @@
 package uni.backend.controller;
 
 import java.awt.print.Pageable;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,6 @@ public class HomeController {
     @Autowired
     PageTranslationService pageTranslationService;
 
-
     @GetMapping("/home")
     public ResponseEntity<Page<HomeProfileResponse>> searchByUnivNameAndHashtags(
         @RequestParam(required = false) String univName,
@@ -45,6 +45,7 @@ public class HomeController {
         univName = (univName != null) ? univName.trim() : null;
         if (hashtags != null) {
             hashtags = hashtags.stream().map(String::trim).collect(Collectors.toList());
+            homeService.changeHashtagsToKorean(hashtags);
         }
 
         Page<HomeProfileResponse> results = homeService.searchByUnivNameAndHashtags(univName,
