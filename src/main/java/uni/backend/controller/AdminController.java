@@ -50,7 +50,7 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
         @RequestParam(required = false) UserStatus status,
-        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
 
         Page<UserResponse> users = adminService.getAllUsers(status, page, size);

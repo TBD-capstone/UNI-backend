@@ -52,6 +52,22 @@ public class ReviewReply {
     private LocalDateTime deletedTime; // 삭제 시간
     private LocalDateTime updatedTime; // 수정 시간
 
+
+    // 블라인드 처리 메서드
+    public void blindReply() {
+        this.isBlind = true;
+    }
+
+    // 블라인드 해제 메서드
+    public void unblindReply() {
+        this.isBlind = false;
+    }
+
+    public String getBlindReviewReply() {
+        return isBlind ? "이 대댓글은 블라인드 처리되었습니다." : content;
+    }
+
+
     public void softDelete() {
         this.deleted = true;
         this.deletedTime = LocalDateTime.now();

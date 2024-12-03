@@ -33,6 +33,7 @@ public class Reply {
     @Column(nullable = false)
     private Boolean isBlind = false; // 블라인드 여부
 
+
     private LocalDateTime deletedTime; // 삭제 시간
     private LocalDateTime updatedTime; // 수정 시간
 
@@ -75,7 +76,10 @@ public class Reply {
         this.isBlind = false;
     }
 
-    
+    public String getBlindReply() {
+        return isBlind ? "이 대댓글은 블라인드 처리되었습니다." : content;
+    }
+
     public Reply() {
     }
 }
