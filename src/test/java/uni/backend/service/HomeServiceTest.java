@@ -1,5 +1,6 @@
 package uni.backend.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,13 +77,18 @@ public class HomeServiceTest {
         profile3.setStar(5.0);
 
         // 해시태그 추가
-        hashtags = List.of("Hashtag1", "Hashtag2");
+        hashtags = List.of("여행", "게임");
         hashtags.forEach(
             hashtagName -> {
                 profile1.addMainCategory(createMainCategoryWithHashtag(hashtagName));
                 profile2.addMainCategory(createMainCategoryWithHashtag(hashtagName));
             });
     }
+
+//    @Test
+//    void 대학교_null() {
+//        homeService.searchByUnivNameAndHashtags(null, any(), anyInt(), any());
+//    }
 
     @Test
     @DisplayName("Profile -> HomeProfileResponse 변환 성공 테스트")
@@ -157,4 +163,41 @@ public class HomeServiceTest {
         assertEquals("User2", result.getContent().get(0).getUsername());
         verify(profileRepository).findByUnivNameAndHashtags(anyString(), any(), anyInt(), any());
     }
+
+    @Test
+    void 다국어_해시태그_번역() {
+        // Given
+        List<String> searchHashtags = new ArrayList<>(List.of());
+        searchHashtags.add("Trip");
+        searchHashtags.add("旅行");
+        searchHashtags.add("GASTRovENTuRe");
+        searchHashtags.add("게임");
+        searchHashtags.add("Unknown");
+
+        // When
+        homeService.changeHashtagsToKorean(searchHashtags);
+
+        // Then
+        assertEquals("여행", searchHashtags.get(0));
+        assertEquals("여행", searchHashtags.get(1));
+        assertEquals("맛집", searchHashtags.get(2));
+        assertEquals("게임", searchHashtags.get(3));
+        assertEquals("Unknown", searchHashtags.get(4));
+    }
+
+//    @Test
+//    void 다국어_해시태그로_유저_찾기() {
+//        // Given
+//        List<String> searchHashtags = new ArrayList<>(List.of());
+//        searchHashtags.add("Trip");
+//        searchHashtags.add("游戏");
+//
+//        // When
+//        homeService.changeHashtagsToKorean(searchHashtags);
+//        Page<HomeProfileResponse> result = homeService.searchByUnivNameAndHashtags(null,
+//            searchHashtags, 0, any());
+//
+//        // Then
+//        assertEquals(result.getTotalElements(), 2);
+//    }
 }
