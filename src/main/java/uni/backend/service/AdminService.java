@@ -84,7 +84,7 @@ public class AdminService {
      */
     @Transactional(readOnly = true)
     public Page<UserResponse> getAllUsers(UserStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("email").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("email").ascending());
         Page<User> users = (status != null)
             ? userRepository.findByStatus(status, pageable)
             : userRepository.findAll(pageable);
@@ -116,26 +116,26 @@ public class AdminService {
             .orElseThrow(() -> new RuntimeException("User not found"));
 
         LocalDateTime banEndDate = null;
+
         if (banDays != null) {
-            banEndDate = LocalDateTime.now().plusDays(banDays);
+            if (banDays == 0) {
+                status = UserStatus.ACTIVE;
+                unblindAllContentByUser(userId);
+            } else {
+                banEndDate = LocalDateTime.now().plusDays(banDays);
+                blindAllContentByUser(userId);
+            }
         }
 
         user.setStatus(status);
         user.setEndBanDate(banEndDate);
         userRepository.save(user);
 
-        qnaRepository.setBlindStatusByUserId(userId, status == UserStatus.BANNED);
-
-        if (status == UserStatus.BANNED) {
-            blindAllContentByUser(userId);
-        } else if (status == UserStatus.ACTIVE) {
-            unblindAllContentByUser(userId);
-        }
-
+        UserStatus finalStatus = status;
         profileRepository.findByUser_UserId(userId)
-            .ifPresent(profile -> profile.setVisible(status != UserStatus.BANNED));
+            .ifPresent(profile -> profile.setVisible(finalStatus != UserStatus.BANNED));
 
-        log.info("유저 ID={}의 상태가 {}로 변경되었습니다. 제재 해제일: {}", userId, status, banEndDate);
+        log.info("유저 ID={}의 상태가 {}로 변경되었습니다. 제재 해제일: {}", userId, finalStatus, banEndDate);
     }
 
     /**
@@ -147,7 +147,7 @@ public class AdminService {
      */
     @Transactional(readOnly = true)
     public Page<ReportedUserResponse> getReportedUsers(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page, size);
         List<Report> allReports = reportRepository.findAll();
 
         Map<Integer, List<Report>> groupedReports = allReports.stream()
@@ -164,6 +164,7 @@ public class AdminService {
                     (long) reports.size(),
                     reports.stream()
                         .map(report -> new ReportedUserResponse.ReportDetail(
+                            report.getTitle(),
                             report.getCategory().name(),
                             report.getReason().name(),
                             report.getDetailedReason()

@@ -11,5 +11,5 @@ public interface ReplyRepository extends JpaRepository<Reply, Integer> {
 
     List<Reply> findByCommenter_UserId(Integer userId); // 작성자 ID로 답글 조회
 
-
+    List<Reply> findByQna_QnaId(Integer qnaId);
 }
