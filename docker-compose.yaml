@@ -1,0 +1,8 @@
+services:
+  app:
+    image: ${DOCKER_REPO}/uni-backend:latest  # Docker Hub에서 Pull할 이미지
+    container_name: backend-container       # 컨테이너 이름
+    network_mode: host
+    restart: always                         # 컨테이너가 종료되면 자동으로 재시작
+    env_file:
+      - .env
