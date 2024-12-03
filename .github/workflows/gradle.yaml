@@ -25,8 +25,8 @@ jobs:
           touch ./.env
           echo "${{ secrets.ENV }}" | base64 --decode > ./.env
           cd ./src/main/resources
-          touch ./application-private.properties
-          echo "${{ secrets.PROPERTIES }}" | base64 --decode > ./application-private.properties
+          touch ./application-private.yml
+          echo "${{ secrets.PROPERTIES }}" | base64 --decode > ./application-private.yml
         shell: bash
 
       - name: Build with Gradle
