@@ -38,6 +38,7 @@ dependencies {
     implementation 'com.deepl.api:deepl-java:1.6.0'
     implementation 'org.springframework.boot:spring-boot-starter-webflux:3.3.4'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.session:spring-session-core'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
