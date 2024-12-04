@@ -2,6 +2,7 @@ package uni.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,6 +16,7 @@ import uni.backend.service.ChatService;
 import java.security.Principal;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
@@ -47,6 +49,9 @@ public class ChatController {
     // WebSocket으로 메시지 전송 처리
     @MessageMapping("/message")
     public void sendWebSocketMessage(@Payload ChatMessageRequest messageRequest, Principal principal) {
+        if (messageRequest.getContent() == null || messageRequest.getContent().trim().isEmpty()) {
+            return;
+        }
         ChatMessageResponse response = chatService.sendMessage(messageRequest, principal.getName(), null);
 
         messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
@@ -91,5 +96,15 @@ public class ChatController {
     @MessageMapping("/enter")
     public void markMessagesAsRead(@Payload Integer roomId, Principal principal) {
         chatService.markMessagesAsRead(roomId, principal.getName());
+    }
+
+    @PostMapping("/read/bulk")
+    public ResponseEntity<String> handleBulkRead(@RequestBody ReadMessagesRequest request, Principal principal) {
+        try {
+            chatService.markMessagesAsRead(request.getRoomId(), request.getMessageIds(), principal.getName());
+            return ResponseEntity.ok("Messages marked as read.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to mark messages as read.");
+        }
     }
 }

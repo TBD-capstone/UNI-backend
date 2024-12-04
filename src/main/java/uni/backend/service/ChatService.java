@@ -45,6 +45,9 @@ public class ChatService {
     // 메시지 전송
     @Transactional
     public ChatMessageResponse sendMessage(ChatMessageRequest request, String senderEmail, Integer roomId) {
+        if (request.getContent() == null || request.getContent().isEmpty()) {
+            throw new IllegalArgumentException("Message content cannot be null or empty");
+        }
         User sender = findUserByEmail(senderEmail);
         ChatRoom chatRoom = findChatRoomById(roomId != null ? roomId : request.getRoomId());
         User receiver = findReceiver(chatRoom, sender);
@@ -89,6 +92,20 @@ public class ChatService {
 
         unreadMessages.forEach(msg -> msg.setRead(true));
         chatMessageRepository.saveAll(unreadMessages);
+    }
+
+    @Transactional
+    public void markMessagesAsRead(Integer roomId, List<Integer> messageIds, String userEmail) {
+        // 메시지 ID 목록을 기반으로 읽음 상태 업데이트
+        List<ChatMessage> messagesToMarkAsRead = chatMessageRepository.findAllById(messageIds);
+
+        for (ChatMessage message : messagesToMarkAsRead) {
+            if (message.getChatRoom().getChatRoomId().equals(roomId) && message.getReceiver().getEmail().equals(userEmail)) {
+                message.setRead(true);
+            }
+        }
+
+        chatMessageRepository.saveAll(messagesToMarkAsRead);
     }
 
     // 채팅방 조회
