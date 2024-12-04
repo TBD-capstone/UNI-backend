@@ -46,7 +46,7 @@ public class Profile {
     @Column(nullable = true) // null 허용
     private String region;
 
-    @Column(nullable = true) // null 허용
+    @Column(nullable = true, length = 1000)
     private String description;
 
     @Column(nullable = true) // null 허용

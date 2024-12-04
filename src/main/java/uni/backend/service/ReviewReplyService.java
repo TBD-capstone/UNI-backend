@@ -57,7 +57,7 @@ public class ReviewReplyService {
             .commenterId(savedReply.getCommenter().getUserId())
             .commenterName(savedReply.getCommenter().getName())
             .commenterImgProf(savedReply.getCommenter().getProfile().getImgProf())
-            .content(savedReply.getContent())
+            .content(savedReply.getBlindReviewReply())
             .likes(savedReply.getLikes())
             .deleted(savedReply.getDeleted())
             .deletedTime(savedReply.getDeletedTime())

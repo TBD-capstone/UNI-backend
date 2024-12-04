@@ -119,7 +119,7 @@ public class QnaService {
                     reply.getReplyId(),
                     reply.getCommenter().getUserId(),
                     reply.getCommenter().getName(),
-                    reply.getContent(),
+                    reply.getBlindReply(),
                     reply.getQna().getQnaId(),
                     reply.getCommenter().getProfile().getImgProf(),
                     reply.getDeleted(),
