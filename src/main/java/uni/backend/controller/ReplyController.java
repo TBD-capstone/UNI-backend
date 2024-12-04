@@ -62,7 +62,7 @@ public class ReplyController {
         return ResponseEntity.ok(Response.successMessage("대댓글이 삭제되었습니다.")); // 성공 메시지 반환
     }
 
-    // 대댓글 정보 조회
+    //     대댓글 정보 조회
     @GetMapping("/replies/{replyId}")
     public ResponseEntity<ReplyResponse> getReply(@PathVariable Integer replyId) {
         Reply reply = replyService.getReply(replyId);
@@ -89,7 +89,7 @@ public class ReplyController {
             reply.getReplyId(),
             reply.getCommenter().getUserId(),
             reply.getCommenter().getName(),
-            reply.getContent(),
+            reply.getBlindReply(),
             reply.getQna().getQnaId(),
             reply.getCommenter().getProfile().getImgProf(),
             false,  // deleted 여부

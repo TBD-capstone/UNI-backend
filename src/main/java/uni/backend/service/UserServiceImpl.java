@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.domain.UserStatus;
+import uni.backend.domain.dto.MeResponse;
 import uni.backend.exception.UserStatusException;
 import uni.backend.repository.UserRepository;
 
@@ -47,7 +49,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (user.getStatus() == UserStatus.BANNED) {
             log.warn("Banned user {} tried to log in", user.getEmail());
@@ -89,6 +91,7 @@ public class UserServiceImpl implements UserService {
         resetCodes.put(email, code);
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("UNI <jdragon@uni-ajou.site>");
         message.setTo(email);
         message.setSubject("Password Reset Code");
         message.setText("Your password reset code is: " + code);
@@ -112,4 +115,20 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         resetCodes.remove(email);
     }
+
+    public MeResponse getCurrentUserProfile() {
+        // SecurityContext에서 현재 사용자 가져오기
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+            .orElseThrow(() -> new IllegalArgumentException("로그인된 사용자를 찾을 수 없습니다."));
+
+        return MeResponse.builder()
+            .userId(currentUser.getUserId())
+            .name(currentUser.getName())
+            .role(currentUser.getRole())
+            .imgProf(
+                currentUser.getProfile() != null ? currentUser.getProfile().getImgProf() : null)
+            .build();
+    }
+
 }
