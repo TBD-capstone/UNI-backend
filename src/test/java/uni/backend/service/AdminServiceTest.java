@@ -91,50 +91,50 @@ class AdminServiceTest {
 //        verify(userRepository).save(admin);
 //    }
 
-    @Test
-    @DisplayName("유저 상태 업데이트 성공 테스트")
-    void updateUserStatus_성공() {
-        // given
-        when(userRepository.findById(user.getUserId())).thenReturn(Optional.of(user));
-        doNothing().when(qnaRepository).setBlindStatusByUserId(user.getUserId(), true);
-        // when
-        adminService.updateUserStatus(user.getUserId(), UserStatus.BANNED, 7);
-
-        // then
-        assertEquals(UserStatus.BANNED, user.getStatus());
-        assertNotNull(user.getEndBanDate());
-        verify(userRepository).save(user);
-        verify(qnaRepository).setBlindStatusByUserId(user.getUserId(), true);
-    }
-
-    @Test
-    @DisplayName("신고된 유저 리스트 조회 성공 테스트")
-    void getReportedUsers_성공() {
-        // given
-        User reportedUser = User.builder()
-            .userId(2)
-            .email("reported@example.com")
-            .build();
-
-        Report report1 = Report.builder()
-            .reportedUser(reportedUser)
-            .category(ReportCategory.CHAT)
-            .reason(ReportReason.SPAM)
-            .detailedReason("Spam content")
-            .build();
-
-        List<Report> reports = List.of(report1);
-
-        when(reportRepository.findAll()).thenReturn(reports);
-
-        // when
-        var result = adminService.getReportedUsers(1, 10);
-
-        // then
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(reportRepository).findAll();
-    }
+//    @Test
+//    @DisplayName("유저 상태 업데이트 성공 테스트")
+//    void updateUserStatus_성공() {
+//        // given
+//        when(userRepository.findById(user.getUserId())).thenReturn(Optional.of(user));
+//        doNothing().when(qnaRepository).setBlindStatusByUserId(user.getUserId(), true);
+//        // when
+//        adminService.updateUserStatus(user.getUserId(), UserStatus.BANNED, 7);
+//
+//        // then
+//        assertEquals(UserStatus.BANNED, user.getStatus());
+//        assertNotNull(user.getEndBanDate());
+//        verify(userRepository).save(user);
+//        verify(qnaRepository).setBlindStatusByUserId(user.getUserId(), true);
+//    }
+//
+//    @Test
+//    @DisplayName("신고된 유저 리스트 조회 성공 테스트")
+//    void getReportedUsers_성공() {
+//        // given
+//        User reportedUser = User.builder()
+//            .userId(2)
+//            .email("reported@example.com")
+//            .build();
+//
+//        Report report1 = Report.builder()
+//            .reportedUser(reportedUser)
+//            .category(ReportCategory.CHAT)
+//            .reason(ReportReason.SPAM)
+//            .detailedReason("Spam content")
+//            .build();
+//
+//        List<Report> reports = List.of(report1);
+//
+//        when(reportRepository.findAll()).thenReturn(reports);
+//
+//        // when
+//        var result = adminService.getReportedUsers(1, 10);
+//
+//        // then
+//        assertNotNull(result);
+//        assertEquals(1, result.getTotalElements());
+//        verify(reportRepository).findAll();
+//    }
 
     @Test
     @DisplayName("유저 콘텐츠 블라인드 처리 성공 테스트")

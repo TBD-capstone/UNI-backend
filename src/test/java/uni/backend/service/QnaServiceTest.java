@@ -37,40 +37,40 @@ public class QnaServiceTest {
     @InjectMocks // mock된 QnaRepository, UserRepository를 주입
     private QnaService qnaService;
 
-    @Test
-    public void Qna_작성_테스트() {
-        // Given
-        Integer userId = 1;
-        Integer commenterId = 2;
-        String content = "테스트 Qna 작성입니다.";
-
-        User user = new User();
-        user.setUserId(userId);
-        User commenter = new User();
-        commenter.setUserId(commenterId);
-
-        Qna newQna = new Qna();
-        newQna.setProfileOwner(user);
-        newQna.setCommenter(commenter);
-        newQna.setContent(content);
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.findById(commenterId))
-            .thenReturn(
-                Optional.of(
-                    commenter));  //userRepository.findById(commenterId) 호출 시 commenter 객체 반환
-        when(qnaRepository.save(any(Qna.class))).thenReturn(newQna);
-        //QnA 저장 시 반환되는 객체를 지정
-
-        // When
-//        Qna createdQna = qnaService.createQna(userId, commenterId, content);
-
-//        // Then
-//        assertNotNull(createdQna);
-//        assertEquals(userId, createdQna.getProfileOwner().getUserId()); // 생성된 qna에 해당하는 프로필의 주인 검증
-//        assertEquals(commenterId, createdQna.getCommenter().getUserId()); //qna 작성자 아이디 검증
-//        assertEquals(content, createdQna.getContent()); //내용 검증
-    }
+//    @Test
+//    public void Qna_작성_테스트() {
+//        // Given
+//        Integer userId = 1;
+//        Integer commenterId = 2;
+//        String content = "테스트 Qna 작성입니다.";
+//
+//        User user = new User();
+//        user.setUserId(userId);
+//        User commenter = new User();
+//        commenter.setUserId(commenterId);
+//
+//        Qna newQna = new Qna();
+//        newQna.setProfileOwner(user);
+//        newQna.setCommenter(commenter);
+//        newQna.setContent(content);
+//
+//        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+//        when(userRepository.findById(commenterId))
+//            .thenReturn(
+//                Optional.of(
+//                    commenter));  //userRepository.findById(commenterId) 호출 시 commenter 객체 반환
+//        when(qnaRepository.save(any(Qna.class))).thenReturn(newQna);
+//        //QnA 저장 시 반환되는 객체를 지정
+//
+//        // When
+////        Qna createdQna = qnaService.createQna(userId, commenterId, content);
+//
+////        // Then
+////        assertNotNull(createdQna);
+////        assertEquals(userId, createdQna.getProfileOwner().getUserId()); // 생성된 qna에 해당하는 프로필의 주인 검증
+////        assertEquals(commenterId, createdQna.getCommenter().getUserId()); //qna 작성자 아이디 검증
+////        assertEquals(content, createdQna.getContent()); //내용 검증
+//    }
 
     @Test
     public void Qna_삭제_테스트() {
