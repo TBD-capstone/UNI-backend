@@ -15,6 +15,8 @@ spring:
     servlet:
       session:
         timeout: 30m  # 세션 타임아웃을 30분으로 설정
+        cookie:
+          same-site: None
 
   logging:
     level:
