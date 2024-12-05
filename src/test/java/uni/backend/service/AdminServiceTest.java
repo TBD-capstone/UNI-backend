@@ -1,12 +1,9 @@
 package uni.backend.service;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,8 +13,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import uni.backend.domain.*;
-import uni.backend.domain.dto.UserResponse;
-import uni.backend.domain.util.AdminAccountUtil;
+import uni.backend.util.AdminAccountUtil;
 import uni.backend.repository.*;
 
 class AdminServiceTest {
