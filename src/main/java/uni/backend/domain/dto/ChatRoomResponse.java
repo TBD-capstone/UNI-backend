@@ -19,4 +19,5 @@ public class ChatRoomResponse {
     private Integer otherId;
     private String otherName;
     private String otherImgProf;
+    private long unreadCount;
 }
