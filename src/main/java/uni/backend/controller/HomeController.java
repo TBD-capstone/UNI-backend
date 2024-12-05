@@ -21,6 +21,7 @@ import uni.backend.service.PageTranslationService;
 import uni.backend.service.ProfileService;
 
 import java.util.List;
+import uni.backend.service.TranslationService;
 
 @RestController
 @RequestMapping("/api")
@@ -30,6 +31,9 @@ public class HomeController {
 
     @Autowired
     HomeService homeService;
+
+    @Autowired
+    TranslationService translationService;
 
     @Autowired
     PageTranslationService pageTranslationService;
