@@ -107,4 +107,15 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to mark messages as read.");
         }
     }
+
+    @PostMapping("/room/{roomId}/leave")
+    public ResponseEntity<String> leaveChatRoom(@PathVariable Integer roomId, Principal principal) {
+        try {
+            // 채팅방의 메시지 읽음 처리
+            chatService.markMessagesAsRead(roomId, principal.getName());
+            return ResponseEntity.ok("Successfully left the chat room.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to leave chat room.");
+        }
+    }
 }

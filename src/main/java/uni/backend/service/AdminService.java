@@ -1,7 +1,5 @@
 package uni.backend.service;
 
-import static uni.backend.domain.util.AdminAccountUtil.createEmailForm;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,9 +22,8 @@ import uni.backend.domain.ReviewReply;
 import uni.backend.domain.User;
 import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.ReportedUserResponse;
-import uni.backend.domain.dto.ReportedUserResponse.ReportDetail;
 import uni.backend.domain.dto.UserResponse;
-import uni.backend.domain.util.AdminAccountUtil;
+import uni.backend.util.AdminAccountUtil;
 import uni.backend.repository.ProfileRepository;
 import uni.backend.repository.QnaRepository;
 import uni.backend.repository.ReplyRepository;
