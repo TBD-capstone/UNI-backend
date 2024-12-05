@@ -1,4 +1,4 @@
-package uni.backend.domain.util;
+package uni.backend.util;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;

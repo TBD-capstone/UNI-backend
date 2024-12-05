@@ -27,6 +27,12 @@ public class ChatRoom {
 
     private LocalDateTime createdAt;
 
+    private LocalDateTime senderLastMessageAt;
+    private LocalDateTime receiverLastMessageAt;
+
+    private long senderUnreadCount;
+    private long receiverUnreadCount;
+
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
     private List<ChatMessage> chatMessages;
 

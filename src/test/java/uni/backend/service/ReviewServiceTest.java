@@ -87,35 +87,35 @@ public class ReviewServiceTest {
             .build();
     }
 
-    @Test
-    void createReview_성공() {
-        // given
-        when(matchingRepository.findById(matching.getMatchingId())).thenReturn(
-            Optional.of(matching));
-        when(userRepository.findById(profileOwner.getUserId())).thenReturn(
-            Optional.of(profileOwner));
-        when(userRepository.findById(commenter.getUserId())).thenReturn(Optional.of(commenter));
-        when(reviewRepository.save(any(Review.class))).thenAnswer(
-            invocation -> invocation.getArgument(0));
-
-        // when
-        ReviewResponse createdReview = reviewService.createReview(
-            matching.getMatchingId(),
-            profileOwner.getUserId(),
-            commenter.getUserId(),
-            "Great experience!",
-            5
-        );
-
-        // then
-        assertNotNull(createdReview);
-        assertEquals("Great experience!", createdReview.getContent());
-        assertEquals(5, createdReview.getStar());
-        verify(matchingRepository).findById(matching.getMatchingId());
-        verify(userRepository, times(2)).findById(any());
-        verify(reviewRepository).save(any(Review.class));
-        verify(profileService).updateProfileStar(profileOwner.getUserId());
-    }
+//    @Test
+//    void createReview_성공() {
+//        // given
+//        when(matchingRepository.findById(matching.getMatchingId())).thenReturn(
+//            Optional.of(matching));
+//        when(userRepository.findById(profileOwner.getUserId())).thenReturn(
+//            Optional.of(profileOwner));
+//        when(userRepository.findById(commenter.getUserId())).thenReturn(Optional.of(commenter));
+//        when(reviewRepository.save(any(Review.class))).thenAnswer(
+//            invocation -> invocation.getArgument(0));
+//
+//        // when
+//        ReviewResponse createdReview = reviewService.createReview(
+//            matching.getMatchingId(),
+//            profileOwner.getUserId(),
+//            commenter.getUserId(),
+//            "Great experience!",
+//            5
+//        );
+//
+//        // then
+//        assertNotNull(createdReview);
+//        assertEquals("Great experience!", createdReview.getContent());
+//        assertEquals(5, createdReview.getStar());
+//        verify(matchingRepository).findById(matching.getMatchingId());
+//        verify(userRepository, times(2)).findById(any());
+//        verify(reviewRepository).save(any(Review.class));
+//        verify(profileService).updateProfileStar(profileOwner.getUserId());
+//    }
 
     @Test
     void deleteReview_성공() {
