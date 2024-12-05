@@ -3,6 +3,8 @@ package uni.backend.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import uni.backend.domain.dto.HomeDataResponse;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
 import uni.backend.domain.dto.IndividualTranslationResponse;
+import uni.backend.domain.dto.MarkerResponse;
 import uni.backend.domain.dto.QnaResponse;
 import uni.backend.domain.dto.ReplyResponse;
 import uni.backend.domain.dto.ReviewReplyResponse;
@@ -20,6 +23,7 @@ import uni.backend.domain.dto.TranslationResponse;
 @Service
 public class PageTranslationService {
 
+    private static final Logger log = LoggerFactory.getLogger(PageTranslationService.class);
     @Autowired
     private TranslationService translationService;
 
@@ -72,7 +76,8 @@ public class PageTranslationService {
 
         String region = individualProfileResponse.getRegion();
         if (region != null && !region.isEmpty()) {
-            individualProfileResponse.setRegion(translateOneLine(region, acceptLanguage));
+            String translatedRegion = translateOneLine(region, acceptLanguage);
+            individualProfileResponse.setRegion(translatedRegion);
         }
     }
 
@@ -153,6 +158,36 @@ public class PageTranslationService {
             profile.setUnivName(data.getFirst());
             if (data.size() > 1) {
                 profile.setHashtags(data.subList(1, data.size()));
+            }
+        }
+
+    }
+
+    public void translateMarkers(List<MarkerResponse> markers, String acceptLanguage) {
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
+        TranslationRequest translationRequest = new TranslationRequest();
+        translationRequest.setSource_lang("ko");
+        translationRequest.setTarget_lang(acceptLanguage);
+        List<String> text = new ArrayList<>(List.of());
+
+        for (MarkerResponse individualMarkerResponse : markers) {
+            text.add(individualMarkerResponse.getName());
+            text.add(individualMarkerResponse.getDescription());
+        }
+        translationRequest.setText(text);
+
+        // 번역 요청 수행
+        TranslationResponse translationResponse = translationService.translate(translationRequest);
+
+        // 번역된 텍스트를 markers에 다시 설정
+        List<IndividualTranslationResponse> translations = translationResponse.getTranslations();
+        int index = 0; // 번역 텍스트의 인덱스를 추적
+        for (MarkerResponse marker : markers) {
+            if (index < translations.size()) {
+                marker.setName(translations.get(index++).getText()); // 이름 설정
+            }
+            if (index < translations.size()) {
+                marker.setDescription(translations.get(index++).getText()); // 설명 설정
             }
         }
 

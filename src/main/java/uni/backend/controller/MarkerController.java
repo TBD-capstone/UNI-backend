@@ -8,6 +8,7 @@ import uni.backend.domain.dto.MarkerRequest;
 import uni.backend.domain.dto.MarkerResponse;
 import uni.backend.domain.dto.Response;
 import uni.backend.service.MarkerService;
+import uni.backend.service.PageTranslationService;
 
 @RestController
 @RequestMapping("/api/markers")
@@ -15,9 +16,13 @@ public class MarkerController {
 
     private final MarkerService markerService;
 
+    private final PageTranslationService pageTranslationService;
+
     @Autowired
-    public MarkerController(MarkerService markerService) {
+    public MarkerController(MarkerService markerService,
+        PageTranslationService pageTranslationService) {
         this.markerService = markerService;
+        this.pageTranslationService = pageTranslationService;
     }
 
     // 마커 추가 API
@@ -47,8 +52,13 @@ public class MarkerController {
 
     // 사용자 마커 조회 API
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<MarkerResponse>> getUserMarkers(@PathVariable Integer userId) {
+    public ResponseEntity<List<MarkerResponse>> getUserMarkers(@PathVariable Integer userId,
+        @RequestHeader(name = "Accept-Language", required = false) String acceptLanguage) {
         List<MarkerResponse> markers = markerService.getUserMarkers(userId);
+
+        if (acceptLanguage != null && !acceptLanguage.isEmpty() && !markers.isEmpty()) {
+            pageTranslationService.translateMarkers(markers, acceptLanguage);
+        }
         return ResponseEntity.ok(markers);
     }
 }
