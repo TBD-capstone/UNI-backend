@@ -42,6 +42,17 @@ public class PageTranslationService {
             .collect(Collectors.toList());
     }
 
+    private String translateOneLine(String text, String acceptLanguage) {
+        List<String> oneList = new ArrayList<>(List.of());
+        oneList.add(text);
+        TranslationRequest translationRequest = new TranslationRequest();
+        translationRequest.setText(oneList);
+        translationRequest.setSource_lang("ko");
+        translationRequest.setTarget_lang(acceptLanguage);
+        TranslationResponse translationResponse = translationService.translate(translationRequest);
+        return translationResponse.getTranslations().getFirst().getText();
+    }
+
     public void translateProfileResponse(IndividualProfileResponse individualProfileResponse,
         String acceptLanguage) {
         if (individualProfileResponse == null || acceptLanguage == null) {
@@ -57,6 +68,11 @@ public class PageTranslationService {
         }
         if (data.size() > 2) {
             individualProfileResponse.setHashtags(data.subList(2, data.size()));
+        }
+
+        String region = individualProfileResponse.getRegion();
+        if (region != null && !region.isEmpty()) {
+            individualProfileResponse.setRegion(translateOneLine(region, acceptLanguage));
         }
     }
 
