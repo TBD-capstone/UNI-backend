@@ -103,6 +103,13 @@ public class ChatService {
                 .collect(Collectors.toList());
 
         unreadMessages.forEach(msg -> msg.setRead(true));
+
+        if (chatRoom.getSender().equals(receiver)) {
+            chatRoom.setSenderUnreadCount(0);
+        } else if (chatRoom.getReceiver().equals(receiver)) {
+            chatRoom.setReceiverUnreadCount(0);
+        }
+
         chatMessageRepository.saveAll(unreadMessages);
     }
 
@@ -229,18 +236,18 @@ public class ChatService {
                 .build();
     }
 
-    @Scheduled(fixedRate = 1200000, initialDelay = 3000) //초기 시간 3초, 대기시간 120초
+    @Scheduled(fixedRate = 60000, initialDelay = 3000) //초기 시간 3초, 대기시간 120초
     public void notifyUnreadMessages() {
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
 
         for (ChatRoom chatRoom : chatRooms) {
             if (chatRoom.getSenderUnreadCount() > 0 &&
                     chatRoom.getReceiverLastMessageAt() != null) {
-                sendUnreadMessageNotification(chatRoom.getReceiver().getEmail());
+                sendUnreadMessageNotification(chatRoom.getSender().getEmail());
             }
             if (chatRoom.getReceiverUnreadCount() > 0 &&
                     chatRoom.getSenderLastMessageAt() != null) {
-                sendUnreadMessageNotification(chatRoom.getSender().getEmail());
+                sendUnreadMessageNotification(chatRoom.getReceiver().getEmail());
             }
         }
     }
