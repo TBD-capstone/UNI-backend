@@ -32,27 +32,34 @@ public class MatchingController {
 
     @PostMapping("/request")
     public ResponseEntity<MatchingCreateResponse> createMatchRequest(
-        @RequestBody MatchingCreateRequest matchingCreateRequest) {
+            @RequestBody MatchingCreateRequest matchingCreateRequest) {
 
         User requester = userService.findById(matchingCreateRequest.getRequesterId());
         User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
+        // 중복 매칭 확인
+        Optional<Matching> existingMatching = matchingService.findPendingRequest(requester.getUserId(), receiver.getUserId());
+        if (existingMatching.isPresent()) {
+            MatchingCreateResponse response = MatchingCreateResponse.from(existingMatching.get());
+            return ResponseEntity.ok(response);
+        }
+
+        // 새로운 요청 생성
         Matching request = Matching.builder()
-            .requester(requester)
-            .receiver(receiver)
-            .status(Matching.Status.PENDING)
-            .build();
+                .requester(requester)
+                .receiver(receiver)
+                .status(Matching.Status.PENDING)
+                .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
         MatchingCreateResponse response = MatchingCreateResponse.from(savedRequest);
 
         messagingTemplate.convertAndSend(
-            "/sub/match-request/" + matchingCreateRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
+                "/sub/match-request/" + matchingCreateRequest.getReceiverId(), "매칭 요청이 도착했습니다.");
 
         return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/respond")
     public ResponseEntity<String> respondToMatchRequest(
@@ -83,11 +90,18 @@ public class MatchingController {
         User requester = userService.findById(matchingCreateRequest.getRequesterId());
         User receiver = userService.findById(matchingCreateRequest.getReceiverId());
 
+        // 중복 매칭 확인
+        Optional<Matching> existingMatching = matchingService.findPendingRequest(requester.getUserId(), receiver.getUserId());
+        if (existingMatching.isPresent()) {
+            return MatchingCreateResponse.from(existingMatching.get());
+        }
+
+        // 새로운 요청 생성
         Matching request = Matching.builder()
-            .requester(requester)
-            .receiver(receiver)
-            .status(Matching.Status.PENDING)
-            .build();
+                .requester(requester)
+                .receiver(receiver)
+                .status(Matching.Status.PENDING)
+                .build();
 
         Matching savedRequest = matchingService.createRequest(request, requester, receiver);
 
@@ -157,5 +171,17 @@ public class MatchingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/pending/{requesterId}/{receiverId}")
+    public ResponseEntity<MatchingCreateResponse> getPendingMatching(
+            @PathVariable Integer requesterId, @PathVariable Integer receiverId) {
 
+        // 대기 중인 요청 확인
+        Optional<Matching> existingMatching = matchingService.findPendingRequest(requesterId, receiverId);
+        if (existingMatching.isPresent()) {
+            MatchingCreateResponse response = MatchingCreateResponse.from(existingMatching.get());
+            return ResponseEntity.ok(response);
+        }
+
+        return ResponseEntity.noContent().build(); // 대기 중인 요청이 없으면 No Content 응답
+    }
 }
