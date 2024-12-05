@@ -1,6 +1,7 @@
 package uni.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.ChatMessage;
@@ -24,6 +25,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final TranslationService translationService;
+    private final UserStatusScheduler userStatusScheduler;
 
     // 채팅방 생성
     @Transactional
@@ -62,6 +64,16 @@ public class ChatService {
                         .isRead(false)
                         .build()
         );
+
+        // 마지막 메시지 시간 갱신
+        if (chatRoom.getSender().equals(sender)) {
+            chatRoom.setSenderLastMessageAt(LocalDateTime.now());
+            chatRoom.setReceiverUnreadCount(chatRoom.getReceiverUnreadCount() + 1);
+        } else {
+            chatRoom.setReceiverLastMessageAt(LocalDateTime.now());
+            chatRoom.setSenderUnreadCount(chatRoom.getSenderUnreadCount() + 1);
+        }
+        chatRoomRepository.save(chatRoom);
 
         return toChatMessageResponse(message);
     }
@@ -185,6 +197,13 @@ public class ChatService {
         long unreadCount = messages.stream()
                 .filter(msg -> !msg.isRead() && msg.getReceiver().equals(currentUser))
                 .count();
+        if (chatRoom.getSender().equals(currentUser)) {
+            chatRoom.setSenderUnreadCount(unreadCount);
+        } else if (chatRoom.getReceiver().equals(currentUser)) {
+            chatRoom.setReceiverUnreadCount(unreadCount);
+        }
+
+        chatRoomRepository.save(chatRoom);
 
         return ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getChatRoomId())
@@ -209,4 +228,26 @@ public class ChatService {
                 .sendAt(message.getSendAt())
                 .build();
     }
+
+    @Scheduled(fixedRate = 1200000, initialDelay = 3000) //초기 시간 3초, 대기시간 120초
+    public void notifyUnreadMessages() {
+        List<ChatRoom> chatRooms = chatRoomRepository.findAll();
+
+        for (ChatRoom chatRoom : chatRooms) {
+            if (chatRoom.getSenderUnreadCount() > 0 &&
+                    chatRoom.getReceiverLastMessageAt() != null) {
+                sendUnreadMessageNotification(chatRoom.getReceiver().getEmail());
+            }
+            if (chatRoom.getReceiverUnreadCount() > 0 &&
+                    chatRoom.getSenderLastMessageAt() != null) {
+                sendUnreadMessageNotification(chatRoom.getSender().getEmail());
+            }
+        }
+    }
+
+    private void sendUnreadMessageNotification(String email) {
+        // UserStatusScheduler로 이메일 전송 위임
+        userStatusScheduler.sendEmailNotification(email, "읽지 않은 메시지가 있습니다.");
+    }
+
 }
