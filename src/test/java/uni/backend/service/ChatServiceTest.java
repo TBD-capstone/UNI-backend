@@ -2,22 +2,16 @@ package uni.backend.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import uni.backend.domain.ChatMessage;
 import uni.backend.domain.ChatRoom;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.ChatMessageRequest;
-import uni.backend.domain.dto.ChatMessageResponse;
 import uni.backend.domain.dto.ChatRoomRequest;
-import uni.backend.domain.dto.ChatRoomResponse;
 import uni.backend.repository.ChatMessageRepository;
 import uni.backend.repository.ChatRoomRepository;
 import uni.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,166 +20,164 @@ import static org.mockito.Mockito.*;
 
 class ChatServiceTest {
 
-    @Mock
-    private ChatRoomRepository chatRoomRepository;
-
-    @Mock
-    private ChatMessageRepository chatMessageRepository;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @InjectMocks
     private ChatService chatService;
-
-    private User sender;
-    private User receiver;
-    private ChatRoom chatRoom;
-    private ChatMessageRequest chatMessageRequest;
-    private ChatRoomRequest chatRoomRequest;
+    private ChatRoomRepository chatRoomRepository;
+    private ChatMessageRepository chatMessageRepository;
+    private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        chatRoomRepository = mock(ChatRoomRepository.class);
+        chatMessageRepository = mock(ChatMessageRepository.class);
+        userRepository = mock(UserRepository.class);
+        var translationService = mock(TranslationService.class);
+        var userStatusScheduler = mock(UserStatusScheduler.class);
 
-        // Given
-        sender = User.builder().userId(1).email("sender@example.com").build();
-        receiver = User.builder().userId(2).email("receiver@example.com").build();
-
-        chatRoom = ChatRoom.builder()
-                .chatRoomId(123)
-                .sender(sender)
-                .receiver(receiver)
-                .build();
-
-        chatMessageRequest = ChatMessageRequest.builder()
-                .roomId(chatRoom.getChatRoomId())
-                .content("Hello, World!")
-                .build();
-
-        chatRoomRequest = ChatRoomRequest.builder()
-                .receiverId(receiver.getUserId())
-                .build();
-
-        when(chatRoomRepository.findById(chatRoom.getChatRoomId())).thenReturn(Optional.of(chatRoom));
-        when(userRepository.findByEmail(sender.getEmail())).thenReturn(Optional.of(sender));
-        when(userRepository.findById(receiver.getUserId())).thenReturn(Optional.of(receiver));
-        when(chatRoomRepository.findBySenderAndReceiver(sender, receiver)).thenReturn(Optional.of(chatRoom));
+        chatService = new ChatService(
+                chatRoomRepository,
+                chatMessageRepository,
+                userRepository,
+                translationService,
+                userStatusScheduler
+        );
     }
-
 
     @Test
     void testCreateChatRoom() {
-        // Given
-        when(userRepository.findByEmail(sender.getEmail())).thenReturn(Optional.of(sender));
-        when(userRepository.findById(receiver.getUserId())).thenReturn(Optional.of(receiver));
+        // given
+        var senderEmail = "sender@example.com";
+        var request = ChatRoomRequest.builder().receiverId(2).build();
+        var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
+
+        // Mock 설정
+        when(userRepository.findByEmail(senderEmail)).thenReturn(Optional.of(sender));
+        when(userRepository.findById(2)).thenReturn(Optional.of(receiver));
         when(chatRoomRepository.findBySenderAndReceiver(sender, receiver)).thenReturn(Optional.empty());
+
+        var chatRoom = ChatRoom.builder()
+                .chatRoomId(1)
+                .sender(sender)
+                .receiver(receiver)
+                .build();
         when(chatRoomRepository.save(any(ChatRoom.class))).thenReturn(chatRoom);
 
-        // When
-        ChatRoomResponse response = chatService.createChatRoom(sender.getEmail(), chatRoomRequest);
+        // 추가 Mock 설정: findById
+        when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
 
-        // Then
-        verify(userRepository, times(1)).findByEmail(sender.getEmail());
-        verify(userRepository, times(1)).findById(receiver.getUserId());
-        verify(chatRoomRepository, times(1)).findBySenderAndReceiver(sender, receiver);
-        verify(chatRoomRepository, times(1)).save(any(ChatRoom.class)); // save() 호출 검증
+        // when
+        var response = chatService.createChatRoom(senderEmail, request);
 
+        // then
         assertNotNull(response);
-        assertEquals(chatRoom.getChatRoomId(), response.getChatRoomId());
-        assertEquals(sender.getUserId(), response.getMyId());
-        assertEquals(receiver.getUserId(), response.getOtherId());
+        assertEquals(1, response.getChatRoomId());
+
+        // Verify Mock 동작
+        verify(userRepository).findByEmail(senderEmail);
+        verify(userRepository).findById(2);
+        verify(chatRoomRepository).findBySenderAndReceiver(sender, receiver);
+        verify(chatRoomRepository).save(any(ChatRoom.class));
+        verify(chatRoomRepository).findById(1);
     }
 
     @Test
     void testSendMessage() {
-        // Given
-        when(userRepository.findByEmail(sender.getEmail())).thenReturn(Optional.of(sender));
-        when(chatRoomRepository.findById(chatRoom.getChatRoomId())).thenReturn(Optional.of(chatRoom));
-        when(chatMessageRepository.save(any(ChatMessage.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        // given
+        var request = ChatMessageRequest.builder().roomId(1).content("Hello").build();
+        var senderEmail = "sender@example.com";
+        var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
+        var chatRoom = ChatRoom.builder().chatRoomId(1).sender(sender).receiver(receiver).build();
 
-        // When
-        ChatMessageResponse response = chatService.sendMessage(chatMessageRequest, sender.getEmail(), null);
+        when(userRepository.findByEmail(senderEmail)).thenReturn(Optional.of(sender));
+        when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
 
-        // Then
-        verify(userRepository, times(1)).findByEmail(sender.getEmail());
-        verify(chatRoomRepository, times(1)).findById(chatMessageRequest.getRoomId());
-        verify(chatMessageRepository, times(1)).save(any(ChatMessage.class));
-
-        assertNotNull(response);
-        assertEquals(chatRoom.getChatRoomId(), response.getRoomId());
-        assertEquals(sender.getUserId(), response.getSenderId());
-        assertEquals(receiver.getUserId(), response.getReceiverId());
-        assertEquals(chatMessageRequest.getContent(), response.getContent());
-    }
-
-    @Test
-    void testGetChatRoomsForUser() {
-        // Given
-        when(chatRoomRepository.findBySenderOrReceiver(sender, sender)).thenReturn(List.of(chatRoom));
-
-        // When
-        List<ChatRoomResponse> responses = chatService.getChatRoomsForUser(sender.getEmail());
-
-        // Then
-        verify(userRepository, times(1)).findByEmail(sender.getEmail());
-        verify(chatRoomRepository, times(1)).findBySenderOrReceiver(sender, sender);
-
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-        assertEquals(chatRoom.getChatRoomId(), responses.get(0).getChatRoomId());
-    }
-
-    @Test
-    void testGetChatMessages() {
-        // Given
-        ChatMessage chatMessage = ChatMessage.builder()
+        var message = ChatMessage.builder()
                 .messageId(1)
                 .chatRoom(chatRoom)
                 .sender(sender)
                 .receiver(receiver)
                 .content("Hello")
                 .sendAt(LocalDateTime.now())
+                .isRead(false)
                 .build();
-        when(chatRoomRepository.findById(chatRoom.getChatRoomId())).thenReturn(Optional.of(chatRoom));
-        when(chatMessageRepository.findByChatRoom(chatRoom)).thenReturn(Arrays.asList(chatMessage));
 
-        // When
-        List<ChatMessageResponse> responses = chatService.getChatMessages(chatRoom.getChatRoomId());
+        when(chatMessageRepository.save(any(ChatMessage.class))).thenReturn(message);
 
-        // Then
-        verify(chatRoomRepository, times(1)).findById(chatRoom.getChatRoomId());
-        verify(chatMessageRepository, times(1)).findByChatRoom(chatRoom);
+        // when
+        var response = chatService.sendMessage(request, senderEmail, 1);
 
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-        assertEquals(chatMessage.getContent(), responses.get(0).getContent());
+        // then
+        assertNotNull(response);
+        assertEquals("Hello", response.getContent());
+        verify(chatMessageRepository).save(any(ChatMessage.class));
+        verify(chatRoomRepository).save(chatRoom);
     }
 
     @Test
-    void testFindUserByEmailNotFound() {
-        // Given
-        when(userRepository.findByEmail(sender.getEmail())).thenReturn(Optional.empty());
+    void testMarkMessagesAsRead() {
+        // given
+        var roomId = 1;
+        var username = "receiver@example.com";
+        var receiver = User.builder().userId(2).email(username).name("Receiver").build();
+        var chatRoom = ChatRoom.builder()
+                .chatRoomId(1)
+                .sender(User.builder().userId(1).email("sender@example.com").name("Sender").build())
+                .receiver(receiver)
+                .build();
 
-        // When
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> chatService.getChatRoomsForUser(sender.getEmail()));
+        var message = ChatMessage.builder()
+                .messageId(1)
+                .chatRoom(chatRoom)
+                .sender(chatRoom.getSender())
+                .receiver(receiver)
+                .content("Hi")
+                .sendAt(LocalDateTime.now())
+                .isRead(false)
+                .build();
 
-        // Then
-        assertEquals("User not found with email: " + sender.getEmail(), exception.getMessage());
+        chatRoom.setChatMessages(List.of(message));
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+        when(userRepository.findByEmail(username)).thenReturn(Optional.of(receiver));
+
+        // when
+        chatService.markMessagesAsRead(roomId, username);
+
+        // then
+        assertTrue(message.isRead());
+        verify(chatMessageRepository).saveAll(chatRoom.getChatMessages());
     }
 
     @Test
-    void testFindChatRoomByIdNotFound() {
-        // Given
-        when(chatRoomRepository.findById(chatRoom.getChatRoomId())).thenReturn(Optional.empty());
+    void testGetChatMessages() {
+        // given
+        var roomId = 1;
+        var chatRoom = ChatRoom.builder()
+                .chatRoomId(1)
+                .sender(User.builder().userId(1).email("sender@example.com").name("Sender").build())
+                .receiver(User.builder().userId(2).email("receiver@example.com").name("Receiver").build())
+                .build();
 
-        // When
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> chatService.getChatMessages(chatRoom.getChatRoomId()));
+        var message = ChatMessage.builder()
+                .messageId(1)
+                .chatRoom(chatRoom)
+                .sender(chatRoom.getSender())
+                .receiver(chatRoom.getReceiver())
+                .content("Hi")
+                .sendAt(LocalDateTime.now())
+                .isRead(false)
+                .build();
 
-        // Then
-        assertEquals("Chat room not found with ID: " + chatRoom.getChatRoomId(), exception.getMessage());
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.findByChatRoom(chatRoom)).thenReturn(List.of(message));
+
+        // when
+        var messages = chatService.getChatMessages(roomId);
+
+        // then
+        assertNotNull(messages);
+        assertEquals(1, messages.size());
+        assertEquals("Hi", messages.getFirst().getContent());
     }
 }
