@@ -1,32 +1,20 @@
 package uni.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
-import uni.backend.domain.Role;
 import uni.backend.domain.User;
-import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.*;
-import uni.backend.exception.UserStatusException;
-import uni.backend.repository.UserRepository;
+import uni.backend.security.JwtUtils;
+import uni.backend.service.AuthService;
 import uni.backend.service.UserService;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -35,12 +23,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final AuthenticationManager authenticationManager;
-
-    @Autowired
+    private final JwtUtils jwtUtils;
+    private final AuthService authService;
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // SecurityConfig에 있는 passwordEncoder를 가져와야 함
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @PostMapping("/signup")
     public ResponseEntity<Response> signup(@RequestBody SignupRequest signupRequest) {
@@ -55,68 +41,32 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
-        HttpServletRequest request) {
-        try {
-            // 인증 토큰 생성
-            UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
-                    loginRequest.getPassword());
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        return ResponseEntity.ok(authService.login(loginRequest));
+    }
 
-            // 인증 시도
-            Authentication authentication = authenticationManager.authenticate(authToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // 세션 생성 및 SecurityContext 설정
-            request.getSession(true)
-                .setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-
-            // 인증된 사용자 정보 가져오기
-            User user = (User) authentication.getPrincipal();
-
-            // 성공 응답 전송
-            return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
-                user.getName(), user.getUserId(),
-                user.getRole() == Role.KOREAN, user.getProfile().getImgProf(),
-                user.getProfile().getImgBack()));
-        } catch (InternalAuthenticationServiceException e) {
-            if (e.getCause() instanceof UserStatusException) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new Response("fail", e.getCause().getMessage()));
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new Response("fail", "wrong information"));
-        } catch (AuthenticationException e) {
-            // 일반적인 로그인 실패 처리 (잘못된 이메일이나 비밀번호)
-//            log.error("AuthenticationException occurred during login: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new Response("fail", "wrong information"));
-        }
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        Map<String, String> tokens = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(tokens);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response,
-        Authentication auth) {
-        if (auth != null) {
-            new SecurityContextLogoutHandler().logout(request, response, auth);
-            return ResponseEntity.ok(Response.successMessage("logged out successfully"));
-        } else {
-            return ResponseEntity.status(400).body(Response.failMessage("logout failed"));
-        }
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String token = jwtUtils.getJwtFromRequest(request); // 헤더에서 JWT 추출
+        authService.logout(token); // 리프레시 토큰 삭제
+        return ResponseEntity.ok(new Response("success", "Logged out successfully"));
     }
 
     @GetMapping("/loginCheck")
     public ResponseEntity<?> loginCheck(@AuthenticationPrincipal User user) {
-        if (user == null) { // 인증되지 않은 경우
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not logged in.");
+        try {
+            MeResponse meResponse = authService.getLoggedInUserInfo(user);
+            return ResponseEntity.ok(meResponse);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", user.getUserId());
-        response.put("name", user.getName());
-        response.put("email", user.getEmail());
-        response.put("role", user.getRole() != null ? user.getRole().toString() : "ROLE_NOT_SET");
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")
