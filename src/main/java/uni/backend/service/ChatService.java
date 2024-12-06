@@ -78,20 +78,6 @@ public class ChatService {
         return toChatMessageResponse(message);
     }
 
-    //개별 메시지 읽음 처리
-    @Transactional
-    public void markMessageAsRead(Integer messageId, Integer roomId, String username) {
-        ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
-
-        if (!message.getReceiver().getEmail().equals(username)) {
-            throw new IllegalArgumentException("Only the receiver can mark the message as read");
-        }
-
-        message.setRead(true);
-        chatMessageRepository.save(message);
-    }
-
     //특정 채팅방 메시지 읽음 처리
     @Transactional
     public void markMessagesAsRead(Integer roomId, String username) {
@@ -111,20 +97,6 @@ public class ChatService {
         }
 
         chatMessageRepository.saveAll(unreadMessages);
-    }
-
-    @Transactional
-    public void markMessagesAsRead(Integer roomId, List<Integer> messageIds, String userEmail) {
-        // 메시지 ID 목록을 기반으로 읽음 상태 업데이트
-        List<ChatMessage> messagesToMarkAsRead = chatMessageRepository.findAllById(messageIds);
-
-        for (ChatMessage message : messagesToMarkAsRead) {
-            if (message.getChatRoom().getChatRoomId().equals(roomId) && message.getReceiver().getEmail().equals(userEmail)) {
-                message.setRead(true);
-            }
-        }
-
-        chatMessageRepository.saveAll(messagesToMarkAsRead);
     }
 
     // 채팅방 조회
@@ -210,8 +182,6 @@ public class ChatService {
             chatRoom.setReceiverUnreadCount(unreadCount);
         }
 
-        chatRoomRepository.save(chatRoom);
-
         return ChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getChatRoomId())
                 .chatMessages(getChatMessages(chatRoom.getChatRoomId()))
@@ -236,24 +206,29 @@ public class ChatService {
                 .build();
     }
 
-    @Scheduled(fixedRate = 60000, initialDelay = 3000) //초기 시간 3초, 대기시간 120초
+    @Scheduled(cron = "0 0 0 * * *")
     public void notifyUnreadMessages() {
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
 
         for (ChatRoom chatRoom : chatRooms) {
+            LocalDateTime now = LocalDateTime.now();
+
+            // Sender 가 읽지 않은 메시지가 있고, 마지막 메시지가 1일 이상 지난 경우
             if (chatRoom.getSenderUnreadCount() > 0 &&
-                    chatRoom.getReceiverLastMessageAt() != null) {
+                    chatRoom.getReceiverLastMessageAt() != null &&
+                    chatRoom.getReceiverLastMessageAt().isBefore(now.minusDays(1))) {
                 sendUnreadMessageNotification(chatRoom.getSender().getEmail());
             }
+            // Receiver 가 읽지 않은 메시지가 있고, 마지막 메시지가 1일 이상 지난 경우
             if (chatRoom.getReceiverUnreadCount() > 0 &&
-                    chatRoom.getSenderLastMessageAt() != null) {
+                    chatRoom.getSenderLastMessageAt() != null &&
+                    chatRoom.getSenderLastMessageAt().isBefore(now.minusDays(1))) {
                 sendUnreadMessageNotification(chatRoom.getReceiver().getEmail());
             }
         }
     }
 
     private void sendUnreadMessageNotification(String email) {
-        // UserStatusScheduler로 이메일 전송 위임
         userStatusScheduler.sendEmailNotification(email, "읽지 않은 메시지가 있습니다.");
     }
 
