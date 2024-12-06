@@ -3,7 +3,10 @@ package uni.backend.controller;
 import jakarta.persistence.criteria.CriteriaBuilder.In;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +39,11 @@ public class ProfileController {
 
 
     @GetMapping("/user/me")
-    public ResponseEntity<MeResponse> getCurrentUser() {
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
         // 서비스에서 유저 정보를 가져와 응답
         MeResponse userProfile = userService.getCurrentUserProfile();
         return ResponseEntity.ok(userProfile);

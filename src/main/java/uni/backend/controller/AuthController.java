@@ -2,6 +2,7 @@ package uni.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,8 +69,11 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // 세션 생성 및 SecurityContext 설정
-            request.getSession(true)
-                .setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            HttpSession session = request.getSession(true);
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+            // 세션 ID 반환
+            String sessionId = session.getId();
 
             // 인증된 사용자 정보 가져오기
             User user = (User) authentication.getPrincipal();
@@ -78,7 +82,7 @@ public class AuthController {
             return ResponseEntity.ok(new LoginResponse("success", "logged in successfully",
                 user.getName(), user.getUserId(),
                 user.getRole() == Role.KOREAN, user.getProfile().getImgProf(),
-                user.getProfile().getImgBack()));
+                user.getProfile().getImgBack(), sessionId));
         } catch (InternalAuthenticationServiceException e) {
             if (e.getCause() instanceof UserStatusException) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)

@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.cors.CorsConfiguration;
@@ -32,15 +33,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정
+                .csrf(AbstractHttpConfigurer::disable) // CSRF 비활성화
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless 설정
+                .addFilterBefore(new CustomSessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class) // 커스텀 필터 추가
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/home", "/api/auth/**", "/ws/**").permitAll()
-//                      .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider());
+                        .requestMatchers("/api/home", "/api/auth/**", "/ws/**").permitAll() // 특정 경로 허용
+//                      .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 역할 설정
+                        .anyRequest().authenticated()) // 나머지 요청 인증 필요
+                .authenticationProvider(authenticationProvider()); // 인증 제공자 설정
 
         return http.build();
     }

@@ -1,5 +1,6 @@
 package uni.backend.service;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import uni.backend.domain.User;
 
@@ -18,4 +19,6 @@ public interface UserService extends UserDetailsService {
     boolean verifyResetCode(String email, String code);
 
     void resetPassword(String email, String newPassword);
+
+    User getUserBySessionId(String sessionId, HttpSession session);
 }

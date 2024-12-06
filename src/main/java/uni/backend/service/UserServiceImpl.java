@@ -1,9 +1,12 @@
 package uni.backend.service;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -111,5 +114,27 @@ public class UserServiceImpl implements UserService {
     public User findById(Integer userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다."));
+    }
+
+    public User getUserBySessionId(String sessionId, HttpSession session) {
+        // 세션 아이디 확인
+        if (!sessionId.equals(session.getId())) {
+            throw new IllegalArgumentException("Invalid session ID");
+        }
+
+        // SecurityContext를 가져옴
+        SecurityContext securityContext = (SecurityContext) session.getAttribute("SPRING_SECURITY_CONTEXT");
+        if (securityContext == null) {
+            throw new IllegalStateException("No security context found for session ID: " + sessionId);
+        }
+
+        // Authentication 객체를 가져옴
+        Authentication authentication = securityContext.getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("No authenticated user found for session ID: " + sessionId);
+        }
+
+        // 인증된 사용자 정보 반환
+        return (User) authentication.getPrincipal();
     }
 }
