@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uni.backend.domain.Report;
 import uni.backend.domain.User;
+import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.ReportRequest;
 import uni.backend.repository.ReportRepository;
 import uni.backend.repository.UserRepository;
@@ -18,6 +19,7 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final AdminService adminService; // AdminService 주입
 
     @Transactional
     public void createReport(Integer userId, ReportRequest reportRequest) {
@@ -39,9 +41,13 @@ public class ReportService {
 
         reportRepository.save(report);
 
-        // 신고당한 유저의 신고 횟수와 마지막 신고 사유 업데이트
         reportedUser.setReportCount(reportedUser.getReportCount() + 1);
         reportedUser.setLastReportReason(reportRequest.getDetailedReason());
+
+        if (reportedUser.getReportCount() >= 5) {
+            reportedUser.setStatus(UserStatus.BANNED); // 상태 변경
+            adminService.blindAllContentByUser(userId); // 블라인드 처리 호출
+        }
 
         userRepository.save(reportedUser);
     }
