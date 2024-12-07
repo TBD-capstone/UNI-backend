@@ -88,6 +88,12 @@ public class ChatService {
                 .filter(msg -> !msg.isRead() && msg.getReceiver().equals(receiver))
                 .collect(Collectors.toList());
 
+        // 빈 리스트일 경우 saveAll 호출 생략
+        if (!unreadMessages.isEmpty()) {
+            unreadMessages.forEach(msg -> msg.setRead(true));
+            chatMessageRepository.saveAll(unreadMessages);
+        }
+
         unreadMessages.forEach(msg -> msg.setRead(true));
 
         if (chatRoom.getSender().equals(receiver)) {
@@ -96,7 +102,7 @@ public class ChatService {
             chatRoom.setReceiverUnreadCount(0);
         }
 
-        chatMessageRepository.saveAll(unreadMessages);
+        chatRoomRepository.save(chatRoom);
     }
 
     // 채팅방 조회
@@ -176,6 +182,7 @@ public class ChatService {
         long unreadCount = messages.stream()
                 .filter(msg -> !msg.isRead() && msg.getReceiver().equals(currentUser))
                 .count();
+
         if (chatRoom.getSender().equals(currentUser)) {
             chatRoom.setSenderUnreadCount(unreadCount);
         } else if (chatRoom.getReceiver().equals(currentUser)) {
