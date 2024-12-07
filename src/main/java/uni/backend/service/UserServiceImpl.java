@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (user.getStatus() == UserStatus.BANNED) {
             log.warn("Banned user {} tried to log in", user.getEmail());
@@ -80,16 +80,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void resetPassword(String token, String newPassword) {
-        String email;
-        try {
-            email = jwtUtils.getEmailFromJwtToken(token);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid reset token.", e);
-        }
-
+    public void resetPassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No user found with email: " + email));
+            .orElseThrow(() -> new IllegalArgumentException("No user found with email: " + email));
 
         user.setPassword(new BCryptPasswordEncoder().encode(newPassword));
         userRepository.save(user);
@@ -99,15 +92,15 @@ public class UserServiceImpl implements UserService {
         // SecurityContext 에서 현재 사용자 가져오기
         String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new IllegalArgumentException("로그인된 사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("로그인된 사용자를 찾을 수 없습니다."));
 
         return MeResponse.builder()
-                .userId(currentUser.getUserId())
-                .name(currentUser.getName())
-                .role(currentUser.getRole())
-                .imgProf(
-                        currentUser.getProfile() != null ? currentUser.getProfile().getImgProf() : null)
-                .build();
+            .userId(currentUser.getUserId())
+            .name(currentUser.getName())
+            .role(currentUser.getRole())
+            .imgProf(
+                currentUser.getProfile() != null ? currentUser.getProfile().getImgProf() : null)
+            .build();
     }
 
 
@@ -119,6 +112,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findById(Integer userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다."));
     }
 }

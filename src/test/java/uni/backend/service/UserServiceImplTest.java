@@ -119,8 +119,8 @@ class UserServiceImplTest {
 
         // When & Then
         IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> userService.generateAndSendResetCode(email)
+            IllegalArgumentException.class,
+            () -> userService.generateAndSendResetCode(email)
         );
 
         assertEquals("No user found with email: " + email, exception.getMessage());
@@ -147,6 +147,28 @@ class UserServiceImplTest {
     }
 
     @Test
+    void givenEmailMismatch_whenVerifyResetCode_thenReturnFalse() {
+        // Given
+        String email = "reset@uni.com";
+        String token = "valid-token";
+        String differentEmail = "mismatch@uni.com";
+
+        // Mocking: jwtUtils.getEmailFromJwtToken will return a different email
+        when(jwtUtils.getEmailFromJwtToken(token)).thenReturn(differentEmail);
+
+        // No need to mock userRepository.findByEmail as it won't be called in this case
+
+        // When
+        boolean isValid = userService.verifyResetCode(email, token);
+
+        // Then
+        assertFalse(isValid);
+        verify(jwtUtils, times(1)).getEmailFromJwtToken(token);
+        verify(userRepository, never()).findByEmail(
+            anyString()); // Ensure findByEmail is never called
+    }
+
+    @Test
     void givenInvalidToken_whenVerifyResetCode_thenReturnFalse() {
         // Given
         String email = "invalid@uni.com";
@@ -163,18 +185,17 @@ class UserServiceImplTest {
     }
 
     @Test
-    void givenValidToken_whenResetPassword_thenPasswordUpdated() {
+    void givenValidEmailAndToken_whenResetPassword_thenPasswordUpdated() {
         // Given
-        String token = "valid-token";
         String email = "reset@uni.com";
         String newPassword = "newPassword";
         User user = new User();
         user.setEmail(email);
-        when(jwtUtils.getEmailFromJwtToken(token)).thenReturn(email);
+
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         // When
-        userService.resetPassword(token, newPassword);
+        userService.resetPassword(email, newPassword);
 
         // Then
         assertTrue(new BCryptPasswordEncoder().matches(newPassword, user.getPassword()));
@@ -182,22 +203,20 @@ class UserServiceImplTest {
     }
 
     @Test
-    void givenInvalidToken_whenResetPassword_thenThrowException() {
+    void givenInvalidEmail_whenResetPassword_thenThrowException() {
         // Given
-        String token = "invalid-token";
-        when(jwtUtils.getEmailFromJwtToken(token)).thenThrow(new RuntimeException("Token parsing failed"));
+        String email = "nonexistent@uni.com";
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // When & Then
         IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> userService.resetPassword(token, "newPassword")
+            IllegalArgumentException.class,
+            () -> userService.resetPassword(email, "newPassword")
         );
 
-        assertEquals("Invalid reset token.", exception.getMessage());
-        assertNotNull(exception.getCause());
-        assertEquals("Token parsing failed", exception.getCause().getMessage());
-        verify(jwtUtils, times(1)).getEmailFromJwtToken(token);
-        verify(userRepository, never()).findByEmail(anyString());
+        assertEquals("No user found with email: " + email, exception.getMessage());
+        verify(userRepository, times(1)).findByEmail(email);
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -294,8 +313,8 @@ class UserServiceImplTest {
 
         // When & Then
         IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> userService.findById(userId)
+            IllegalArgumentException.class,
+            () -> userService.findById(userId)
         );
 
         assertEquals("해당 ID의 사용자를 찾을 수 없습니다.", exception.getMessage());

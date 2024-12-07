@@ -88,6 +88,7 @@ public class AuthController {
             userService.resetPassword(request.getEmail(), request.getNewPassword());
             return ResponseEntity.ok(Response.successMessage("Password has been reset"));
         } catch (Exception e) {
+            log.error("Error resetting password: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(Response.failMessage(e.getMessage()));
         }
     }
