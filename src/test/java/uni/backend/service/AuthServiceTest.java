@@ -49,9 +49,9 @@ class AuthServiceTest {
         String password = "password";
 
         LoginRequest loginRequest = LoginRequest.builder()
-                .email(email)
-                .password(password)
-                .build();
+            .email(email)
+            .password(password)
+            .build();
 
         User user = new User();
         user.setEmail(email);
@@ -66,7 +66,7 @@ class AuthServiceTest {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
+            .thenReturn(authentication);
         when(jwtUtils.generateJwtToken(email, Role.KOREAN)).thenReturn("access-token");
 
         RefreshToken refreshToken = new RefreshToken();
@@ -91,9 +91,9 @@ class AuthServiceTest {
         String password = "password";
 
         LoginRequest loginRequest = LoginRequest.builder()
-                .email(email)
-                .password(password)
-                .build();
+            .email(email)
+            .password(password)
+            .build();
 
         User user = new User();
         user.setEmail(email);
@@ -108,7 +108,7 @@ class AuthServiceTest {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
+            .thenReturn(authentication);
         when(jwtUtils.generateJwtToken(email, Role.ADMIN)).thenReturn("access-token");
 
         RefreshToken refreshToken = new RefreshToken();
@@ -199,8 +199,8 @@ class AuthServiceTest {
     void givenNullUser_whenGetLoggedInUserInfo_thenThrowException() {
         // When & Then
         IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> authService.getLoggedInUserInfo(null)
+            IllegalStateException.class,
+            () -> authService.getLoggedInUserInfo(null)
         );
         assertEquals("User is not logged in.", exception.getMessage());
     }
