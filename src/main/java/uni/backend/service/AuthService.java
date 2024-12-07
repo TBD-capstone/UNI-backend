@@ -25,16 +25,17 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                loginRequest.getPassword())
         );
         User user = (User) authentication.getPrincipal();
         String accessToken = jwtUtils.generateJwtToken(user.getEmail(), user.getRole());
         String refreshToken = refreshTokenService.createRefreshToken(user.getUserId()).getToken();
         return new LoginResponse(
-                "success", "logged in successfully", user.getName(),
-                user.getUserId(), user.getRole() == Role.KOREAN,
-                user.getProfile().getImgProf(), user.getProfile().getImgBack(),
-                accessToken, refreshToken
+            "success", "logged in successfully", user.getName(),
+            user.getUserId(), user.getRole() == Role.KOREAN,
+            user.getProfile().getImgProf(), user.getProfile().getImgBack(),
+            accessToken, refreshToken
         );
     }
 
@@ -47,8 +48,8 @@ public class AuthService {
 
         // 응답 데이터 반환
         return Map.of(
-                "accessToken", newAccessToken,
-                "refreshToken", token.getToken()
+            "accessToken", newAccessToken,
+            "refreshToken", token.getToken()
         );
     }
 
@@ -64,11 +65,11 @@ public class AuthService {
         }
 
         return MeResponse.builder()
-                .userId(user.getUserId())
-                .name(user.getName())
-                .role(user.getRole())
-                .imgProf(user.getProfile().getImgProf())
-                .build();
+            .userId(user.getUserId())
+            .name(user.getName())
+            .role(user.getRole())
+            .imgProf(user.getProfile().getImgProf())
+            .build();
     }
 }
 
