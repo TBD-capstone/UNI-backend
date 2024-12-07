@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
-    private final Map<String, String> resetCodes = new HashMap<>();
+    protected final Map<String, String> resetCodes = new HashMap<>();
 
     @Override
     @Transactional

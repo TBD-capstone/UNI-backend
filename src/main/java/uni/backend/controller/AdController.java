@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Ad;
 import uni.backend.domain.dto.AdEditRequest;
 import uni.backend.domain.dto.AdListResponse;
@@ -37,8 +39,12 @@ public class AdController {
     }
 
     @PostMapping("/new")
-    public Ad createAd(@RequestBody AdRequest adRequest) {
-        return adService.uploadAd(adRequest);
+    public Ad createAd(
+        @RequestParam("userId") Integer userId,
+        @RequestParam("adImg") MultipartFile adImg,
+        @RequestBody AdRequest adRequest) {
+
+        return adService.uploadAd(userId, adImg, adRequest);
     }
 
     @PostMapping()
