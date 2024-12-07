@@ -35,7 +35,7 @@ public class AdminController {
         );
 
         // recipientEmails 전달
-        adminService.createAccountAndSendToMultipleRecipients(recipientEmails);
+        adminService.createAccount(recipientEmails);
         return ResponseEntity.ok("관리자 계정이 생성되었으며 이메일이 발송되었습니다.");
     }
 
