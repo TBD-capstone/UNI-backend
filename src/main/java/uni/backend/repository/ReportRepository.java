@@ -5,10 +5,14 @@ import org.springframework.stereotype.Repository;
 import uni.backend.domain.Report;
 
 import java.util.List;
+import uni.backend.domain.User;
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Integer> {
 
     // 특정 유저에 대한 모든 신고 리스트 조회
     List<Report> findByReportedUser_UserId(Integer reportedUserId);
+
+    Report findFirstByReporterUserAndReportedUserOrderByReportedAtDesc(User reporter,
+        User reported);
 }

@@ -95,6 +95,8 @@ public class AwsS3Service {
             s3Folder = "profiles/";
         } else if ("background".equalsIgnoreCase(type)) {
             s3Folder = "backgrounds/";
+        } else if ("ads".equalsIgnoreCase(type)) { // 광고 타입 추가
+            s3Folder = "ads/";
         } else {
             // type 값이 "profile"이나 "background"가 아닐 경우 예외 처리
             throw new IllegalArgumentException("Invalid type: " + type);
