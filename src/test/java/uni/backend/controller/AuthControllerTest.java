@@ -73,7 +73,7 @@ class AuthControllerTest {
         signupRequest.setUnivName("Uni Name");
 
         doThrow(new IllegalStateException("User already exists"))
-                .when(userService).saveUser(any(User.class));
+            .when(userService).saveUser(any(User.class));
 
         // When
         ResponseEntity<Response> response = authController.signup(signupRequest);
@@ -89,11 +89,12 @@ class AuthControllerTest {
     void givenValidLoginRequest_whenLogin_thenReturnLoginResponse() {
         // Given
         LoginRequest loginRequest = LoginRequest.builder()
-                .email("user@uni.com")
-                .password("password")
-                .build();
+            .email("user@uni.com")
+            .password("password")
+            .build();
 
-        LoginResponse loginResponse = new LoginResponse("success", "logged in successfully", "John Doe", 1, true, "img_prof.jpg", "img_back.jpg", "access-token", "refresh-token");
+        LoginResponse loginResponse = new LoginResponse("success", "logged in successfully",
+            "John Doe", 1, true, "img_prof.jpg", "img_back.jpg", "access-token", "refresh-token");
 
         when(authService.login(loginRequest)).thenReturn(loginResponse);
 
@@ -110,7 +111,8 @@ class AuthControllerTest {
     void givenValidRefreshTokenRequest_whenRefreshToken_thenReturnNewTokens() {
         // Given
         Map<String, String> request = Map.of("refreshToken", "valid-refresh-token");
-        Map<String, String> tokens = Map.of("accessToken", "new-access-token", "refreshToken", "valid-refresh-token");
+        Map<String, String> tokens = Map.of("accessToken", "new-access-token", "refreshToken",
+            "valid-refresh-token");
 
         when(authService.refreshAccessToken("valid-refresh-token")).thenReturn(tokens);
 
@@ -145,11 +147,11 @@ class AuthControllerTest {
         // Given
         User user = mock(User.class);
         MeResponse meResponse = MeResponse.builder()
-                .userId(1)
-                .name("John Doe")
-                .role(Role.KOREAN)
-                .imgProf("img_prof.jpg")
-                .build();
+            .userId(1)
+            .name("John Doe")
+            .role(Role.KOREAN)
+            .imgProf("img_prof.jpg")
+            .build();
 
         when(authService.getLoggedInUserInfo(user)).thenReturn(meResponse);
 
@@ -165,7 +167,8 @@ class AuthControllerTest {
     @Test
     void givenNullUser_whenLoginCheck_thenReturnUnauthorized() {
         // Given
-        when(authService.getLoggedInUserInfo(null)).thenThrow(new IllegalStateException("User is not logged in"));
+        when(authService.getLoggedInUserInfo(null)).thenThrow(
+            new IllegalStateException("User is not logged in"));
 
         // When
         ResponseEntity<?> response = authController.loginCheck(null);
@@ -196,7 +199,8 @@ class AuthControllerTest {
     void givenInvalidForgotPasswordRequest_whenSendResetCode_thenReturnFailureResponse() {
         // Given
         ForgotPasswordRequest request = new ForgotPasswordRequest("user@uni.com");
-        doThrow(new RuntimeException("Invalid email")).when(userService).generateAndSendResetCode(request.getEmail());
+        doThrow(new RuntimeException("Invalid email")).when(userService)
+            .generateAndSendResetCode(request.getEmail());
 
         // When
         ResponseEntity<Response> response = authController.sendResetCode(request);
@@ -211,7 +215,8 @@ class AuthControllerTest {
     @Test
     void givenValidResetPasswordRequest_whenResetPassword_thenReturnSuccessResponse() {
         // Given
-        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "valid-code", "new-password");
+        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "valid-code",
+            "new-password");
 
         when(userService.verifyResetCode(request.getEmail(), request.getCode())).thenReturn(true);
         doNothing().when(userService).resetPassword(request.getEmail(), request.getNewPassword());
@@ -230,7 +235,8 @@ class AuthControllerTest {
     @Test
     void givenInvalidResetCode_whenResetPassword_thenReturnFailureResponse() {
         // Given
-        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "invalid-code", "new-password");
+        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "invalid-code",
+            "new-password");
 
         when(userService.verifyResetCode(request.getEmail(), request.getCode())).thenReturn(false);
 
@@ -249,10 +255,12 @@ class AuthControllerTest {
     @Test
     void givenValidResetCode_whenResetPasswordThrowsException_thenReturnInternalServerError() {
         // Given
-        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "valid-code", "new-password");
+        ResetPasswordRequest request = new ResetPasswordRequest("user@uni.com", "valid-code",
+            "new-password");
 
         when(userService.verifyResetCode(request.getEmail(), request.getCode())).thenReturn(true);
-        doThrow(new RuntimeException("Unexpected error")).when(userService).resetPassword(request.getEmail(), request.getNewPassword());
+        doThrow(new RuntimeException("Unexpected error")).when(userService)
+            .resetPassword(request.getEmail(), request.getNewPassword());
 
         // When
         ResponseEntity<Response> response = authController.resetPassword(request);
