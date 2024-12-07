@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -141,5 +142,37 @@ public class ReportServiceTest {
         });
 
         assertEquals("신고한 유저를 찾을 수 없습니다. ID: " + reporterUserId, exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("중복 신고 제한 테스트 - 24시간 이내 중복 신고 불가")
+    void createReport_duplicateWithin24Hours() {
+        // Given
+        User reporter = new User();
+        reporter.setUserId(1);
+
+        User reported = new User();
+        reported.setUserId(2);
+
+        Report lastReport = Report.builder()
+            .reporterUser(reporter)
+            .reportedUser(reported)
+            .reportedAt(LocalDateTime.now().minusHours(12)) // 12시간 전 신고
+            .build();
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(reporter));
+        when(userRepository.findById(2)).thenReturn(Optional.of(reported));
+        when(reportRepository.findFirstByReporterUserAndReportedUserOrderByReportedAtDesc(reporter,
+            reported))
+            .thenReturn(lastReport);
+
+        // When & Then
+        ReportRequest reportRequest = new ReportRequest();
+        reportRequest.setReporterUserId(1);
+        reportRequest.setDetailedReason("Test Reason");
+
+        assertThrows(IllegalArgumentException.class,
+            () -> reportService.createReport(2, reportRequest),
+            "같은 사용자에게 24시간 이내에 다시 신고할 수 없습니다.");
     }
 }
