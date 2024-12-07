@@ -14,5 +14,7 @@ public class LoginResponse {
     private Boolean isKorean;
     private String imgProf;
     private String imgBack;
+    private String accessToken;
+    private String refreshToken;
 }
 
