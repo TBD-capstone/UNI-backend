@@ -35,17 +35,22 @@ public class PageTranslationService {
 
     private void translateHashtag(List<String> hashtags,
         String acceptLanguage) {
-        TranslationRequest translationRequest = new TranslationRequest();
-        List<String> newList = new ArrayList<>(hashtags);
-        translationRequest.setText(newList);
-        translationRequest.setSource_lang("ko");
-        translationRequest.setTarget_lang(acceptLanguage);
-        TranslationResponse translationResponse = translationService.translate(
-            translationRequest);
-        hashtags = translationResponse.getTranslations()
-            .stream()
-            .map(IndividualTranslationResponse::getText)
-            .collect(Collectors.toList());
+        for (String hashtag : hashtags) {
+            // DB로 부터 찾아오거나
+            // 메모리에 Map을 박아놓고 해당 Map으로부터 찾아오기(MainCategoryMap처럼)
+        }
+//        TranslationRequest translationRequest = new TranslationRequest();
+//        List<String> newList = new ArrayList<>(hashtags);
+//        translationRequest.setText(newList);
+//        translationRequest.setSource_lang("ko");
+//        translationRequest.setTarget_lang(acceptLanguage);
+//        TranslationResponse translationResponse = translationService.translate(
+//            translationRequest);
+//        return translationResponse.getTranslations()
+//            .stream()
+//            .map(IndividualTranslationResponse::getText)
+//            .collect(Collectors.toList());
+
     }
 
     private String getUnivNameByLanguage(String univName, String acceptLanguage) {
