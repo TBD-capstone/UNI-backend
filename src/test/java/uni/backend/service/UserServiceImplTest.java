@@ -1,34 +1,31 @@
 package uni.backend.service;
 
-import java.util.List;
-import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.annotation.Transactional;
-import uni.backend.domain.*;
+import uni.backend.domain.Profile;
+import uni.backend.domain.Role;
+import uni.backend.domain.User;
+import uni.backend.domain.UserStatus;
 import uni.backend.domain.dto.MeResponse;
 import uni.backend.exception.UserStatusException;
 import uni.backend.repository.UserRepository;
-import uni.backend.service.UserServiceImpl;
-
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
+import uni.backend.security.JwtUtils;
 
 import java.util.Optional;
 
+import static com.amazonaws.services.ec2.model.PrincipalType.Role;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class UserServiceImplTest {
+class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -40,106 +37,269 @@ public class UserServiceImplTest {
     private JavaMailSender mailSender;
 
     @Mock
-    private User mockUser;
-
-    @Mock
-    private Profile mockProfile;
-
-    private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "newpassword";
+    private JwtUtils jwtUtils;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-
+  
     @Test
-    @DisplayName("사용자 저장 테스트")
-    void saveUser() {
+    void givenUser_whenSaveUser_thenUserSavedWithProfile() {
+        // Given
         User user = new User();
-        user.setEmail(TEST_EMAIL);
-        user.setPassword(TEST_PASSWORD);
+        user.setEmail("test@uni.com");
+        when(userRepository.save(user)).thenReturn(user);
 
-        when(userRepository.save(any(User.class))).thenReturn(user);
-
+        // When
         User savedUser = userService.saveUser(user);
 
-        assertNotNull(savedUser);
-        assertEquals(TEST_EMAIL, savedUser.getEmail());
-        verify(userRepository, times(1)).save(any(User.class));
+        // Then
+        assertNotNull(savedUser.getProfile());
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    @DisplayName("이메일로 사용자 로드 성공 테스트")
-    void loadUserByUsername_success() {
+    void givenExistingEmail_whenLoadUserByUsername_thenUserReturned() {
+        // Given
+        String email = "test@uni.com";
         User user = new User();
-        user.setEmail(TEST_EMAIL);
-        user.setPassword(TEST_PASSWORD);
+        user.setEmail(email);
         user.setStatus(UserStatus.ACTIVE);
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-        UserDetails userDetails = userService.loadUserByUsername(TEST_EMAIL);
+        // When
+        var userDetails = userService.loadUserByUsername(email);
 
-        assertNotNull(userDetails);
-        assertEquals(TEST_EMAIL, userDetails.getUsername());
+        // Then
+        assertEquals(email, userDetails.getUsername());
+        verify(userRepository, times(1)).findByEmail(email);
     }
 
     @Test
-    @DisplayName("이메일로 사용자 로드 실패 테스트 - 사용자 없음")
-    void loadUserByUsername_userNotFound() {
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-
-        assertThrows(UsernameNotFoundException.class,
-            () -> userService.loadUserByUsername(TEST_EMAIL));
-    }
-
-    @Test
-    @DisplayName("이메일로 사용자 로드 실패 테스트 - 계정 차단됨")
-    void loadUserByUsername_bannedUser() {
-        User bannedUser = new User();
-        bannedUser.setEmail(TEST_EMAIL);
-        bannedUser.setStatus(UserStatus.BANNED);
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(bannedUser));
-
-        assertThrows(UserStatusException.class, () -> userService.loadUserByUsername(TEST_EMAIL));
-    }
-
-    @Test
-    @DisplayName("비밀번호 재설정 성공 테스트")
-    void resetPassword_success() {
+    void givenBannedUser_whenLoadUserByUsername_thenThrowException() {
+        // Given
+        String email = "banned@uni.com";
         User user = new User();
-        user.setEmail(TEST_EMAIL);
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
+        user.setEmail(email);
+        user.setStatus(UserStatus.BANNED);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-        userService.resetPassword(TEST_EMAIL, TEST_PASSWORD);
-
-        verify(userRepository).save(user);
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        assertTrue(encoder.matches(TEST_PASSWORD, user.getPassword()));
+        // When & Then
+        assertThrows(UserStatusException.class, () -> userService.loadUserByUsername(email));
+        verify(userRepository, times(1)).findByEmail(email);
     }
 
     @Test
-    @DisplayName("현재 사용자 프로필 조회 성공 테스트")
-    void getCurrentUserProfile_success_withManualContext() {
-        // Given: SecurityContext에 인증 정보 수동 설정
-        SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(TEST_EMAIL, null,
-                List.of(new SimpleGrantedAuthority("ROLE_KOREAN")))
+    void givenEmail_whenGenerateAndSendResetCode_thenEmailSent() {
+        // Given
+        String email = "reset@uni.com";
+        User user = new User();
+        user.setEmail(email);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(jwtUtils.generateJwtToken(email)).thenReturn("test-token");
+
+        // Mock mailSender behavior
+        doNothing().when(mailSender).send(any(SimpleMailMessage.class));
+
+        // When
+        userService.generateAndSendResetCode(email);
+
+        // Then
+        verify(userRepository, times(1)).findByEmail(email);
+        verify(jwtUtils, times(1)).generateJwtToken(email);
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void givenNonExistingEmail_whenGenerateAndSendResetCode_thenThrowException() {
+        // Given
+        String email = "nonexistent@uni.com";
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.generateAndSendResetCode(email)
         );
 
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(mockUser));
-        when(mockUser.getEmail()).thenReturn(TEST_EMAIL);
-        when(mockUser.getName()).thenReturn("Test User");
-        when(mockUser.getRole()).thenReturn(Role.KOREAN);
-        when(mockUser.getProfile()).thenReturn(mockProfile);
+        assertEquals("No user found with email: " + email, exception.getMessage());
+        verify(userRepository, times(1)).findByEmail(email);
+        verify(jwtUtils, never()).generateJwtToken(anyString());
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void givenValidToken_whenVerifyResetCode_thenReturnTrue() {
+        // Given
+        String email = "valid@uni.com";
+        String token = "test-token";
+        when(jwtUtils.getEmailFromJwtToken(token)).thenReturn(email);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(new User()));
+
+        // When
+        boolean result = userService.verifyResetCode(email, token);
+
+        // Then
+        assertTrue(result);
+        verify(jwtUtils, times(1)).getEmailFromJwtToken(token);
+        verify(userRepository, times(1)).findByEmail(email);
+    }
+
+    @Test
+    void givenInvalidToken_whenVerifyResetCode_thenReturnFalse() {
+        // Given
+        String email = "invalid@uni.com";
+        String token = "test-token";
+        when(jwtUtils.getEmailFromJwtToken(token)).thenThrow(new RuntimeException("Invalid token"));
+
+        // When
+        boolean result = userService.verifyResetCode(email, token);
+
+        // Then
+        assertFalse(result);
+        verify(jwtUtils, times(1)).getEmailFromJwtToken(token);
+        verify(userRepository, never()).findByEmail(email);
+    }
+
+    @Test
+    void givenValidToken_whenResetPassword_thenPasswordUpdated() {
+        // Given
+        String token = "valid-token";
+        String email = "reset@uni.com";
+        String newPassword = "newPassword";
+        User user = new User();
+        user.setEmail(email);
+        when(jwtUtils.getEmailFromJwtToken(token)).thenReturn(email);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        // When
+        userService.resetPassword(token, newPassword);
+
+        // Then
+        assertTrue(new BCryptPasswordEncoder().matches(newPassword, user.getPassword()));
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void givenInvalidToken_whenResetPassword_thenThrowException() {
+        // Given
+        String token = "invalid-token";
+        when(jwtUtils.getEmailFromJwtToken(token)).thenThrow(new RuntimeException("Token parsing failed"));
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.resetPassword(token, "newPassword")
+        );
+
+        assertEquals("Invalid reset token.", exception.getMessage());
+        assertNotNull(exception.getCause());
+        assertEquals("Token parsing failed", exception.getCause().getMessage());
+        verify(jwtUtils, times(1)).getEmailFromJwtToken(token);
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
+    void givenAuthenticatedUser_whenGetCurrentUserProfile_thenReturnMeResponse() {
+        // Given
+        String currentUserEmail = "user@uni.com";
+        User user = new User();
+        user.setUserId(1);
+        user.setEmail(currentUserEmail);
+        user.setName("John Doe");
+        user.setRole(uni.backend.domain.Role.KOREAN);
+        Profile profile = new Profile();
+        profile.setImgProf("profile.jpg");
+        user.setProfile(profile);
+
+        // Mock SecurityContextHolder
+        var authentication = mock(org.springframework.security.core.Authentication.class);
+        when(authentication.getName()).thenReturn(currentUserEmail);
+        var securityContext = mock(org.springframework.security.core.context.SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // Mock userRepository
+        when(userRepository.findByEmail(currentUserEmail)).thenReturn(Optional.of(user));
 
         // When
         MeResponse response = userService.getCurrentUserProfile();
 
         // Then
-        assertEquals("Test User", response.getName());
-        assertEquals(Role.KOREAN, response.getRole());
-        verify(userRepository).findByEmail(TEST_EMAIL);
+        assertNotNull(response);
+        assertEquals(1, response.getUserId());
+        assertEquals("John Doe", response.getName());
+        assertEquals(uni.backend.domain.Role.KOREAN, response.getRole());
+        assertEquals("profile.jpg", response.getImgProf());
+
+        verify(userRepository, times(1)).findByEmail(currentUserEmail);
+    }
+
+    @Test
+    void givenExistingEmail_whenFindByEmail_thenReturnUser() {
+        // Given
+        String email = "existing@uni.com";
+        User user = new User();
+        user.setEmail(email);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        // When
+        Optional<User> result = userService.findByEmail(email);
+
+        // Then
+        assertTrue(result.isPresent());
+        assertEquals(email, result.get().getEmail());
+        verify(userRepository, times(1)).findByEmail(email);
+    }
+
+    @Test
+    void givenNonExistingEmail_whenFindByEmail_thenReturnEmpty() {
+        // Given
+        String email = "nonexistent@uni.com";
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // When
+        Optional<User> result = userService.findByEmail(email);
+
+        // Then
+        assertFalse(result.isPresent());
+        verify(userRepository, times(1)).findByEmail(email);
+    }
+
+    @Test
+    void givenExistingUserId_whenFindById_thenReturnUser() {
+        // Given
+        Integer userId = 1;
+        User user = new User();
+        user.setUserId(userId);
+        user.setName("John Doe");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // When
+        User result = userService.findById(userId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(userId, result.getUserId());
+        assertEquals("John Doe", result.getName());
+        verify(userRepository, times(1)).findById(userId);
+    }
+
+    @Test
+    void givenNonExistingUserId_whenFindById_thenThrowException() {
+        // Given
+        Integer userId = 99;
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.findById(userId)
+        );
+
+        assertEquals("해당 ID의 사용자를 찾을 수 없습니다.", exception.getMessage());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
