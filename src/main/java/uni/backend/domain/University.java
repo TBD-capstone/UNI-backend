@@ -21,6 +21,12 @@ public class University {
     @Column(nullable = false, length = 255)
     private String uniName;
 
+    @Column
+    private String zhUniName;
+
+    @Column
+    private String enUniName;
+
     public University(Integer universityId, String uniName) {
         this.universityId = universityId;
         this.uniName = uniName;
