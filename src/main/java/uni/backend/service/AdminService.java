@@ -56,7 +56,7 @@ public class AdminService {
      * 관리자 계정 생성 관리자 계정을 생성하고, 생성된 계정 정보를 로그로 기록, 및 팀원에게 이메일 전송
      */
     @Transactional
-    public void createAccountAndSendToMultipleRecipients(List<String> recipientEmails) {
+    public void createAccount(List<String> recipientEmails) {
         String rawPassword = adminAccountUtil.createAdminPassword();
         User admin = adminAccountUtil.createAdminAccount(rawPassword);
         userRepository.save(admin);
