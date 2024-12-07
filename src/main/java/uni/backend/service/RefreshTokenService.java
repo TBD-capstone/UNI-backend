@@ -1,5 +1,6 @@
 package uni.backend.service;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
+    @Getter
     @Value("${jwt.refreshExpirationMs}")
     private Long refreshTokenExpirationMs;
 
@@ -25,6 +27,10 @@ public class RefreshTokenService {
     private final UserRepository userRepository;
 
     public RefreshToken createRefreshToken(Integer userId) {
+        if (refreshTokenExpirationMs == null) {
+            throw new IllegalStateException("refreshTokenExpirationMs is not initialized");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
