@@ -2,9 +2,11 @@ package uni.backend.domain.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Builder;
 import lombok.Data;
 import uni.backend.enums.AdStatus;
 
+@Builder
 @Data
 public class AdResponse {
 

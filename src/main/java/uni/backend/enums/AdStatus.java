@@ -1,7 +1,8 @@
 package uni.backend.enums;
 
 public enum AdStatus {
-    POSTED,
+    ACTIVE,
     ENDED,
+    INACTIVE,
     ERROR
 }
