@@ -13,7 +13,5 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
 
     Optional<Hashtag> findByHashtagId(Integer hashtagId);
 
-    Optional<Hashtag> findByEnTagName(String entagName); // 영어 이름으로 검색
 
-    Optional<Hashtag> findByZhTagName(String zhtagName); // 중국어 이름으로 검색
 }
