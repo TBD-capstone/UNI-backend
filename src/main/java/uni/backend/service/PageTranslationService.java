@@ -44,18 +44,9 @@ public class PageTranslationService {
         List<String> translatedHashtags = new ArrayList<>();
 
         for (String hashtag : hashtags) {
-            String koreanKeyword = mapToKoreanKeyword(hashtag);
-
-            Map<String, String> translations = MainCategoryMap.KOREAN_HASHTAG_MAP.get(
-                koreanKeyword);
-            if (translations == null) {
-                translatedHashtags.add(hashtag); // 번역하지 않고 원본 추가
-                continue;
-            }
-
-            String translated = translations.getOrDefault(acceptLanguage.toLowerCase(),
-                koreanKeyword);
-            translatedHashtags.add(translated);
+            String foreignKeyword = mapToForeignKeyword(hashtag,
+                acceptLanguage.toLowerCase());
+            translatedHashtags.add(foreignKeyword);
         }
 
         return translatedHashtags;
@@ -78,6 +69,9 @@ public class PageTranslationService {
     }
 
     private String translateOneText(String text, String acceptLanguage) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
         List<String> oneList = new ArrayList<>(List.of());
         oneList.add(text);
         TranslationRequest translationRequest = new TranslationRequest();
@@ -99,8 +93,9 @@ public class PageTranslationService {
             individualProfileResponse.getDescription(), acceptLanguage));
         individualProfileResponse.setUniv(
             getUnivNameByLanguage(individualProfileResponse.getUniv(), acceptLanguage));
-        List<String> hashtags = individualProfileResponse.getHashtags();
-        translateHashtag(hashtags, acceptLanguage);
+        List<String> hashtags = translateHashtag(individualProfileResponse.getHashtags(),
+            acceptLanguage);
+        individualProfileResponse.setHashtags(hashtags);
 
         String region = individualProfileResponse.getRegion();
         if (region != null && !region.isEmpty()) {
@@ -212,14 +207,16 @@ public class PageTranslationService {
             userInput);
     }
 
-    public String translateToLanguage(String koreanKeyword, String targetLanguage) {
-        Map<String, String> translations = MainCategoryMap.KOREAN_HASHTAG_MAP.get(koreanKeyword);
-        if (translations != null) {
-            return translations.getOrDefault(targetLanguage.toLowerCase(), koreanKeyword);
+    public String mapToForeignKeyword(String koreanKeyword, String targetLanguage) {
+        String result = koreanKeyword;
+        if (MainCategoryMap.KOREAN_HASHTAG_MAP.containsKey(koreanKeyword)) {
+            Map<String, String> subMap = MainCategoryMap.KOREAN_HASHTAG_MAP.get(koreanKeyword);
+            if (subMap.containsKey(targetLanguage)) {
+                result = subMap.get(targetLanguage);
+            }
         }
-        // 맵에 없는 경우 원래 키워드 반환
-        return koreanKeyword;
-    }
 
+        return result;
+    }
 
 }
