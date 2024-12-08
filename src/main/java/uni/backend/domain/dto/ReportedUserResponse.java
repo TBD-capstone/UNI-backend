@@ -1,5 +1,6 @@
 package uni.backend.domain.dto;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,5 +29,6 @@ public class ReportedUserResponse {
         private String category;      // 신고 카테고리 (PROFILE, CHAT, QNA, REVIEW 등)
         private String reason;        // 신고 사유 (욕설/혐오/차별, 음란물 등)
         private String detailedReason; // 상세 신고 사유
+        private LocalDateTime reportedAt;
     }
 }
