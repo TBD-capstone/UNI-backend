@@ -1,12 +1,10 @@
 package uni.backend.controller;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uni.backend.domain.dto.ReportRequest;
-import uni.backend.domain.dto.ReportResponse;
 import uni.backend.service.ReportService;
 
 @RestController
@@ -16,7 +14,7 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    
+
     /**
      * 특정 유저에 대한 신고 생성
      *
