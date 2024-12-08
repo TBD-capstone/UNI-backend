@@ -33,7 +33,7 @@ public class AuthService {
         String refreshToken = refreshTokenService.createRefreshToken(user.getUserId()).getToken();
         return new LoginResponse(
             "success", "logged in successfully", user.getName(),
-            user.getUserId(), user.getRole() == Role.KOREAN,
+            user.getUserId(), user.getRole(),
             user.getProfile().getImgProf(), user.getProfile().getImgBack(),
             accessToken, refreshToken
         );
