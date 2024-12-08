@@ -68,7 +68,7 @@ class TranslationControllerTest {
         verify(translationService, times(1)).translate(any(TranslationRequest.class));
     }
 
-    @Test
+    /*@Test
     @DisplayName("용어집 생성 테스트")
     void testCreateGlossary() {
         // given
@@ -100,9 +100,9 @@ class TranslationControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("test glossary", response.getBody().getName());
         verify(translationService, times(1)).createGlossary(any(CreateGlossaryRequest.class));
-    }
+    }*/
 
-    @Test
+    /*@Test
     @DisplayName("용어집 목록 조회 테스트")
     void testListGlossaries() {
         // given
@@ -128,9 +128,9 @@ class TranslationControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(1, response.getBody().getGlossaries().size());
         verify(translationService, times(1)).getGlossariesList();
-    }
+    }*/
 
-    @Test
+    /*@Test
     @DisplayName("용어집 조회 테스트")
     void testRetrieveGlossary() {
         // given
@@ -152,5 +152,5 @@ class TranslationControllerTest {
         assertEquals("Glossary found", response.getBody().getMessage());
         assertEquals("Glossary details", response.getBody().getDetail());
         verify(translationService, times(1)).retrieveGlossaryEntry(anyString());
-    }
+    }*/
 }

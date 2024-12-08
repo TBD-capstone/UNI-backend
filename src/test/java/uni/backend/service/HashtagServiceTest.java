@@ -1,43 +1,106 @@
-// package uni.backend.service;
+package uni.backend.service;
 
-// import org.junit.jupiter.api.Assertions;
-// import org.junit.jupiter.api.Test;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.test.context.SpringBootTest;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import uni.backend.domain.Hashtag;
+import uni.backend.domain.MainCategory;
+import uni.backend.domain.Profile;
+import uni.backend.repository.HashtagRepository;
+import uni.backend.repository.MainCategoryRepository;
 
-// import java.util.List;
+import java.util.Arrays;
+import java.util.Optional;
 
-// @SpringBootTest
-// public class HashtagServiceTest {
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-//     @Autowired
-//     private HashtagService hashtagService;
+class HashtagServiceTest {
 
-//     @Test
-//     void 해시태그로_사용자_검색_존재() {
-//         List<String> hashtags = List.of("java", "spring");
-//         List<String> users = hashtagService.findUsersByHashtags(hashtags);
+    @Mock
+    private HashtagRepository hashtagRepository;
 
+    @Mock
+    private MainCategoryRepository mainCategoryRepository;
 
-//         System.out.println(hashtags);
-//         System.out.println(users);
-//         Assertions.assertEquals(users.size(), 1);
-// //        System.out.println(users);
-//     }
+    @InjectMocks
+    private HashtagService hashtagService;
 
-//     @Test
-//     void 해시태그로_사용자_검색_비존재1() {
-//         List<String> hashtags = List.of("java", "tag1");
-//         List<String> users = hashtagService.findUsersByHashtags(hashtags);
+    private Profile profile;
 
-//         Assertions.assertEquals(users.size(), 0);
-//     }
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        profile = new Profile();
+    }
 
-//     @Test
-//     void 해시태그로_사용자_검색_비존재2() {
-//         List<String> hashtags = List.of("java", "NonValidTag");
-//         List<String> users = hashtagService.findUsersByHashtags(hashtags);
+    @DisplayName("새로운 해시태그 추가 시 새로운 MainCategory 생성")
+    @Test
+    void givenNewHashtags_whenAddHashtagsToProfile_thenMainCategoryIsCreated() {
+        // given
+        String hashtagName = "testHashtag";
+        List<String> hashtags = Arrays.asList(hashtagName);
 
-//         Assertions.assertEquals(users.size(), 0);
-//     }
-// }
+        Hashtag hashtag = new Hashtag();
+        hashtag.setHashtagName(hashtagName);
+        when(hashtagRepository.findByHashtagName(hashtagName)).thenReturn(Optional.empty());
+        when(hashtagRepository.save(any(Hashtag.class))).thenReturn(hashtag);
+
+        // when
+        hashtagService.addHashtagsToProfile(profile, hashtags);
+
+        // then
+        assertEquals(1, profile.getMainCategories().size());
+        MainCategory mainCategory = profile.getMainCategories().iterator().next();
+        assertNotNull(mainCategory.getHashtag());
+        assertEquals(hashtagName, mainCategory.getHashtag().getHashtagName());
+
+        verify(hashtagRepository).findByHashtagName(hashtagName);
+        verify(hashtagRepository).save(any(Hashtag.class));
+        verify(mainCategoryRepository).save(any(MainCategory.class));
+    }
+
+    @DisplayName("이미 존재하는 해시태그일 경우 새로운 해시태그 객체 생성 없이 MainCategory 추가")
+    @Test
+    void givenExistingHashtags_whenAddHashtagsToProfile_thenMainCategoryIsAdded() {
+        // given
+        String hashtagName = "existingHashtag";
+        List<String> hashtags = Arrays.asList(hashtagName);
+
+        Hashtag hashtag = new Hashtag();
+        hashtag.setHashtagName(hashtagName);
+        when(hashtagRepository.findByHashtagName(hashtagName)).thenReturn(Optional.of(hashtag));
+
+        // when
+        hashtagService.addHashtagsToProfile(profile, hashtags);
+
+        // then
+        assertEquals(1, profile.getMainCategories().size());
+        MainCategory mainCategory = profile.getMainCategories().iterator().next();
+        assertNotNull(mainCategory.getHashtag());
+        assertEquals(hashtagName, mainCategory.getHashtag().getHashtagName());
+
+        verify(hashtagRepository).findByHashtagName(hashtagName);
+        verify(mainCategoryRepository).save(any(MainCategory.class));
+    }
+
+    @DisplayName("해시태그 목록이 비어있을 경우 MainCategory가 추가되지 않음")
+    @Test
+    void givenEmptyHashtags_whenAddHashtagsToProfile_thenNoMainCategoryIsAdded() {
+        // given
+        List<String> hashtags = Arrays.asList();
+
+        // when
+        hashtagService.addHashtagsToProfile(profile, hashtags);
+
+        // then
+        assertEquals(0, profile.getMainCategories().size());
+        verify(hashtagRepository, never()).findByHashtagName(anyString());
+        verify(mainCategoryRepository, never()).save(any(MainCategory.class));
+    }
+}
