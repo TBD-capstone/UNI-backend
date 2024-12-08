@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockMultipartFile;
+
 import uni.backend.domain.Ad;
 import uni.backend.domain.dto.AdListResponse;
 import uni.backend.domain.dto.AdRequest;
@@ -45,7 +46,7 @@ class AdServiceTest {
             .adId(1)
             .advertiser("test1")
             .title("starbucks")
-            .adStatus(AdStatus.POSTED)
+            .adStatus(AdStatus.ACTIVE)
             .startDate(LocalDate.now())
             .endDate(LocalDate.of(2025, 1, 1))
             .imageUrl("image1 url")
@@ -61,8 +62,6 @@ class AdServiceTest {
             .imageUrl("image2 url")
             .build();
 
-        when(adRepository.findByAdvertiser("test1")).thenReturn(Optional.of(ad1));
-        when(adRepository.findByAdvertiser("test2")).thenReturn(Optional.of(ad2));
         when(adRepository.findById(1)).thenReturn(Optional.of(ad1));
         when(adRepository.findById(2)).thenReturn(Optional.of(ad2));
         when(adRepository.save(any(Ad.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -74,33 +73,33 @@ class AdServiceTest {
         // given
         MockMultipartFile mockFile = new MockMultipartFile(
             "adImg",
-            "test.jpg", // 올바른 파일 이름 설정
+            "test.jpg",
             "image/jpeg",
-            new byte[]{1, 2, 3} // 임의의 바이트 데이터 추가
+            new byte[]{1, 2, 3}
         );
 
         AdRequest adRequest = AdRequest.builder()
             .advertiser("test3")
             .title("samsung")
-            .adStatus("posted")
+            .adStatus(AdStatus.ACTIVE)
             .startDate(LocalDate.now())
             .endDate(LocalDate.of(2026, 1, 1))
             .build();
 
-        String mockUrl = "https://tbd-bucket.s3.ap-northeast-2.amazonaws.com/ads/user_1_mock.jpg";
+        String mockUrl = "https://tbd-bucket.s3.ap-northeast-2.amazonaws.com/ads/test.jpg";
 
         // S3 업로드 Mock 설정
-        when(awsS3Service.upload(mockFile, "ads", 1)).thenReturn(mockUrl);
+        when(awsS3Service.uploadAdImage(mockFile)).thenReturn(mockUrl);
 
         // when
-        Ad ad = adService.uploadAd(1, mockFile, adRequest);
+        Ad ad = adService.uploadAd(mockFile, adRequest);
 
         // then
         assertNotNull(ad);
         assertEquals("test3", ad.getAdvertiser());
         assertEquals("samsung", ad.getTitle());
-        assertEquals(AdStatus.POSTED, ad.getAdStatus());
-        assertEquals(mockUrl, ad.getImageUrl()); // 업로드 후 반환된 URL과 비교
+        assertEquals(AdStatus.ACTIVE, ad.getAdStatus());
+        assertEquals(mockUrl, ad.getImageUrl());
     }
 
     @Test
@@ -110,7 +109,7 @@ class AdServiceTest {
         Integer adId = ad1.getAdId();
 
         // when
-        adService.updateAdStatus(adId, "ended");
+        adService.updateAdStatus(adId, AdStatus.ENDED);
 
         // then
         verify(adRepository).save(ad1);
@@ -142,5 +141,19 @@ class AdServiceTest {
 
         // then
         verify(adRepository).delete(ad2);
+    }
+
+    @Test
+    @DisplayName("랜덤 ACTIVE 광고 반환 테스트")
+    void 랜덤_ACTIVE_광고_반환() {
+        // given
+        when(adRepository.findAll()).thenReturn(List.of(ad1));
+
+        // when
+        Ad activeAd = adService.getRandomActiveAd();
+
+        // then
+        assertNotNull(activeAd);
+        assertEquals(AdStatus.ACTIVE, activeAd.getAdStatus());
     }
 }

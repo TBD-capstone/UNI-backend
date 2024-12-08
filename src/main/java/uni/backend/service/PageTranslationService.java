@@ -78,6 +78,9 @@ public class PageTranslationService {
     }
 
     private String translateOneText(String text, String acceptLanguage) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
         List<String> oneList = new ArrayList<>(List.of());
         oneList.add(text);
         TranslationRequest translationRequest = new TranslationRequest();

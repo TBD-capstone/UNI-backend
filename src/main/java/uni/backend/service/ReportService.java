@@ -1,6 +1,5 @@
 package uni.backend.service;
 
-
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +35,7 @@ public class ReportService {
             reporterUser, reportedUser);
         if (lastReport != null && lastReport.getReportedAt()
             .isAfter(LocalDateTime.now().minusDays(1))) {
-            LocalDateTime nextAllowedTime = lastReport.getReportedAt().plusDays(1);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "같은 사용자에게 24시간 이내에 다시 신고할 수 없습니다.");
-            response.put("nextReportAllowedAt", nextAllowedTime);
-            return response;
+            throw new IllegalArgumentException("같은 사용자에게 24시간 이내에 다시 신고할 수 없습니다.");
         }
 
         // 새로운 신고 생성
@@ -76,6 +70,9 @@ public class ReportService {
             reportedUser.setStatus(UserStatus.BANNED);
             adminService.blindAllContentByUser(reportedUser.getUserId());
         }
+
+        // 유저 상태 저장
+        userRepository.save(reportedUser);
     }
 
 }
