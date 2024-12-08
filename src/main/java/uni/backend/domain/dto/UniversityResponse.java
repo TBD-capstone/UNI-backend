@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class UniversityResponse {
 
-  private Integer universityId;
-  private String univName;
+    private Integer universityId;
+    private String univName;
+    private String enUnivName;
 }

@@ -2,6 +2,7 @@ package uni.backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import uni.backend.domain.Hashtag;
 import uni.backend.domain.University;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
@@ -20,6 +22,7 @@ import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
+import uni.backend.repository.HashtagRepository;
 import uni.backend.repository.UniversityRepository;
 import uni.backend.util.MainCategoryMap;
 
@@ -33,24 +36,29 @@ public class PageTranslationService {
     @Autowired
     private UniversityRepository universityRepository;
 
-    private void translateHashtag(List<String> hashtags,
-        String acceptLanguage) {
-        for (String hashtag : hashtags) {
-            // DB로 부터 찾아오거나
-            // 메모리에 Map을 박아놓고 해당 Map으로부터 찾아오기(MainCategoryMap처럼)
+    private List<String> translateHashtag(List<String> hashtags, String acceptLanguage) {
+        if (hashtags == null || hashtags.isEmpty()) {
+            return hashtags; // 입력값이 비어있으면 그대로 반환
         }
-//        TranslationRequest translationRequest = new TranslationRequest();
-//        List<String> newList = new ArrayList<>(hashtags);
-//        translationRequest.setText(newList);
-//        translationRequest.setSource_lang("ko");
-//        translationRequest.setTarget_lang(acceptLanguage);
-//        TranslationResponse translationResponse = translationService.translate(
-//            translationRequest);
-//        return translationResponse.getTranslations()
-//            .stream()
-//            .map(IndividualTranslationResponse::getText)
-//            .collect(Collectors.toList());
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
+        List<String> translatedHashtags = new ArrayList<>();
 
+        for (String hashtag : hashtags) {
+            String koreanKeyword = mapToKoreanKeyword(hashtag);
+
+            Map<String, String> translations = MainCategoryMap.KOREAN_HASHTAG_MAP.get(
+                koreanKeyword);
+            if (translations == null) {
+                translatedHashtags.add(hashtag); // 번역하지 않고 원본 추가
+                continue;
+            }
+
+            String translated = translations.getOrDefault(acceptLanguage.toLowerCase(),
+                koreanKeyword);
+            translatedHashtags.add(translated);
+        }
+
+        return translatedHashtags;
     }
 
     private String getUnivNameByLanguage(String univName, String acceptLanguage) {
@@ -157,8 +165,8 @@ public class PageTranslationService {
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
 
         for (HomeProfileResponse profile : results.getContent()) {
-            List<String> data = translateHashtag(profile.getUnivName(), profile.getHashtags(),
-                acceptLanguage, null);
+            List<String> data = translateHashtag(profile.getHashtags(), acceptLanguage);
+            // 첫번째껄 대학이름으로?
             profile.setUnivName(data.getFirst());
             if (data.size() > 1) {
                 profile.setHashtags(data.subList(1, data.size()));
@@ -196,4 +204,20 @@ public class PageTranslationService {
         }
 
     }
+
+    public String mapToKoreanKeyword(String userInput) {
+        return MainCategoryMap.HASHTAG_TRANSLATION_MAP.getOrDefault(userInput.toLowerCase(),
+            userInput);
+    }
+
+    public String translateToLanguage(String koreanKeyword, String targetLanguage) {
+        Map<String, String> translations = MainCategoryMap.KOREAN_HASHTAG_MAP.get(koreanKeyword);
+        if (translations != null) {
+            return translations.getOrDefault(targetLanguage.toLowerCase(), koreanKeyword);
+        }
+        // 맵에 없는 경우 원래 키워드 반환
+        return koreanKeyword;
+    }
+
+
 }

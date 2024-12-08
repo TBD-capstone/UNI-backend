@@ -20,6 +20,12 @@ public class Hashtag {
     @Column(nullable = false)
     private String hashtagName;
 
+    @Column
+    private String entagName; // 영어 해시태그
+
+    @Column
+    private String zhtagName; // 중국어 해시태그
+
     @OneToMany(mappedBy = "hashtag", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<MainCategory> mainCategories;
 }
