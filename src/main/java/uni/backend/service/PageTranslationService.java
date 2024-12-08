@@ -162,18 +162,20 @@ public class PageTranslationService {
         if (acceptLanguage == null || acceptLanguage.isEmpty()) {
             return;
         }
+        // 사용 언어 결정
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
 
         for (HomeProfileResponse profile : results.getContent()) {
-            List<String> data = translateHashtag(profile.getHashtags(), acceptLanguage);
-            // 첫번째껄 대학이름으로?
-            profile.setUnivName(data.getFirst());
-            if (data.size() > 1) {
-                profile.setHashtags(data.subList(1, data.size()));
-            }
-        }
+            String translatedUnivName = getUnivNameByLanguage(profile.getUnivName(),
+                acceptLanguage);
+            profile.setUnivName(translatedUnivName);
 
+            List<String> translatedHashtags = translateHashtag(profile.getHashtags(),
+                acceptLanguage);
+            profile.setHashtags(translatedHashtags);
+        }
     }
+
 
     public void translateMarkers(List<MarkerResponse> markers, String acceptLanguage) {
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
