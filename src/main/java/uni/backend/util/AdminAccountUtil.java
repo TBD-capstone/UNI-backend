@@ -10,9 +10,11 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import uni.backend.config.SecurityConfig;
+import uni.backend.domain.Profile;
 import uni.backend.domain.User;
 import uni.backend.domain.Role;
 import uni.backend.domain.UserStatus;
+import uni.backend.repository.UserRepository;
 
 @Component
 public class AdminAccountUtil {
@@ -40,11 +42,16 @@ public class AdminAccountUtil {
      */
     public User createAdminAccount(String rawPassword) {
         User admin = new User();
+        Profile profile = new Profile();
+        profile.setImgProf("/profile-image.png");
+        profile.setUser(admin);
+        
         admin.setEmail(createAdminName()); // 고유한 관리자 이메일 생성
         admin.setPassword(passwordEncoder.encode(rawPassword)); // 비밀번호 암호화 후 저장
         admin.setStatus(UserStatus.ACTIVE); // 활성화 상태 설정
         admin.setRole(Role.ADMIN); // 역할을 관리자(Admin)로 설정
         admin.setName("System Admin"); // 관리자 기본 이름 설정
+        admin.setProfile(profile);
         admin.setAdminId(UUID.randomUUID().toString()); // 고유 Admin ID 설정
         return admin;
     }

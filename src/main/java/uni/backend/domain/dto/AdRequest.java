@@ -10,12 +10,13 @@ import uni.backend.enums.AdStatus;
 @Builder
 public class AdRequest {
 
-    String advertiser;
-    String title;
-    String adStatus;
-    LocalDate startDate;
-    LocalDate endDate;
-    String imageUrl;
+    private String advertiser;
+    private String title;
+    private AdStatus adStatus;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String imageUrl;
+
 }
 
 

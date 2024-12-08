@@ -156,6 +156,57 @@ public class AwsS3Service {
             throw new AwsS3Exception(AwsS3ErrorCode.IO_EXCEPTION_ON_IMAGE_DELETE);
         }
     }
+
+    public String uploadAdImage(MultipartFile image) {
+        log.info("Uploading ad image to bucket: {}", bucketName);
+
+        if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
+            throw new AwsS3Exception(AwsS3ErrorCode.EMPTY_FILE_EXCEPTION);
+        }
+
+        this.validateImageFileExtention(image.getOriginalFilename());
+
+        try {
+            return this.uploadImageToS3ForAds(image);
+        } catch (IOException e) {
+            throw new AwsS3Exception(AwsS3ErrorCode.IO_EXCEPTION_ON_IMAGE_UPLOAD);
+        }
+    }
+
+    private String uploadImageToS3ForAds(MultipartFile image) throws IOException {
+        String s3Folder = "ads/";
+
+        String originalFilename = image.getOriginalFilename();
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+
+        String s3FileName = s3Folder + UUID.randomUUID().toString().substring(0, 10) + extension;
+
+        InputStream is = image.getInputStream();
+        byte[] bytes = IOUtils.toByteArray(is);
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType("image/" + extension);  // MIME 타입 설정
+        metadata.setContentLength(bytes.length);  // 파일 크기 설정
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+
+        try {
+            // S3에 이미지 업로드
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, s3FileName,
+                byteArrayInputStream, metadata)
+                .withCannedAcl(CannedAccessControlList.PublicRead);  // 공개 읽기 권한 설정
+            amazonS3.putObject(putObjectRequest);  // 이미지 S3에 업로드
+        } catch (Exception e) {
+            throw new AwsS3Exception(AwsS3ErrorCode.PUT_OBJECT_EXCEPTION);
+        } finally {
+            byteArrayInputStream.close();
+            is.close();
+        }
+
+        // 업로드된 이미지의 URL 반환
+        return getImageUrl(s3FileName);  // getImageUrl 메서드가 경로에 맞는 URL 반환
+    }
+
+
 }
 
 /*
