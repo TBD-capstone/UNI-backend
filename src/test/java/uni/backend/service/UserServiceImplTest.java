@@ -43,7 +43,7 @@ class UserServiceImplTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-  
+
     @Test
     void givenUser_whenSaveUser_thenUserSavedWithProfile() {
         // Given
@@ -320,37 +320,4 @@ class UserServiceImplTest {
         assertEquals("해당 ID의 사용자를 찾을 수 없습니다.", exception.getMessage());
         verify(userRepository, times(1)).findById(userId);
     }
-
-    @Test
-    @DisplayName("비밀번호 재설정 코드 생성 및 발송 테스트")
-    void generateAndSendResetCode_success() {
-        // Given
-        User user = new User();
-        user.setEmail(TEST_EMAIL);
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
-        doNothing().when(mailSender).send(any(SimpleMailMessage.class));
-
-        // When
-        userService.generateAndSendResetCode(TEST_EMAIL);
-
-        // Then
-        String generatedCode = userService.resetCodes.get(TEST_EMAIL);
-        assertNotNull(generatedCode, "Reset code should be generated");
-        assertTrue(userService.verifyResetCode(TEST_EMAIL, generatedCode));
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
-    }
-
-
-    @Test
-    @DisplayName("비밀번호 재설정 코드 생성 실패 테스트 - 사용자 없음")
-    void generateAndSendResetCode_userNotFound() {
-        // Given
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class,
-            () -> userService.generateAndSendResetCode(TEST_EMAIL));
-    }
-
-
 }

@@ -52,16 +52,16 @@ class MatchingControllerTest {
         receiver.setUserId(2);
 
         Matching newMatching = Matching.builder()
+            .matchingId(10)
             .requester(requester)
             .receiver(receiver)
             .status(Matching.Status.PENDING)
+            .createdAt(LocalDateTime.now())
             .build();
 
-        when(userService.findById(1)).thenReturn(requester);
-        when(userService.findById(2)).thenReturn(receiver);
-        when(matchingService.findPendingRequest(1, 2)).thenReturn(Optional.empty());
-        when(matchingService.createRequest(any(Matching.class), eq(requester), eq(receiver)))
-            .thenReturn(newMatching);
+        MatchingCreateResponse expectedResponse = MatchingCreateResponse.from(newMatching);
+
+        when(matchingService.createMatchRequest(request)).thenReturn(expectedResponse);
 
         // When
         ResponseEntity<MatchingCreateResponse> response = matchingController.createMatchRequest(
@@ -70,8 +70,11 @@ class MatchingControllerTest {
         // Then
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
+        assertEquals(10, response.getBody().getMatchingId());
         assertEquals(1, response.getBody().getRequesterId());
         assertEquals(2, response.getBody().getReceiverId());
+        assertEquals(Matching.Status.PENDING.name(), response.getBody().getStatus());
+        verify(matchingService, times(1)).createMatchRequest(request);
         verify(messagingTemplate, times(1))
             .convertAndSend("/sub/match-request/2", "매칭 요청이 도착했습니다.");
     }
@@ -79,7 +82,9 @@ class MatchingControllerTest {
     @Test
     void 매칭_응답_처리_요청_존재() {
         // Given
-        MatchingUpdateRequest updateRequest = new MatchingUpdateRequest(1, true);
+        MatchingUpdateRequest updateRequest = new MatchingUpdateRequest();
+        updateRequest.setMatchingId(1);
+        updateRequest.setAccepted(true);
 
         User requester = new User();
         requester.setUserId(1);
@@ -88,10 +93,10 @@ class MatchingControllerTest {
             .matchingId(1)
             .requester(requester)
             .receiver(new User())
-            .status(Matching.Status.PENDING)
+            .status(Matching.Status.ACCEPTED)
             .build();
 
-        when(matchingService.updateRequestStatus(updateRequest)).thenReturn(Optional.of(matching));
+        when(matchingService.respondToMatchRequest(updateRequest)).thenReturn("매칭 요청이 수락되었습니다.");
 
         // When
         ResponseEntity<String> response = matchingController.respondToMatchRequest(updateRequest);
@@ -100,46 +105,53 @@ class MatchingControllerTest {
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("응답 처리 완료", response.getBody());
+        verify(matchingService, times(1)).respondToMatchRequest(updateRequest);
         verify(messagingTemplate, times(1))
             .convertAndSend("/sub/match-response/1", "매칭 요청이 수락되었습니다.");
+    }
+
+    @Test
+    void 매칭_응답_처리_요청_없음() {
+        // Given
+        MatchingUpdateRequest updateRequest = new MatchingUpdateRequest();
+        updateRequest.setMatchingId(1);
+        updateRequest.setAccepted(true);
+
+        // Mock 설정: 서비스가 null 반환
+        when(matchingService.respondToMatchRequest(updateRequest)).thenReturn(null);
+
+        // When
+        ResponseEntity<String> response = matchingController.respondToMatchRequest(updateRequest);
+
+        // Then
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode()); // 상태 코드가 NOT_FOUND인지 확인
+
+        // Mock 호출 검증
+        verify(matchingService, times(1)).respondToMatchRequest(updateRequest); // 서비스 호출 검증
+        verify(messagingTemplate, never()).convertAndSend(anyString(),
+            anyString()); // 메시지 전송이 호출되지 않음 검증
     }
 
     @Test
     void 요청자_아이디로_매칭_목록_조회() {
         // Given
         int requesterId = 1;
-        User requester = new User();
-        requester.setUserId(requesterId);
 
-        User receiver1 = new User();
-        receiver1.setUserId(2);
-        receiver1.setName("Receiver1");
-
-        User receiver2 = new User();
-        receiver2.setUserId(3);
-        receiver2.setName("Receiver2");
-
-        Matching matching1 = Matching.builder()
+        MatchingListResponse response1 = MatchingListResponse.builder()
             .matchingId(1)
-            .requester(requester)
-            .receiver(receiver1)
-            .status(Matching.Status.PENDING)
-            .createdAt(LocalDateTime.now())
+            .userName("Receiver1")
+            .status(Matching.Status.PENDING.name())
             .build();
 
-        Matching matching2 = Matching.builder()
+        MatchingListResponse response2 = MatchingListResponse.builder()
             .matchingId(2)
-            .requester(requester)
-            .receiver(receiver2)
-            .status(Matching.Status.ACCEPTED)
-            .createdAt(LocalDateTime.now())
+            .userName("Receiver2")
+            .status(Matching.Status.ACCEPTED.name())
             .build();
 
-        when(matchingService.getMatchingListByRequesterId(requesterId))
-            .thenReturn(List.of(matching1, matching2));
-
-        when(userService.findById(2)).thenReturn(receiver1);
-        when(userService.findById(3)).thenReturn(receiver2);
+        when(matchingService.getMatchingListByRequester(requesterId))
+            .thenReturn(List.of(response1, response2));
 
         // When
         List<MatchingListResponse> responses = matchingController.getMatchingListByRequester(
@@ -152,7 +164,7 @@ class MatchingControllerTest {
         assertEquals("Receiver2", responses.get(1).getUserName());
         assertEquals(Matching.Status.PENDING.name(), responses.get(0).getStatus());
         assertEquals(Matching.Status.ACCEPTED.name(), responses.get(1).getStatus());
-        verify(matchingService, times(1)).getMatchingListByRequesterId(requesterId);
+        verify(matchingService, times(1)).getMatchingListByRequester(requesterId); // 서비스 호출 검증
     }
 
     @Test
@@ -161,23 +173,15 @@ class MatchingControllerTest {
         int requesterId = 1;
         int receiverId = 2;
 
-        User requester = new User();
-        requester.setUserId(requesterId);
-
-        User receiver = new User();
-        receiver.setUserId(receiverId);
-
-        Matching matching = Matching.builder()
+        MatchingCreateResponse responseBody = MatchingCreateResponse.builder()
             .matchingId(1)
-            .requester(requester) // 미리 생성된 User 객체 사용
-            .receiver(receiver)  // 미리 생성된 User 객체 사용
-            .status(Matching.Status.PENDING)
-            .createdAt(LocalDateTime.now())
+            .requesterId(requesterId)
+            .receiverId(receiverId)
+            .status(Matching.Status.PENDING.name())
             .build();
 
         // Mock 설정: 대기 중인 요청이 존재
-        when(matchingService.findPendingRequest(requesterId, receiverId))
-            .thenReturn(Optional.of(matching));
+        when(matchingService.getPendingMatching(requesterId, receiverId)).thenReturn(responseBody);
 
         // When
         ResponseEntity<MatchingCreateResponse> response = matchingController.getPendingMatching(
@@ -192,7 +196,7 @@ class MatchingControllerTest {
         assertEquals(receiverId, response.getBody().getReceiverId()); // 수신자 ID 확인
 
         // Mock 호출 검증
-        verify(matchingService, times(1)).findPendingRequest(requesterId, receiverId);
+        verify(matchingService, times(1)).getPendingMatching(requesterId, receiverId);
     }
 
     @Test
@@ -201,8 +205,8 @@ class MatchingControllerTest {
         int requesterId = 1;
         int receiverId = 2;
 
-        when(matchingService.findPendingRequest(requesterId, receiverId))
-            .thenReturn(Optional.empty());
+        // Mock 설정: 대기 중인 요청이 없음
+        when(matchingService.getPendingMatching(requesterId, receiverId)).thenReturn(null);
 
         // When
         ResponseEntity<MatchingCreateResponse> response = matchingController.getPendingMatching(
@@ -210,8 +214,8 @@ class MatchingControllerTest {
 
         // Then
         assertNotNull(response);
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(matchingService, times(1)).findPendingRequest(requesterId, receiverId);
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()); // 상태 코드가 NO_CONTENT인지 확인
+        verify(matchingService, times(1)).getPendingMatching(requesterId, receiverId); // 서비스 호출 검증
     }
 
     @Test
@@ -219,37 +223,21 @@ class MatchingControllerTest {
         // Given
         int receiverId = 2;
 
-        User requester1 = new User();
-        requester1.setUserId(1);
-        requester1.setName("Requester1");
-
-        User requester2 = new User();
-        requester2.setUserId(3);
-        requester2.setName("Requester3");
-
-        User receiver = new User();
-        receiver.setUserId(receiverId);
-
-        Matching matching1 = Matching.builder()
+        MatchingListResponse response1 = MatchingListResponse.builder()
             .matchingId(1)
-            .requester(requester1)
-            .receiver(receiver)
-            .status(Matching.Status.PENDING)
-            .createdAt(LocalDateTime.now())
+            .userName("Requester1")
+            .status(Matching.Status.PENDING.name())
             .build();
 
-        Matching matching2 = Matching.builder()
+        MatchingListResponse response2 = MatchingListResponse.builder()
             .matchingId(2)
-            .requester(requester2)
-            .receiver(receiver)
-            .status(Matching.Status.ACCEPTED)
-            .createdAt(LocalDateTime.now())
+            .userName("Requester3")
+            .status(Matching.Status.ACCEPTED.name())
             .build();
 
-        when(matchingService.getMatchingListByReceiverId(receiverId))
-            .thenReturn(List.of(matching1, matching2));
-        when(userService.findById(1)).thenReturn(requester1); // 요청자 1 Mock 설정
-        when(userService.findById(3)).thenReturn(requester2); // 요청자 2 Mock 설정
+        // Mock 설정: 서비스가 반환하는 MatchingListResponse
+        when(matchingService.getMatchingListByReceiver(receiverId)).thenReturn(
+            List.of(response1, response2));
 
         // When
         List<MatchingListResponse> responses = matchingController.getMatchingListByReceiver(
@@ -260,9 +248,9 @@ class MatchingControllerTest {
         assertEquals(2, responses.size());
         assertEquals("Requester1", responses.get(0).getUserName());
         assertEquals("Requester3", responses.get(1).getUserName());
-        verify(matchingService, times(1)).getMatchingListByReceiverId(receiverId);
-        verify(userService, times(1)).findById(1);
-        verify(userService, times(1)).findById(3);
+        assertEquals(Matching.Status.PENDING.name(), responses.get(0).getStatus());
+        assertEquals(Matching.Status.ACCEPTED.name(), responses.get(1).getStatus());
+        verify(matchingService, times(1)).getMatchingListByReceiver(receiverId); // 서비스 호출 검증
     }
 
     @Test
@@ -272,17 +260,21 @@ class MatchingControllerTest {
 
         MatchingResponse matchingResponse = new MatchingResponse(1, 2, 3);
 
+        // Mock 설정: 서비스가 MatchingResponse 반환
         when(matchingService.getMatchingInfo(matchingId)).thenReturn(matchingResponse);
 
         // When
         ResponseEntity<MatchingResponse> response = matchingController.getMatchingInfo(matchingId);
 
         // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().getMatchingId());
-        assertEquals(2, response.getBody().getProfileOwnerId());
-        assertEquals(3, response.getBody().getRequesterId());
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(HttpStatus.OK, response.getStatusCode()); // 상태 코드가 OK인지 확인
+        assertNotNull(response.getBody()); // 본문이 null이 아닌지 확인
+        assertEquals(1, response.getBody().getMatchingId()); // 매칭 ID 검증
+        assertEquals(2, response.getBody().getProfileOwnerId()); // 프로필 소유자 ID 검증
+        assertEquals(3, response.getBody().getRequesterId()); // 요청자 ID 검증
+
+        // 서비스 호출 검증
         verify(matchingService, times(1)).getMatchingInfo(matchingId);
     }
 
@@ -292,31 +284,32 @@ class MatchingControllerTest {
         int requesterId = 1;
         int receiverId = 2;
 
-        User requester = new User();
-        requester.setUserId(requesterId);
-
-        User receiver = new User();
-        receiver.setUserId(receiverId);
-
-        Matching matching = Matching.builder()
+        MatchingCreateResponse matchingResponse = MatchingCreateResponse.builder()
             .matchingId(1)
-            .requester(requester)
-            .receiver(receiver)
-            .status(Matching.Status.PENDING)
+            .requesterId(requesterId)
+            .receiverId(receiverId)
+            .status(Matching.Status.PENDING.name())
             .build();
 
-        when(matchingService.findPendingRequest(requesterId, receiverId))
-            .thenReturn(Optional.of(matching));
+        // Mock 설정: 대기 중인 매칭 요청이 존재
+        when(matchingService.getPendingMatching(requesterId, receiverId)).thenReturn(
+            matchingResponse);
 
         // When
         ResponseEntity<MatchingCreateResponse> response = matchingController.getPendingMatching(
             requesterId, receiverId);
 
         // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().getMatchingId());
-        verify(matchingService, times(1)).findPendingRequest(requesterId, receiverId);
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(HttpStatus.OK, response.getStatusCode()); // 상태 코드가 OK인지 확인
+        assertNotNull(response.getBody()); // 본문이 null이 아닌지 확인
+        assertEquals(1, response.getBody().getMatchingId()); // 매칭 ID 확인
+        assertEquals(requesterId, response.getBody().getRequesterId()); // 요청자 ID 확인
+        assertEquals(receiverId, response.getBody().getReceiverId()); // 수신자 ID 확인
+        assertEquals(Matching.Status.PENDING.name(), response.getBody().getStatus()); // 상태 확인
+
+        // Mock 호출 검증
+        verify(matchingService, times(1)).getPendingMatching(requesterId, receiverId);
     }
 
     @Test
@@ -325,16 +318,72 @@ class MatchingControllerTest {
         int requesterId = 1;
         int receiverId = 2;
 
-        when(matchingService.findPendingRequest(requesterId, receiverId))
-            .thenReturn(Optional.empty());
+        // Mock 설정: 대기 중인 매칭 요청 없음
+        when(matchingService.getPendingMatching(requesterId, receiverId)).thenReturn(null);
 
         // When
         ResponseEntity<MatchingCreateResponse> response = matchingController.getPendingMatching(
             requesterId, receiverId);
 
         // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(matchingService, times(1)).findPendingRequest(requesterId, receiverId);
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()); // 상태 코드가 NO_CONTENT인지 확인
+
+        // Mock 호출 검증
+        verify(matchingService, times(1)).getPendingMatching(requesterId, receiverId);
+    }
+
+    @Test
+    void handleMatchRequest_성공() {
+        // Given
+        MatchingCreateRequest createRequest = new MatchingCreateRequest(1, 2);
+
+        MatchingCreateResponse createResponse = MatchingCreateResponse.builder()
+            .matchingId(1)
+            .requesterId(1)
+            .receiverId(2)
+            .status("PENDING")
+            .build();
+
+        when(matchingService.createMatchRequest(createRequest)).thenReturn(createResponse);
+
+        // When
+        MatchingCreateResponse response = matchingController.handleMatchRequest(createRequest);
+
+        // Then
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(1, response.getMatchingId()); // 매칭 ID 확인
+        assertEquals(1, response.getRequesterId()); // 요청자 ID 확인
+        assertEquals(2, response.getReceiverId()); // 수신자 ID 확인
+        assertEquals("PENDING", response.getStatus()); // 상태 확인
+        verify(matchingService, times(1)).createMatchRequest(createRequest); // 서비스 호출 검증
+        verify(messagingTemplate, times(1))
+            .convertAndSend("/sub/match-request/2", createResponse); // 메시지 전송 검증
+    }
+
+    @Test
+    void handleMatchResponse_성공() {
+        // Given
+        MatchingUpdateRequest updateRequest = new MatchingUpdateRequest();
+        updateRequest.setMatchingId(1);
+        updateRequest.setAccepted(true);
+
+        MatchingUpdateResponse updateResponse = MatchingUpdateResponse.builder()
+            .matchingId(1)
+            .status("ACCEPTED")
+            .build();
+
+        when(matchingService.handleMatchResponse(updateRequest)).thenReturn(updateResponse);
+
+        // When
+        MatchingUpdateResponse response = matchingController.handleMatchResponse(updateRequest);
+
+        // Then
+        assertNotNull(response); // 응답이 null이 아닌지 확인
+        assertEquals(1, response.getMatchingId()); // 매칭 ID 확인
+        assertEquals("ACCEPTED", response.getStatus()); // 상태 확인
+        verify(matchingService, times(1)).handleMatchResponse(updateRequest); // 서비스 호출 검증
+        verify(messagingTemplate, times(1))
+            .convertAndSend("/sub/match-response/response", updateResponse); // 메시지 전송 검증
     }
 }
