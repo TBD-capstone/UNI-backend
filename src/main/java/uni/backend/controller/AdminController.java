@@ -83,7 +83,7 @@ public class AdminController {
      */
     @GetMapping("/reported-users")
     public ResponseEntity<Page<ReportedUserResponse>> getReportedUsers(
-        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
 
         Page<ReportedUserResponse> reportedUsers = adminService.getReportedUsers(page, size);
