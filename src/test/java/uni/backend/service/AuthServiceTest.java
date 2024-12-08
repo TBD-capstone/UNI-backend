@@ -81,7 +81,7 @@ class AuthServiceTest {
 
         // Then
         assertNotNull(response);
-        assertTrue(response.getIsKorean()); // isKorean 확인
+        assertTrue(response.getRole() == Role.KOREAN);
     }
 
     @Test
@@ -99,7 +99,7 @@ class AuthServiceTest {
         user.setEmail(email);
         user.setUserId(1);
         user.setName("John Doe");
-        user.setRole(Role.ADMIN); // Role 설정
+        user.setRole(Role.ADMIN);
         Profile profile = new Profile();
         profile.setImgProf("img_prof.jpg");
         profile.setImgBack("img_back.jpg");
@@ -123,7 +123,7 @@ class AuthServiceTest {
 
         // Then
         assertNotNull(response);
-        assertFalse(response.getIsKorean()); // isKorean 확인
+        assertFalse(response.getRole() == Role.KOREAN);
     }
 
     @Test

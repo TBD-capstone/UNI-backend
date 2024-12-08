@@ -94,7 +94,8 @@ class AuthControllerTest {
             .build();
 
         LoginResponse loginResponse = new LoginResponse("success", "logged in successfully",
-            "John Doe", 1, true, "img_prof.jpg", "img_back.jpg", "access-token", "refresh-token");
+            "John Doe", 1, Role.KOREAN, "img_prof.jpg", "img_back.jpg", "access-token",
+            "refresh-token");
 
         when(authService.login(loginRequest)).thenReturn(loginResponse);
 
