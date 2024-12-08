@@ -36,10 +36,8 @@ public class ReportService {
             reporterUser, reportedUser);
         if (lastReport != null && lastReport.getReportedAt()
             .isAfter(LocalDateTime.now().minusDays(1))) {
-            // 다음 신고 가능 시간 계산
             LocalDateTime nextAllowedTime = lastReport.getReportedAt().plusDays(1);
 
-            // 메시지와 다음 신고 가능 시간 전달
             Map<String, Object> response = new HashMap<>();
             response.put("message", "같은 사용자에게 24시간 이내에 다시 신고할 수 없습니다.");
             response.put("nextReportAllowedAt", nextAllowedTime);
@@ -59,15 +57,8 @@ public class ReportService {
 
         reportRepository.save(report);
 
-        reportedUser.setReportCount(reportedUser.getReportCount() + 1);
-        reportedUser.setLastReportReason(reportRequest.getDetailedReason());
-
-        if (reportedUser.getReportCount() >= 5) {
-            reportedUser.setStatus(UserStatus.BANNED); // 상태 변경
-            adminService.blindAllContentByUser(userId); // 블라인드 처리 호출
-        }
-
-        userRepository.save(reportedUser);
+        // 신고된 사용자 처리
+        handleReportedUser(reportedUser, reportRequest.getDetailedReason());
 
         // 성공 메시지 반환
         Map<String, Object> successResponse = new HashMap<>();
@@ -75,4 +66,16 @@ public class ReportService {
         successResponse.put("nextReportAllowedAt", LocalDateTime.now().plusDays(1));
         return successResponse;
     }
+
+    // 신고된 사용자 처리 메서드
+    private void handleReportedUser(User reportedUser, String detailedReason) {
+        reportedUser.setReportCount(reportedUser.getReportCount() + 1);
+        reportedUser.setLastReportReason(detailedReason);
+
+        if (reportedUser.getReportCount() >= 5) {
+            reportedUser.setStatus(UserStatus.BANNED);
+            adminService.blindAllContentByUser(reportedUser.getUserId());
+        }
+    }
+
 }

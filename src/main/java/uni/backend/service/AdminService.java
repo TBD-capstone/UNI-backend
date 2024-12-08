@@ -164,7 +164,8 @@ public class AdminService {
                             report.getTitle(),
                             report.getCategory().name(),
                             report.getReason().name(),
-                            report.getDetailedReason()
+                            report.getDetailedReason(),
+                            report.getReportedAt()
                         ))
                         .collect(Collectors.toList())
                 );
