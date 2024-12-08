@@ -20,7 +20,6 @@ public class Hashtag {
     @Column(nullable = false)
     private String hashtagName;
 
-
     @OneToMany(mappedBy = "hashtag", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<MainCategory> mainCategories;
 }

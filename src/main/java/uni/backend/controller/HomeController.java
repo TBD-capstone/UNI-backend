@@ -31,7 +31,7 @@ public class HomeController {
     public ResponseEntity<Page<HomeProfileResponse>> searchByUnivNameAndHashtags(
         @RequestParam(required = false) String univName,
         @RequestParam(required = false) List<String> hashtags,
-        @RequestParam int page,
+        @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "newest") String sort,
         @RequestHeader(name = "Accept-Language", required = false) String acceptLanguage) {
 

@@ -41,18 +41,20 @@ public class CertificationController {
         String email = request.get("email");
         String univName = request.get("univName");
 
+        // 영어 이름 -> 한국어 이름 변환
+        String krUnivName = universityService.convertToKorean(univName);
+
         if (userRepository.existsByEmail(email)) {
             return ResponseEntity.ok(Map.of("status", "fail", "message", "이미 가입된 이메일입니다."));
         }
 
-        boolean isSent = certificationService.requestCertification(email, univName, false);
+        boolean isSent = certificationService.requestCertification(email, krUnivName, false);
         if (isSent) {
             return ResponseEntity.ok(Map.of("status", "success"));
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("status", "fail", "message", "이메일 인증 요청 실패"));
         }
-
     }
 
 
@@ -63,7 +65,8 @@ public class CertificationController {
         String univName = (String) request.get("univName");
         int code = (Integer) request.get("code");
 
-        boolean isVerified = certificationService.verifyCertification(email, univName, code);
+        String krUnivName = universityService.convertToKorean(univName);
+        boolean isVerified = certificationService.verifyCertification(email, krUnivName, code);
         if (isVerified) {
             return ResponseEntity.ok(Map.of("status", "success"));
         } else {
@@ -75,16 +78,9 @@ public class CertificationController {
     //대학 리스트 받아오기
 
     @GetMapping("/univ")
-    public List<UniversityResponse> getAllUniversities() {
-        List<University> universities = universityService.findAll();
-        return universities.stream()
-            .map(university -> {
-                UniversityResponse dto = new UniversityResponse();
-                dto.setUniversityId(university.getUniversityId());
-                dto.setUnivName(university.getUniName());
-                return dto;
-            })
-            .collect(Collectors.toList());
+    public ResponseEntity<List<UniversityResponse>> getUniversities() {
+        List<UniversityResponse> universities = universityService.getUniversities();
+        return ResponseEntity.ok(universities);
     }
 
     // 대학교 이름 검증 메서드
