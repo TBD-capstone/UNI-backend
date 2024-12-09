@@ -3,6 +3,7 @@ package uni.backend.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -209,6 +210,9 @@ public class PageTranslationService {
 
     public String mapToForeignKeyword(String koreanKeyword, String targetLanguage) {
         String result = koreanKeyword;
+        if (Objects.equals(koreanKeyword, "대학생활")) {
+            koreanKeyword = "대학 생활";
+        }
         if (MainCategoryMap.KOREAN_HASHTAG_MAP.containsKey(koreanKeyword)) {
             Map<String, String> subMap = MainCategoryMap.KOREAN_HASHTAG_MAP.get(koreanKeyword);
             if (subMap.containsKey(targetLanguage)) {
