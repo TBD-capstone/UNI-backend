@@ -6,6 +6,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import uni.backend.domain.Matching;
 import uni.backend.domain.dto.*;
 import uni.backend.service.MatchingService;
 
@@ -59,9 +60,22 @@ public class MatchingController {
     @MessageMapping("/match/respond")
     @SendTo("/sub/match/response")
     public MatchingUpdateResponse handleMatchResponse(MatchingUpdateRequest request) {
+        // MatchingUpdateResponse를 생성
         MatchingUpdateResponse response = matchingService.handleMatchResponse(request);
 
-        messagingTemplate.convertAndSend("/sub/match-response/response", response);
+        // 요청자의 ID를 추출하여 메시지 전송
+        String responseMessage;
+        if ("ACCEPTED".equals(response.getStatus().toString())) {
+            responseMessage = "매칭 요청이 수락되었습니다.";
+        } else if ("REJECTED".equals(response.getStatus().toString())) {
+            responseMessage = "매칭 요청이 거절되었습니다.";
+        } else {
+            responseMessage = "매칭 상태가 변경되었습니다.";
+        }
+
+        messagingTemplate.convertAndSend(
+            "/sub/match-response/" + response.getRequesterId(), responseMessage);
+
         return response;
     }
 
