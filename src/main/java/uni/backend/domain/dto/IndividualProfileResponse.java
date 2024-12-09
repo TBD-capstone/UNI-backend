@@ -1,5 +1,6 @@
 package uni.backend.domain.dto;
 
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import uni.backend.domain.Role;
 
 @Getter
 @Setter
@@ -30,6 +32,7 @@ public class IndividualProfileResponse {
     @Builder.Default
     private boolean isVisible = true;
     private List<String> hashtags = new ArrayList<>(); // 해시태그 목록
+    private Role role;  // ENUM 타입 추가
 
 
     public static IndividualProfileResponse createDefault() {
