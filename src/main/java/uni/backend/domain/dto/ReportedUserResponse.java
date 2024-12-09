@@ -25,10 +25,13 @@ public class ReportedUserResponse {
     @NoArgsConstructor
     public static class ReportDetail {
 
-        private String title;
-        private String category;      // 신고 카테고리 (PROFILE, CHAT, QNA, REVIEW 등)
-        private String reason;        // 신고 사유 (욕설/혐오/차별, 음란물 등)
-        private String detailedReason; // 상세 신고 사유
-        private LocalDateTime reportedAt;
+        private Integer reportId;        // 신고 ID
+        private String title;            // 신고 제목
+        private String category;         // 신고 카테고리
+        private String reason;           // 신고 사유
+        private String detailedReason;   // 상세 신고 사유
+        private LocalDateTime reportedAt; // 신고 날짜
+        private String reporterName;     // 신고한 사람 이름
+        private String reportedUserName; // 신고당한 사람 이름
     }
 }
