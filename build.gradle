@@ -80,6 +80,7 @@ tasks.jacocoTestReport {
                                     'uni/backend/domain/util/**',      // 유틸리티 클래스 제외
                                     'uni/backend/enums/**',            // 예외 클래스 제외
                                     'uni/backend/exception/**',        // 예외 클래스 제외
+                                    'uni/backend/security/**',        // 예외 클래스 제외
                                     '**/lombok/**'                     // Lombok 생성 코드 제외
                             )
                         }

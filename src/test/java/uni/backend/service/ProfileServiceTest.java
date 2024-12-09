@@ -217,5 +217,97 @@ class ProfileServiceTest {
         assertEquals(4.5, response.getStar());
     }
 
+    @Test
+    void 프로필_DTO_조회_예외_프로필_비공개() {
+        // Given
+        Integer userId = user.getUserId();
+        profile.setVisible(false); // 비공개 설정
+        when(profileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+
+        // When & Then
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            profileService.getProfileDTOByUserId(userId);
+        });
+
+        assertEquals("해당 프로필은 비공개 상태입니다.", exception.getMessage());
+    }
+
+    @Test
+    void 프로필_이미지_업데이트_이미지_없음() {
+        // Given
+        Integer userId = user.getUserId();
+        Profile profile = new Profile();
+
+        // PrePersist에 의해 기본값이 설정된 상태를 Mock으로 반영
+        profile.prePersist();
+
+        when(profileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+        when(profileRepository.save(any(Profile.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        Profile updatedProfile = profileService.updateProfileImage(userId, null, null);
+
+        // Then
+        assertNotNull(updatedProfile); // 프로필 객체는 null이 아님
+        assertEquals("/profile-image.png", updatedProfile.getImgProf()); // 기본값 검증
+        assertEquals("/basic_background.png", updatedProfile.getImgBack()); // 기본값 검증
+    }
+
+
+    @Test
+    void 프로필_정보_업데이트_해시태그_없음() {
+        // Given
+        Integer userId = 1;
+        Profile profile = new Profile();
+        profile.setUser(new User()); // User와 연결
+        IndividualProfileResponse profileDto = IndividualProfileResponse.builder()
+            .region("Seoul")
+            .time("Morning")
+            .description("Updated description")
+            .hashtags(null) // 해시태그 없음
+            .build();
+
+        when(profileRepository.findByUser_UserId(userId)).thenReturn(Optional.of(profile));
+        when(profileRepository.save(any(Profile.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        Profile updatedProfile = profileService.updateProfile(userId, profileDto);
+
+        // Then
+        assertNotNull(updatedProfile);
+        assertEquals("Seoul", updatedProfile.getRegion());
+        assertEquals("Morning", updatedProfile.getTime());
+        assertEquals("Updated description", updatedProfile.getDescription());
+        assertTrue(updatedProfile.getMainCategories().isEmpty()); // 해시태그 리스트 비어있는지 확인
+    }
+
+    @Test
+    void 프로필_별점_업데이트_리뷰_없음() {
+        // Given
+        Integer userId = user.getUserId();
+        when(reviewRepository.findByProfileOwnerUserId(userId)).thenReturn(List.of()); // 리뷰 없음
+
+        // When & Then
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            profileService.updateProfileStar(userId);
+        });
+
+        assertEquals("해당 유저에 대한 리뷰가 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    void 홈_데이터_조회_데이터_없음() {
+        when(profileRepository.findByUser_Role(Role.KOREAN)).thenReturn(List.of()); // 빈 리스트 반환
+
+        // When
+        HomeDataResponse homeDataResponse = profileService.getHomeDataProfiles();
+
+        // Then
+        assertNotNull(homeDataResponse);
+        assertTrue(homeDataResponse.getData().isEmpty()); // 반환된 데이터가 비어있는지 확인
+    }
+
 
 }

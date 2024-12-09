@@ -62,6 +62,9 @@ public class AdminService {
         userRepository.save(admin);
 
         recipientEmails.forEach(recipientEmail -> {
+            if (recipientEmail == null || recipientEmail.isBlank()) {
+                throw new RuntimeException("잘못된 이메일 주소입니다."); // 예외 발생
+            }
             SimpleMailMessage message = AdminAccountUtil.createEmailForm(
                 recipientEmail, admin.getEmail(), rawPassword);
             message.setFrom("jdragon@uni-ajou.site");
@@ -218,6 +221,9 @@ public class AdminService {
      */
     @Transactional
     public void unblindAllContentByUser(Integer userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User with ID " + userId + " not found");
+        }
         // QnA 블라인드 해제
         List<Qna> qnas = qnaRepository.findByCommenter_UserId(userId);
         qnas.forEach(Qna::unblindQna);

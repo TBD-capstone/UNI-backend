@@ -45,7 +45,7 @@ public class AdminAccountUtil {
         Profile profile = new Profile();
         profile.setImgProf("/profile-image.png");
         profile.setUser(admin);
-        
+
         admin.setEmail(createAdminName()); // 고유한 관리자 이메일 생성
         admin.setPassword(passwordEncoder.encode(rawPassword)); // 비밀번호 암호화 후 저장
         admin.setStatus(UserStatus.ACTIVE); // 활성화 상태 설정
@@ -80,7 +80,7 @@ public class AdminAccountUtil {
      *
      * @return 보안 강화된 랜덤 숫자 문자열
      */
-    private String createRandomCodeNumber() {
+    public String createRandomCodeNumber() {
         try {
             Random random = SecureRandom.getInstanceStrong();
             return generateRandomNumberSequence(random);
@@ -95,7 +95,7 @@ public class AdminAccountUtil {
      * @param random 랜덤 생성기
      * @return 랜덤 숫자 문자열
      */
-    private String generateRandomNumberSequence(Random random) {
+    public String generateRandomNumberSequence(Random random) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < SECURITY_DIGIT_NUMBER; i++) {
             builder.append(random.nextInt(RANDOM_NUMBER_BOUND));
@@ -127,7 +127,7 @@ public class AdminAccountUtil {
      * @param password  관리자 비밀번호
      * @return 포맷된 이메일 텍스트
      */
-    private static String formatEmailText(String adminName, String password) {
+    public static String formatEmailText(String adminName, String password) {
         return String.format("[Admin Account: %s], [Password: %s]", adminName, password);
     }
 }

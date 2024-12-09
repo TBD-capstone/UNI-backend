@@ -43,7 +43,7 @@ public class UniversityService {
         }
     }
 
-    private boolean isEnglish(String str) {
+    public boolean isEnglish(String str) {
         return str.matches("^[a-zA-Z\\s]+$");
     }
 

@@ -138,4 +138,65 @@ public class CertificationControllerTest {
             .andExpect(jsonPath("$.status").value("success"))
             .andExpect(jsonPath("$.message").value("인증된 유저 목록이 초기화되었습니다."));
     }
+
+    @Test
+    @DisplayName("이메일 인증 및 중복 확인 - 이미 가입된 이메일")
+    @WithMockUser(username = "user", roles = {"USER"})
+    void validateEmail_AlreadyRegistered() throws Exception {
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+
+        mockMvc.perform(post("/api/auth/validate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    Map.of("email", "test@example.com", "univName", "Test University"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("fail"))
+            .andExpect(jsonPath("$.message").value("이미 가입된 이메일입니다."));
+    }
+
+
+    @Test
+    @DisplayName("인증 코드 검증 - 실패")
+    @WithMockUser(username = "user", roles = {"USER"})
+    void verifyCertificationCode_Fail() throws Exception {
+        when(universityService.convertToKorean("Test University")).thenReturn("테스트 대학교");
+        when(certificationService.verifyCertification("test@example.com", "테스트 대학교",
+            1234)).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    Map.of("email", "test@example.com", "univName", "Test University", "code", 1234))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("fail"))
+            .andExpect(jsonPath("$.message").value("인증 코드 검증 실패"));
+    }
+
+    @Test
+    @DisplayName("대학교 인증 - 실패")
+    @WithMockUser(username = "user", roles = {"USER"})
+    void validateUniversity_Fail() throws Exception {
+        when(certificationService.universityCertification("Invalid University")).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/univ")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("univName", "Invalid University"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("fail"))
+            .andExpect(jsonPath("$.message").value("인증 불가능한 대학교입니다."));
+    }
+
+    @Test
+    @DisplayName("인증된 유저 목록 초기화 - 실패")
+    @WithMockUser(username = "user", roles = {"USER"})
+    void clearCertifiedUsers_Fail() throws Exception {
+        when(certificationService.clearCertifiedUsers()).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/clear"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("fail"))
+            .andExpect(jsonPath("$.message").value("인증된 유저 목록 초기화 실패"));
+    }
+
+
 }

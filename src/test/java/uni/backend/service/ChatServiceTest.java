@@ -1,7 +1,13 @@
 package uni.backend.service;
 
+import java.security.Principal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import uni.backend.controller.ChatController;
 import uni.backend.domain.ChatMessage;
 import uni.backend.domain.ChatRoom;
 import uni.backend.domain.User;
@@ -19,14 +25,22 @@ import static org.mockito.Mockito.*;
 
 class ChatServiceTest {
 
-    private ChatService chatService;
     private ChatRoomRepository chatRoomRepository;
     private ChatMessageRepository chatMessageRepository;
     private UserRepository userRepository;
     private TranslationService translationService;
+    private ChatController chatController;
+
+    @Mock
+    private ChatService chatService;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+        chatController = new ChatController(chatService, messagingTemplate); // 초기화 추가
         chatRoomRepository = mock(ChatRoomRepository.class);
         chatMessageRepository = mock(ChatMessageRepository.class);
         userRepository = mock(UserRepository.class);
@@ -34,11 +48,11 @@ class ChatServiceTest {
         var userStatusScheduler = mock(UserStatusScheduler.class);
 
         chatService = new ChatService(
-                chatRoomRepository,
-                chatMessageRepository,
-                userRepository,
-                translationService,
-                userStatusScheduler
+            chatRoomRepository,
+            chatMessageRepository,
+            userRepository,
+            translationService,
+            userStatusScheduler
         );
     }
 
@@ -48,18 +62,20 @@ class ChatServiceTest {
         var senderEmail = "sender@example.com";
         var request = ChatRoomRequest.builder().receiverId(2).build();
         var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
-        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver")
+            .build();
 
         // Mock 설정
         when(userRepository.findByEmail(senderEmail)).thenReturn(Optional.of(sender));
         when(userRepository.findById(2)).thenReturn(Optional.of(receiver));
-        when(chatRoomRepository.findBySenderAndReceiver(sender, receiver)).thenReturn(Optional.empty());
+        when(chatRoomRepository.findBySenderAndReceiver(sender, receiver)).thenReturn(
+            Optional.empty());
 
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(receiver)
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .build();
         when(chatRoomRepository.save(any(ChatRoom.class))).thenReturn(chatRoom);
 
         // 추가 Mock 설정: findById
@@ -97,26 +113,27 @@ class ChatServiceTest {
     @Test
     void testSendMessageWithDirectRoomId() {
         // given
-        var request = ChatMessageRequest.builder().roomId(null).content("Hello").build(); // RoomId는 null
+        var request = ChatMessageRequest.builder().roomId(null).content("Hello")
+            .build(); // RoomId는 null
         var senderEmail = "sender@example.com";
         Integer roomId = 5; // 명시적으로 roomId 설정
         var sender = User.builder().userId(1).email(senderEmail).build();
         var receiver = User.builder().userId(2).email("receiver@example.com").build();
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(roomId)
-                .sender(sender) // sender 설정
-                .receiver(receiver) // receiver 설정
-                .build();
+            .chatRoomId(roomId)
+            .sender(sender) // sender 설정
+            .receiver(receiver) // receiver 설정
+            .build();
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(receiver)
-                .content("Hello")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver)
+            .content("Hello")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         // Mock 설정
         when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
@@ -136,26 +153,28 @@ class ChatServiceTest {
     void testSendMessageWithRequestRoomId() {
         // given
         Integer requestRoomId = 10; // request에 포함된 RoomId
-        var request = ChatMessageRequest.builder().roomId(requestRoomId).content("Hello").build(); // RoomId는 요청에서 가져옴
+        var request = ChatMessageRequest.builder().roomId(requestRoomId).content("Hello")
+            .build(); // RoomId는 요청에서 가져옴
         var senderEmail = "sender@example.com";
         Integer roomId = null; // 명시적으로 roomId가 null
         var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
-        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver")
+            .build();
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(requestRoomId)
-                .sender(sender) // sender 설정
-                .receiver(receiver) // receiver 설정
-                .build();
+            .chatRoomId(requestRoomId)
+            .sender(sender) // sender 설정
+            .receiver(receiver) // receiver 설정
+            .build();
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(receiver)
-                .content("Hello")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver)
+            .content("Hello")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         // Mock 설정
         when(chatRoomRepository.findById(requestRoomId)).thenReturn(Optional.of(chatRoom));
@@ -188,24 +207,27 @@ class ChatServiceTest {
     @Test
     void testSendMessageSuccessfullySenderIsChatRoomSender() {
         // given
-        var request = ChatMessageRequest.builder().roomId(1).content("Hello").build(); // 유효한 content
+        var request = ChatMessageRequest.builder().roomId(1).content("Hello")
+            .build(); // 유효한 content
         var senderEmail = "sender@example.com";
         var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
-        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
-        var chatRoom = ChatRoom.builder().chatRoomId(1).sender(sender).receiver(receiver).build(); // sender가 chatRoom의 sender
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver")
+            .build();
+        var chatRoom = ChatRoom.builder().chatRoomId(1).sender(sender).receiver(receiver)
+            .build(); // sender가 chatRoom의 sender
 
         when(userRepository.findByEmail(senderEmail)).thenReturn(Optional.of(sender));
         when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(receiver)
-                .content("Hello")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver)
+            .content("Hello")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         when(chatMessageRepository.save(any(ChatMessage.class))).thenReturn(message);
 
@@ -217,7 +239,8 @@ class ChatServiceTest {
         assertEquals("Hello", response.getContent());
 
         // Verify chatRoom update for sender as chatRoom sender
-        assertEquals(LocalDateTime.now().getMinute(), chatRoom.getSenderLastMessageAt().getMinute()); // senderLastMessageAt 갱신 확인
+        assertEquals(LocalDateTime.now().getMinute(),
+            chatRoom.getSenderLastMessageAt().getMinute()); // senderLastMessageAt 갱신 확인
         assertEquals(1, chatRoom.getReceiverUnreadCount()); // receiverUnreadCount가 1 증가했는지 확인
 
         verify(chatMessageRepository).save(any(ChatMessage.class));
@@ -227,24 +250,27 @@ class ChatServiceTest {
     @Test
     void testSendMessageSuccessfullySenderIsChatRoomReceiver() {
         // given
-        var request = ChatMessageRequest.builder().roomId(1).content("Hello").build(); // 유효한 content
+        var request = ChatMessageRequest.builder().roomId(1).content("Hello")
+            .build(); // 유효한 content
         var senderEmail = "sender@example.com";
         var sender = User.builder().userId(1).email(senderEmail).name("Sender").build();
-        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver").build();
-        var chatRoom = ChatRoom.builder().chatRoomId(1).sender(receiver).receiver(sender).build(); // sender가 chatRoom의 receiver
+        var receiver = User.builder().userId(2).email("receiver@example.com").name("Receiver")
+            .build();
+        var chatRoom = ChatRoom.builder().chatRoomId(1).sender(receiver).receiver(sender)
+            .build(); // sender가 chatRoom의 receiver
 
         when(userRepository.findByEmail(senderEmail)).thenReturn(Optional.of(sender));
         when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(receiver)
-                .content("Hello")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver)
+            .content("Hello")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         when(chatMessageRepository.save(any(ChatMessage.class))).thenReturn(message);
 
@@ -256,7 +282,8 @@ class ChatServiceTest {
         assertEquals("Hello", response.getContent());
 
         // Verify chatRoom update for sender as chatRoom receiver
-        assertEquals(LocalDateTime.now().getMinute(), chatRoom.getReceiverLastMessageAt().getMinute()); // receiverLastMessageAt 갱신 확인
+        assertEquals(LocalDateTime.now().getMinute(),
+            chatRoom.getReceiverLastMessageAt().getMinute()); // receiverLastMessageAt 갱신 확인
         assertEquals(1, chatRoom.getSenderUnreadCount()); // senderUnreadCount가 1 증가했는지 확인
 
         verify(chatMessageRepository).save(any(ChatMessage.class));
@@ -271,20 +298,20 @@ class ChatServiceTest {
         var sender = User.builder().userId(1).email("sender@example.com").name("Sender").build();
         var receiver = User.builder().userId(2).email(username).name("Receiver").build();
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(receiver)
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .build();
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(receiver)
-                .receiver(sender)
-                .content("Hi")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(receiver)
+            .receiver(sender)
+            .content("Hi")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         chatRoom.setChatMessages(List.of(message));
 
@@ -296,7 +323,8 @@ class ChatServiceTest {
 
         // then
         assertTrue(message.isRead(), "The message should be marked as read");
-        assertEquals(0, chatRoom.getReceiverUnreadCount(), "The receiver's unread count should be 0 after reading the message");
+        assertEquals(0, chatRoom.getReceiverUnreadCount(),
+            "The receiver's unread count should be 0 after reading the message");
         verify(chatMessageRepository).saveAll(chatRoom.getChatMessages());
     }
 
@@ -308,20 +336,20 @@ class ChatServiceTest {
         var sender = User.builder().userId(1).email("sender@example.com").name("Sender").build();
         var receiver = User.builder().userId(2).email(username).name("Receiver").build();
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(receiver)
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .build();
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(receiver)
-                .content("Hi")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver)
+            .content("Hi")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         chatRoom.setChatMessages(List.of(message));
 
@@ -333,7 +361,8 @@ class ChatServiceTest {
 
         // then
         assertTrue(message.isRead(), "The message should be marked as read");
-        assertEquals(0, chatRoom.getReceiverUnreadCount(), "The receiver's unread count should be 0 after reading the message");
+        assertEquals(0, chatRoom.getReceiverUnreadCount(),
+            "The receiver's unread count should be 0 after reading the message");
         verify(chatMessageRepository).saveAll(chatRoom.getChatMessages());
     }
 
@@ -345,13 +374,14 @@ class ChatServiceTest {
         var sender = User.builder().userId(1).email("sender@example.com").build();
         var receiver = User.builder().userId(2).email(username).build();
         var otherReceiver = User.builder().userId(3).email("other@example.com").build();
-        var chatRoom = ChatRoom.builder().chatRoomId(roomId).sender(sender).receiver(receiver).build();
+        var chatRoom = ChatRoom.builder().chatRoomId(roomId).sender(sender).receiver(receiver)
+            .build();
 
         var message = ChatMessage.builder()
-                .chatRoom(chatRoom)
-                .receiver(otherReceiver) // 잘못된 receiver
-                .isRead(false) // 아직 읽지 않은 메시지
-                .build();
+            .chatRoom(chatRoom)
+            .receiver(otherReceiver) // 잘못된 receiver
+            .isRead(false) // 아직 읽지 않은 메시지
+            .build();
 
         chatRoom.setChatMessages(List.of(message));
         when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
@@ -361,7 +391,8 @@ class ChatServiceTest {
         chatService.markMessagesAsRead(roomId, username);
 
         // then
-        assertFalse(message.isRead(), "The message should remain unread as it is for a different receiver");
+        assertFalse(message.isRead(),
+            "The message should remain unread as it is for a different receiver");
         verify(chatMessageRepository, never()).saveAll(any()); // 저장 동작이 발생하지 않아야 함
         verify(chatRoomRepository).save(chatRoom); // 채팅방은 저장될 수 있음
     }
@@ -373,13 +404,14 @@ class ChatServiceTest {
         var username = "receiver@example.com";
         var sender = User.builder().userId(1).email("sender@example.com").build();
         var receiver = User.builder().userId(2).email(username).build();
-        var chatRoom = ChatRoom.builder().chatRoomId(roomId).sender(sender).receiver(receiver).build();
+        var chatRoom = ChatRoom.builder().chatRoomId(roomId).sender(sender).receiver(receiver)
+            .build();
 
         var message = ChatMessage.builder()
-                .chatRoom(chatRoom)
-                .receiver(receiver) // 올바른 receiver
-                .isRead(true) // 이미 읽은 메시지
-                .build();
+            .chatRoom(chatRoom)
+            .receiver(receiver) // 올바른 receiver
+            .isRead(true) // 이미 읽은 메시지
+            .build();
 
         chatRoom.setChatMessages(List.of(message));
         when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
@@ -408,12 +440,13 @@ class ChatServiceTest {
 
         // Mock the repository and services
         when(chatMessageRepository.findById(messageId))
-                .thenReturn(Optional.of(ChatMessage.builder()
-                        .messageId(messageId)
-                        .content(originalMessage)
-                        .build()));
+            .thenReturn(Optional.of(ChatMessage.builder()
+                .messageId(messageId)
+                .content(originalMessage)
+                .build()));
         when(translationService.determineTargetLanguage(acceptLanguage)).thenReturn(targetLanguage);
-        when(translationService.translate(any(TranslationRequest.class))).thenReturn(translationResponse);
+        when(translationService.translate(any(TranslationRequest.class))).thenReturn(
+            translationResponse);
 
         // when
         String translatedMessage = chatService.translateMessage(messageId, acceptLanguage);
@@ -453,18 +486,20 @@ class ChatServiceTest {
         var chatMessageRepository = mock(ChatMessageRepository.class);
         var userRepository = mock(UserRepository.class);
         var userStatusScheduler = mock(UserStatusScheduler.class);
-        chatService = new ChatService(chatRoomRepository, chatMessageRepository, userRepository, translationService, userStatusScheduler);
+        chatService = new ChatService(chatRoomRepository, chatMessageRepository, userRepository,
+            translationService, userStatusScheduler);
 
         // Mock the translation response (empty response)
         TranslationResponse translationResponse = mock(TranslationResponse.class);
-        when(translationService.translate(any(TranslationRequest.class))).thenReturn(translationResponse);
+        when(translationService.translate(any(TranslationRequest.class))).thenReturn(
+            translationResponse);
         when(translationResponse.getTranslations()).thenReturn(List.of());
 
         // Mock the method to get the message by id
         when(chatMessageRepository.findById(messageId)).thenReturn(Optional.of(ChatMessage.builder()
-                .messageId(messageId)
-                .content(originalMessage)
-                .build()));
+            .messageId(messageId)
+            .content(originalMessage)
+            .build()));
 
         // when
         String result = chatService.translateMessage(messageId, acceptLanguage);
@@ -499,21 +534,23 @@ class ChatServiceTest {
         var user = User.builder().userId(1).email(email).name("User").build();
 
         var chatRoom1 = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(user)
-                .receiver(User.builder().userId(2).email("receiver1@example.com").name("Receiver1").build())
-                .build();
+            .chatRoomId(1)
+            .sender(user)
+            .receiver(
+                User.builder().userId(2).email("receiver1@example.com").name("Receiver1").build())
+            .build();
 
         var chatRoom2 = ChatRoom.builder()
-                .chatRoomId(2)
-                .sender(user)
-                .receiver(User.builder().userId(3).email("receiver2@example.com").name("Receiver2").build())
-                .build();
+            .chatRoomId(2)
+            .sender(user)
+            .receiver(
+                User.builder().userId(3).email("receiver2@example.com").name("Receiver2").build())
+            .build();
 
         // Mock 설정
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(chatRoomRepository.findBySenderOrReceiver(user, user))
-                .thenReturn(List.of(chatRoom1, chatRoom2));
+            .thenReturn(List.of(chatRoom1, chatRoom2));
 
         // 추가 Mock 설정: findById
         when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom1));
@@ -539,38 +576,40 @@ class ChatServiceTest {
     void testGetChatRoomsForUser_WhenCurrentUserIsReceiver() {
         // given
         var currentUser = User.builder()
-                .userId(2)
-                .email("receiver@example.com")
-                .name("Receiver")
-                .build();
+            .userId(2)
+            .email("receiver@example.com")
+            .name("Receiver")
+            .build();
 
         var sender = User.builder()
-                .userId(1)
-                .email("sender@example.com")
-                .name("Sender")
-                .build();
+            .userId(1)
+            .email("sender@example.com")
+            .name("Sender")
+            .build();
 
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(currentUser) // currentUser를 receiver로 설정
-                .receiverUnreadCount(5) // 초기 unreadCount 설정
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(currentUser) // currentUser를 receiver로 설정
+            .receiverUnreadCount(5) // 초기 unreadCount 설정
+            .build();
 
         var message1 = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(sender)
-                .receiver(currentUser)
-                .isRead(false)
-                .content("Hello")
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(currentUser)
+            .isRead(false)
+            .content("Hello")
+            .build();
 
         chatRoom.setChatMessages(List.of(message1));
 
         // Mock 설정
-        when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(Optional.of(currentUser));
-        when(chatRoomRepository.findBySenderOrReceiver(currentUser, currentUser)).thenReturn(List.of(chatRoom));
+        when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(
+            Optional.of(currentUser));
+        when(chatRoomRepository.findBySenderOrReceiver(currentUser, currentUser)).thenReturn(
+            List.of(chatRoom));
         when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
         when(chatMessageRepository.findByChatRoom(chatRoom)).thenReturn(List.of(message1));
 
@@ -597,48 +636,51 @@ class ChatServiceTest {
         var email = "user@example.com";
         var user = User.builder().userId(1).email(email).name("User").build();
 
-        var receiver1 = User.builder().userId(2).email("receiver1@example.com").name("Receiver1").build();
-        var receiver2 = User.builder().userId(3).email("receiver2@example.com").name("Receiver2").build();
+        var receiver1 = User.builder().userId(2).email("receiver1@example.com").name("Receiver1")
+            .build();
+        var receiver2 = User.builder().userId(3).email("receiver2@example.com").name("Receiver2")
+            .build();
 
         var chatRoom1 = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(user)
-                .receiver(receiver1)
-                .build();
+            .chatRoomId(1)
+            .sender(user)
+            .receiver(receiver1)
+            .build();
 
         var chatRoom2 = ChatRoom.builder()
-                .chatRoomId(2)
-                .sender(user)
-                .receiver(receiver2)
-                .build();
+            .chatRoomId(2)
+            .sender(user)
+            .receiver(receiver2)
+            .build();
 
         // 메시지 설정
         var message1 = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom1)
-                .sender(user)
-                .receiver(receiver1)
-                .content("Hello")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom1)
+            .sender(user)
+            .receiver(receiver1)
+            .content("Hello")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         var message2 = ChatMessage.builder()
-                .messageId(2)
-                .chatRoom(chatRoom2)
-                .sender(user)
-                .receiver(receiver2)
-                .content("Hi")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(2)
+            .chatRoom(chatRoom2)
+            .sender(user)
+            .receiver(receiver2)
+            .content("Hi")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         chatRoom1.setChatMessages(List.of(message1)); // chatRoom1 메시지 추가
         chatRoom2.setChatMessages(List.of(message2)); // chatRoom2 메시지 추가
 
         // Mock 설정
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(chatRoomRepository.findBySenderOrReceiver(user, user)).thenReturn(List.of(chatRoom1, chatRoom2));
+        when(chatRoomRepository.findBySenderOrReceiver(user, user)).thenReturn(
+            List.of(chatRoom1, chatRoom2));
         when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom1));
         when(chatRoomRepository.findById(2)).thenReturn(Optional.of(chatRoom2));
         when(chatMessageRepository.findByChatRoom(chatRoom1)).thenReturn(List.of(message1));
@@ -669,20 +711,21 @@ class ChatServiceTest {
         // given
         var roomId = 1;
         var chatRoom = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(User.builder().userId(1).email("sender@example.com").name("Sender").build())
-                .receiver(User.builder().userId(2).email("receiver@example.com").name("Receiver").build())
-                .build();
+            .chatRoomId(1)
+            .sender(User.builder().userId(1).email("sender@example.com").name("Sender").build())
+            .receiver(
+                User.builder().userId(2).email("receiver@example.com").name("Receiver").build())
+            .build();
 
         var message = ChatMessage.builder()
-                .messageId(1)
-                .chatRoom(chatRoom)
-                .sender(chatRoom.getSender())
-                .receiver(chatRoom.getReceiver())
-                .content("Hi")
-                .sendAt(LocalDateTime.now())
-                .isRead(false)
-                .build();
+            .messageId(1)
+            .chatRoom(chatRoom)
+            .sender(chatRoom.getSender())
+            .receiver(chatRoom.getReceiver())
+            .content("Hi")
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
 
         when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
         when(chatMessageRepository.findByChatRoom(chatRoom)).thenReturn(List.of(message));
@@ -706,23 +749,23 @@ class ChatServiceTest {
         User receiver = User.builder().userId(2).email("receiver@example.com").build();
 
         ChatRoom chatRoomWithSenderNotification = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(receiver)
-                .senderUnreadCount(5) // Sender가 읽지 않은 메시지가 있음
-                .receiverLastMessageAt(now.minusDays(2)) // 마지막 메시지가 1일 이상 지남
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .senderUnreadCount(5) // Sender가 읽지 않은 메시지가 있음
+            .receiverLastMessageAt(now.minusDays(2)) // 마지막 메시지가 1일 이상 지남
+            .build();
 
         ChatRoom chatRoomWithoutNotification = ChatRoom.builder()
-                .chatRoomId(2)
-                .sender(sender)
-                .receiver(receiver)
-                .senderUnreadCount(0) // 읽지 않은 메시지가 없음
-                .receiverLastMessageAt(now.minusHours(12)) // 마지막 메시지가 1일 지나지 않음
-                .build();
+            .chatRoomId(2)
+            .sender(sender)
+            .receiver(receiver)
+            .senderUnreadCount(0) // 읽지 않은 메시지가 없음
+            .receiverLastMessageAt(now.minusHours(12)) // 마지막 메시지가 1일 지나지 않음
+            .build();
 
         when(chatRoomRepository.findAll())
-                .thenReturn(List.of(chatRoomWithSenderNotification, chatRoomWithoutNotification));
+            .thenReturn(List.of(chatRoomWithSenderNotification, chatRoomWithoutNotification));
 
         // ChatService의 notifyUnreadMessages를 실행
         chatService.notifyUnreadMessages();
@@ -732,7 +775,8 @@ class ChatServiceTest {
 
         // 알림이 필요한 조건만 검증
         assertEquals(5, chatRoomWithSenderNotification.getSenderUnreadCount());
-        assertTrue(chatRoomWithSenderNotification.getReceiverLastMessageAt().isBefore(now.minusDays(1)));
+        assertTrue(
+            chatRoomWithSenderNotification.getReceiverLastMessageAt().isBefore(now.minusDays(1)));
     }
 
     @Test
@@ -745,24 +789,24 @@ class ChatServiceTest {
 
         // Receiver가 알림 조건을 충족하는 ChatRoom 생성
         ChatRoom chatRoomWithReceiverNotification = ChatRoom.builder()
-                .chatRoomId(1)
-                .sender(sender)
-                .receiver(receiver)
-                .receiverUnreadCount(3) // 읽지 않은 메시지가 있음
-                .senderLastMessageAt(now.minusDays(2)) // 마지막 메시지가 1일 이상 지남
-                .build();
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .receiverUnreadCount(3) // 읽지 않은 메시지가 있음
+            .senderLastMessageAt(now.minusDays(2)) // 마지막 메시지가 1일 이상 지남
+            .build();
 
         // 알림 조건을 충족하지 않는 ChatRoom 생성
         ChatRoom chatRoomWithoutNotification = ChatRoom.builder()
-                .chatRoomId(2)
-                .sender(sender)
-                .receiver(receiver)
-                .receiverUnreadCount(0) // 읽지 않은 메시지가 없음
-                .senderLastMessageAt(now.minusHours(12)) // 마지막 메시지가 1일 지나지 않음
-                .build();
+            .chatRoomId(2)
+            .sender(sender)
+            .receiver(receiver)
+            .receiverUnreadCount(0) // 읽지 않은 메시지가 없음
+            .senderLastMessageAt(now.minusHours(12)) // 마지막 메시지가 1일 지나지 않음
+            .build();
 
         when(chatRoomRepository.findAll())
-                .thenReturn(List.of(chatRoomWithReceiverNotification, chatRoomWithoutNotification));
+            .thenReturn(List.of(chatRoomWithReceiverNotification, chatRoomWithoutNotification));
 
         // when
         chatService.notifyUnreadMessages();
@@ -773,10 +817,114 @@ class ChatServiceTest {
 
         // 알림 조건을 충족하는 데이터 검증
         assertEquals(3, chatRoomWithReceiverNotification.getReceiverUnreadCount());
-        assertTrue(chatRoomWithReceiverNotification.getSenderLastMessageAt().isBefore(now.minusDays(1)));
+        assertTrue(
+            chatRoomWithReceiverNotification.getSenderLastMessageAt().isBefore(now.minusDays(1)));
 
         // 알림 조건을 충족하지 않는 데이터 검증
         assertEquals(0, chatRoomWithoutNotification.getReceiverUnreadCount());
         assertTrue(chatRoomWithoutNotification.getSenderLastMessageAt().isAfter(now.minusDays(1)));
+    }
+
+    @Test
+    void sendWebSocketMessage_WhenMessageContentIsEmpty_ShouldNotSendMessage() {
+        // given
+        ChatMessageRequest messageRequest = ChatMessageRequest.builder()
+            .content("") // 빈 메시지
+            .roomId(1)
+            .build();
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("user@example.com");
+
+        // Mock 객체 생성
+        ChatService mockChatService = mock(ChatService.class);
+        SimpMessageSendingOperations mockMessagingTemplate = mock(
+            SimpMessageSendingOperations.class);
+
+        // 테스트할 컨트롤러를 설정 (Mock 주입)
+        ChatController chatController = new ChatController(mockChatService, mockMessagingTemplate);
+
+        // when
+        chatController.sendWebSocketMessage(messageRequest, principal);
+
+        // then
+        // ChatService와 MessagingTemplate가 호출되지 않았음을 검증
+        verifyNoInteractions(mockChatService);
+        verifyNoInteractions(mockMessagingTemplate);
+    }
+
+
+    @Test
+    void sendWebSocketMessage_WhenMessageContentIsValid_ShouldSendMessage() {
+        // given
+        ChatMessageRequest messageRequest = ChatMessageRequest.builder()
+            .content("Hello")
+            .roomId(1)
+            .build();
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("user@example.com");
+
+        User sender = User.builder()
+            .userId(1)
+            .email("user@example.com")
+            .name("Test User")
+            .build();
+        User receiver = User.builder()
+            .userId(2)
+            .email("receiver@example.com")
+            .name("Receiver User")
+            .build();
+
+        ChatRoom chatRoom = ChatRoom.builder()
+            .chatRoomId(1)
+            .sender(sender)
+            .receiver(receiver)
+            .build();
+
+        ChatMessage chatMessage = ChatMessage.builder()
+            .messageId(100)
+            .content("Hello")
+            .chatRoom(chatRoom)
+            .sender(sender)
+            .receiver(receiver) // receiver 설정
+            .sendAt(LocalDateTime.now())
+            .isRead(false)
+            .build();
+
+        ChatMessageResponse response = ChatMessageResponse.builder()
+            .messageId(chatMessage.getMessageId())
+            .content(chatMessage.getContent())
+            .roomId(chatMessage.getChatRoom().getChatRoomId())
+            .senderId(chatMessage.getSender().getUserId())
+            .receiverId(chatMessage.getReceiver().getUserId()) // receiver 확인
+            .sendAt(chatMessage.getSendAt())
+            .build();
+
+        // Mock 설정
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(sender));
+        when(chatRoomRepository.findById(1)).thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.save(any(ChatMessage.class))).thenReturn(chatMessage);
+
+        // when
+        var result = chatService.sendMessage(messageRequest, "user@example.com", 1);
+
+        // then
+        assertNotNull(result);
+        assertEquals("Hello", result.getContent());
+        verify(chatMessageRepository).save(any(ChatMessage.class));
+    }
+
+
+    @Test
+    void sendWebSocketMessage_WhenPrincipalIsNull_ShouldThrowException() {
+        // given
+        ChatMessageRequest messageRequest = ChatMessageRequest.builder()
+            .content("Hello")
+            .roomId(1)
+            .build();
+
+        // when & then
+        assertThrows(NullPointerException.class, () -> {
+            chatController.sendWebSocketMessage(messageRequest, null);
+        });
     }
 }

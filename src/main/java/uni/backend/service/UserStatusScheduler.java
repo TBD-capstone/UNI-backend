@@ -24,13 +24,16 @@ public class UserStatusScheduler {
     private final JavaMailSender mailSender;
 
 
-    @Scheduled(cron = "0 0 0 * * *")  // 매일 자정에 실행
+    @Scheduled(cron = "0 0 0 * * *")
     public void unbanUsersIfBanExpired() {
         log.info("유저 밴 상태 점검을 시작합니다.");
-
-        // 현재 시간 이후로 밴 해제 날짜가 지난 유저를 찾음
         List<User> bannedUsers = userRepository.findByStatusAndEndBanDateBefore(UserStatus.BANNED,
             LocalDateTime.now());
+
+        if (bannedUsers.isEmpty()) {
+            log.info("밴 해제 조건을 만족하는 유저가 없습니다.");
+            return;
+        }
 
         for (User user : bannedUsers) {
             user.setStatus(UserStatus.ACTIVE);

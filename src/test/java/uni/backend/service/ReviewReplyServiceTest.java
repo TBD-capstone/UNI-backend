@@ -207,4 +207,75 @@ class ReviewReplyServiceTest {
         verify(reviewReplyRepository).save(reviewReply); // 업데이트된 ReviewReply 저장 호출 확인
     }
 
+    @Test
+    @DisplayName("대댓글 작성 실패 - 리뷰 없음")
+    void createReviewReply_리뷰없음() {
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewReplyService.createReviewReply(review.getReviewId(), commenter.getUserId(),
+                "Test content");
+        });
+
+        assertEquals("리뷰를 찾을 수 없습니다. ID: " + review.getReviewId(), exception.getMessage());
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 실패 - 작성자 없음")
+    void createReviewReply_작성자없음() {
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.of(review));
+        when(userRepository.findById(commenter.getUserId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewReplyService.createReviewReply(review.getReviewId(), commenter.getUserId(),
+                "Test content");
+        });
+
+        assertEquals("작성자를 찾을 수 없습니다. ID: " + commenter.getUserId(), exception.getMessage());
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("대댓글 수정 실패 - 대댓글 없음")
+    void updateReplyContent_대댓글없음() {
+        when(reviewReplyRepository.findById(reviewReply.getReplyId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewReplyService.updateReplyContent(reviewReply.getReplyId(), "Updated content");
+        });
+
+        assertEquals("대댓글을 찾을 수 없습니다. ID: " + reviewReply.getReplyId(), exception.getMessage());
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("대댓글 수정 실패 - 삭제된 대댓글")
+    void updateReplyContent_삭제된대댓글() {
+        reviewReply.softDelete(); // 대댓글 삭제 상태로 설정
+        when(reviewReplyRepository.findById(reviewReply.getReplyId())).thenReturn(
+            Optional.of(reviewReply));
+
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            reviewReplyService.updateReplyContent(reviewReply.getReplyId(), "Updated content");
+        });
+
+        assertEquals("삭제된 대댓글은 수정할 수 없습니다.", exception.getMessage());
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("좋아요 토글 실패 - 대댓글 없음")
+    void toggleLike_대댓글없음() {
+        when(reviewReplyRepository.findById(reviewReply.getReplyId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewReplyService.toggleLike(reviewReply.getReplyId(), commenter);
+        });
+
+        assertEquals("대댓글을 찾을 수 없습니다. ID: " + reviewReply.getReplyId(), exception.getMessage());
+        verify(reviewReplyLikeRepository, never()).save(any());
+    }
+
+
 }

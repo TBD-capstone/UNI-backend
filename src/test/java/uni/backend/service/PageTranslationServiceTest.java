@@ -2,6 +2,7 @@ package uni.backend.service;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.util.StringUtils.capitalize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
 import uni.backend.repository.UniversityRepository;
+import uni.backend.util.MainCategoryMap;
 
 class PageTranslationServiceTest {
 
@@ -50,7 +52,7 @@ class PageTranslationServiceTest {
         List<HomeProfileResponse> mockProfiles = new ArrayList<>();
         HomeProfileResponse mockProfile = new HomeProfileResponse();
         mockProfile.setUnivName("서울대학교");
-        mockProfile.setHashtags(List.of("trip", "real estate"));
+        mockProfile.setHashtags(List.of("여행"));
         mockProfiles.add(mockProfile);
 
         Page<HomeProfileResponse> profiles = new PageImpl<>(mockProfiles);
@@ -69,7 +71,7 @@ class PageTranslationServiceTest {
 
         // Then: 번역 결과 검증
         assertEquals("Seoul National University", profiles.getContent().get(0).getUnivName());
-        assertEquals(List.of("Trip", "Realty"), profiles.getContent().get(0).getHashtags());
+        assertEquals(List.of("Trip"), profiles.getContent().get(0).getHashtags());
     }
 
     @Test
@@ -130,70 +132,6 @@ class PageTranslationServiceTest {
     }
 
     @Test
-    void testTranslateQna() {
-        // Given: Mock 데이터 생성
-        QnaResponse mockQna = new QnaResponse();
-        mockQna.setContent("질문 내용");
-        ReplyResponse mockReply = new ReplyResponse();
-        mockReply.setContent("답변 내용");
-        mockQna.setReplies(List.of(mockReply));
-
-        when(translationService.determineTargetLanguage("en")).thenReturn("en");
-        when(translationService.translate(any(TranslationRequest.class)))
-            .thenAnswer(invocation -> {
-                TranslationRequest request = invocation.getArgument(0);
-                List<IndividualTranslationResponse> translations = new ArrayList<>();
-                for (String text : request.getText()) {
-                    IndividualTranslationResponse response = new IndividualTranslationResponse();
-                    response.setText("Translated: " + text);
-                    translations.add(response);
-                }
-                TranslationResponse response = new TranslationResponse();
-                response.setTranslations(translations);
-                return response;
-            });
-
-        // Act
-        pageTranslationService.translateQna(List.of(mockQna), "en");
-
-        // Then
-        assertEquals("Translated: 질문 내용", mockQna.getContent());
-        assertEquals("Translated: 답변 내용", mockQna.getReplies().get(0).getContent());
-    }
-
-    @Test
-    void testTranslateReview() {
-        // Given: Mock 데이터 생성
-        ReviewResponse mockReview = new ReviewResponse();
-        mockReview.setContent("리뷰 내용");
-        ReviewReplyResponse mockReply = new ReviewReplyResponse();
-        mockReply.setContent("리뷰 답변");
-        mockReview.setReplies(List.of(mockReply));
-
-        when(translationService.determineTargetLanguage("en")).thenReturn("en");
-        when(translationService.translate(any(TranslationRequest.class)))
-            .thenAnswer(invocation -> {
-                TranslationRequest request = invocation.getArgument(0);
-                List<IndividualTranslationResponse> translations = new ArrayList<>();
-                for (String text : request.getText()) {
-                    IndividualTranslationResponse response = new IndividualTranslationResponse();
-                    response.setText("Translated: " + text);
-                    translations.add(response);
-                }
-                TranslationResponse response = new TranslationResponse();
-                response.setTranslations(translations);
-                return response;
-            });
-
-        // Act
-        pageTranslationService.translateReview(List.of(mockReview), "en");
-
-        // Then
-        assertEquals("Translated: 리뷰 내용", mockReview.getContent());
-        assertEquals("Translated: 리뷰 답변", mockReview.getReplies().get(0).getContent());
-    }
-
-    @Test
     void testTranslateMarkers() {
         // Given: Mock 데이터 생성
         MarkerResponse mockMarker = new MarkerResponse();
@@ -222,5 +160,116 @@ class PageTranslationServiceTest {
         assertEquals("Translated: 마커 이름", mockMarker.getName());
         assertEquals("Translated: 마커 설명", mockMarker.getDescription());
     }
+
+    @Test
+    void testTranslateQna() {
+        // Given
+        QnaResponse mockQna = new QnaResponse();
+        mockQna.setContent("질문 내용");
+        ReplyResponse mockReply = new ReplyResponse();
+        mockReply.setContent("답변 내용");
+        mockQna.setReplies(List.of(mockReply));
+
+        when(translationService.determineTargetLanguage("en")).thenReturn("en");
+        when(translationService.translate(any(TranslationRequest.class)))
+            .thenAnswer(invocation -> {
+                TranslationRequest request = invocation.getArgument(0);
+                List<IndividualTranslationResponse> translations = new ArrayList<>();
+                for (String text : request.getText()) {
+                    IndividualTranslationResponse response = new IndividualTranslationResponse();
+                    response.setText("Translated: " + text);
+                    translations.add(response);
+                }
+                return new TranslationResponse(translations);
+            });
+
+        // When
+        pageTranslationService.translateQna(List.of(mockQna), "en");
+
+        // Then
+        assertEquals("Translated: 질문 내용", mockQna.getContent());
+        assertEquals("Translated: 답변 내용", mockQna.getReplies().get(0).getContent());
+    }
+
+    @Test
+    void testTranslateQna_EmptyReplies() {
+        // Given
+        QnaResponse mockQna = new QnaResponse();
+        mockQna.setContent("질문 내용");
+        mockQna.setReplies(new ArrayList<>()); // 빈 리스트
+
+        when(translationService.determineTargetLanguage("en")).thenReturn("en");
+        when(translationService.translate(any(TranslationRequest.class)))
+            .thenAnswer(invocation -> {
+                TranslationRequest request = invocation.getArgument(0);
+                return new TranslationResponse(
+                    request.getText().stream()
+                        .map(text -> new IndividualTranslationResponse("ko", "Translated: " + text))
+                        .toList()
+                );
+            });
+
+        // When
+        pageTranslationService.translateQna(List.of(mockQna), "en");
+
+        // Then
+        assertEquals("Translated: 질문 내용", mockQna.getContent());
+        assertTrue(mockQna.getReplies().isEmpty());
+    }
+
+    @Test
+    void testTranslateReview() {
+        // Given
+        ReviewResponse mockReview = new ReviewResponse();
+        mockReview.setContent("리뷰 내용");
+        ReviewReplyResponse mockReply = new ReviewReplyResponse();
+        mockReply.setContent("리뷰 답변");
+        mockReview.setReplies(List.of(mockReply));
+
+        when(translationService.determineTargetLanguage("en")).thenReturn("en");
+        when(translationService.translate(any(TranslationRequest.class)))
+            .thenAnswer(invocation -> {
+                TranslationRequest request = invocation.getArgument(0);
+                return new TranslationResponse(
+                    request.getText().stream()
+                        .map(text -> new IndividualTranslationResponse("ko", "Translated: " + text))
+                        .toList()
+                );
+            });
+
+        // When
+        pageTranslationService.translateReview(List.of(mockReview), "en");
+
+        // Then
+        assertEquals("Translated: 리뷰 내용", mockReview.getContent());
+        assertEquals("Translated: 리뷰 답변", mockReview.getReplies().get(0).getContent());
+    }
+
+    @Test
+    void testTranslateReview_NoReplies() {
+        // Given
+        ReviewResponse mockReview = new ReviewResponse();
+        mockReview.setContent("리뷰 내용");
+        mockReview.setReplies(new ArrayList<>()); // 빈 대댓글 리스트
+
+        when(translationService.determineTargetLanguage("en")).thenReturn("en");
+        when(translationService.translate(any(TranslationRequest.class)))
+            .thenAnswer(invocation -> {
+                TranslationRequest request = invocation.getArgument(0);
+                return new TranslationResponse(
+                    request.getText().stream()
+                        .map(text -> new IndividualTranslationResponse("ko", "Translated: " + text))
+                        .toList()
+                );
+            });
+
+        // When
+        pageTranslationService.translateReview(List.of(mockReview), "en");
+
+        // Then
+        assertEquals("Translated: 리뷰 내용", mockReview.getContent());
+        assertTrue(mockReview.getReplies().isEmpty());
+    }
+
 
 }

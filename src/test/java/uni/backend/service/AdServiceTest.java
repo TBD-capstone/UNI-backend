@@ -156,4 +156,79 @@ class AdServiceTest {
         assertNotNull(activeAd);
         assertEquals(AdStatus.ACTIVE, activeAd.getAdStatus());
     }
+
+    @Test
+    @DisplayName("랜덤 ACTIVE 광고가 없을 때 예외 발생")
+    void 랜덤_ACTIVE_광고_없음_예외발생() {
+        // given
+        when(adRepository.findAll()).thenReturn(List.of()); // 비어 있는 리스트 반환
+
+        // when & then
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+            () -> adService.getRandomActiveAd());
+        assertEquals("ACTIVE 상태의 광고가 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("광고 업로드 실패 - 이미지 파일 없음")
+    void 광고_업로드_이미지없음() {
+        // given
+        MockMultipartFile emptyFile = new MockMultipartFile("adImg", "", "image/jpeg",
+            new byte[]{});
+
+        AdRequest adRequest = AdRequest.builder()
+            .advertiser("test3")
+            .title("samsung")
+            .adStatus(AdStatus.ACTIVE)
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.of(2026, 1, 1))
+            .build();
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> adService.uploadAd(emptyFile, adRequest));
+        assertEquals("이미지가 비어 있거나 잘못된 파일입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("광고 상태 변경 실패 - ID 없음")
+    void 광고_상태_변경_ID없음() {
+        // given
+        Integer invalidAdId = 999;
+
+        when(adRepository.findById(invalidAdId)).thenReturn(Optional.empty());
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> adService.updateAdStatus(invalidAdId, AdStatus.ACTIVE));
+        assertEquals("해당 ID의 광고가 존재하지 않습니다: " + invalidAdId, exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("광고 업로드 실패 - AWS S3 업로드 실패")
+    void 광고_업로드_AWSS3_업로드_실패() {
+        // given
+        MockMultipartFile mockFile = new MockMultipartFile(
+            "adImg",
+            "test.jpg",
+            "image/jpeg",
+            new byte[]{1, 2, 3}
+        );
+
+        AdRequest adRequest = AdRequest.builder()
+            .advertiser("test3")
+            .title("samsung")
+            .adStatus(AdStatus.ACTIVE)
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.of(2026, 1, 1))
+            .build();
+
+        when(awsS3Service.uploadAdImage(mockFile)).thenThrow(new RuntimeException("S3 업로드 실패"));
+
+        // when & then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> adService.uploadAd(mockFile, adRequest));
+        assertEquals("S3 업로드 실패", exception.getMessage());
+    }
+
 }

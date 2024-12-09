@@ -203,7 +203,7 @@ public class ReviewServiceTest {
         assertTrue(replies.isEmpty(), "대댓글이 없으면 빈 리스트가 반환되어야 합니다.");
     }
 
-    
+
     @Test
     void 대댓글이_정상일_경우_내용_반환() {
         // given
@@ -235,5 +235,113 @@ public class ReviewServiceTest {
         assertEquals("Initial review content", reviews.get(0).getContent(),
             "리뷰 내용이 올바르게 반환되어야 합니다.");
     }
+
+    @Test
+    void 리뷰_생성_이미_리뷰가_존재할_경우_예외() {
+        // given
+        matching.setReview(review); // 이미 리뷰가 존재하도록 설정
+        when(matchingRepository.findById(matching.getMatchingId())).thenReturn(
+            Optional.of(matching));
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.createReview(
+                matching.getMatchingId(),
+                profileOwner.getUserId(),
+                commenter.getUserId(),
+                "Duplicate review content",
+                4
+            );
+        });
+
+        assertEquals("이미 리뷰가 존재합니다.", exception.getMessage());
+    }
+
+    @Test
+    void 리뷰_생성_매칭_없음_예외() {
+        // given
+        when(matchingRepository.findById(matching.getMatchingId())).thenReturn(Optional.empty());
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.createReview(
+                matching.getMatchingId(),
+                profileOwner.getUserId(),
+                commenter.getUserId(),
+                "Review content",
+                4
+            );
+        });
+
+        assertEquals("해당 매칭을 찾을 수 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    void 리뷰_업데이트_별점_범위_예외() {
+        // given
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.of(review));
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.updateReviewContent(review.getReviewId(), "Updated content", 6);
+        });
+
+        assertEquals("별점은 1~5 사이여야 합니다.", exception.getMessage());
+    }
+
+    @Test
+    void 좋아요_토글_리뷰_없음_예외() {
+        // given
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.empty());
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.toggleLike(review.getReviewId(), commenter);
+        });
+
+        assertEquals("리뷰를 찾을 수 없습니다. ID: " + review.getReviewId(), exception.getMessage());
+    }
+
+    @Test
+    void 리뷰_삭제_리뷰_없음_예외() {
+        // given
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.empty());
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.deleteReview(review.getReviewId());
+        });
+
+        assertEquals("해당 Review가 존재하지 않습니다.", exception.getMessage());
+    }
+
+    @Test
+    void 리뷰_업데이트_리뷰_없음_예외() {
+        // given
+        when(reviewRepository.findById(review.getReviewId())).thenReturn(Optional.empty());
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            reviewService.updateReviewContent(review.getReviewId(), "Updated content", 4);
+        });
+
+        assertEquals("리뷰를 찾을 수 없습니다. ID: " + review.getReviewId(), exception.getMessage());
+    }
+
+    @Test
+    void 리뷰_리스트_조회_빈_결과() {
+        // given
+        when(reviewRepository.findByProfileOwnerUserId(profileOwner.getUserId())).thenReturn(
+            List.of());
+
+        // when
+        List<ReviewResponse> reviews = reviewService.getReviewResponsesByUserId(
+            profileOwner.getUserId());
+
+        // then
+        assertNotNull(reviews);
+        assertTrue(reviews.isEmpty(), "리뷰가 없으면 빈 리스트가 반환되어야 합니다.");
+    }
+
 
 }
