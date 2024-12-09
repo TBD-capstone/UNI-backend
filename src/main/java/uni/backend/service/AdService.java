@@ -69,7 +69,7 @@ public class AdService {
         Ad ad = Ad.builder()
             .advertiser(adRequest.getAdvertiser())
             .title(adRequest.getTitle())
-            .adStatus(adRequest.getAdStatus())
+            .adStatus(AdStatus.ACTIVE)
             .startDate(adRequest.getStartDate())
             .endDate(adRequest.getEndDate())
             .imageUrl(imageUrl)
