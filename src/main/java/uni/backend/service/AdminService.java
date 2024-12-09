@@ -56,7 +56,7 @@ public class AdminService {
      * 관리자 계정 생성 관리자 계정을 생성하고, 생성된 계정 정보를 로그로 기록, 및 팀원에게 이메일 전송
      */
     @Transactional
-    public void createAccountAndSendToMultipleRecipients(List<String> recipientEmails) {
+    public void createAccount(List<String> recipientEmails) {
         String rawPassword = adminAccountUtil.createAdminPassword();
         User admin = adminAccountUtil.createAdminAccount(rawPassword);
         userRepository.save(admin);
@@ -161,10 +161,14 @@ public class AdminService {
                     (long) reports.size(),
                     reports.stream()
                         .map(report -> new ReportedUserResponse.ReportDetail(
-                            report.getTitle(),
-                            report.getCategory().name(),
-                            report.getReason().name(),
-                            report.getDetailedReason()
+                            report.getId(),                                      // 신고 ID
+                            report.getTitle(),                                   // 신고 제목
+                            report.getCategory().name(),                         // 신고 카테고리
+                            report.getReason().name(),                           // 신고 사유
+                            report.getDetailedReason(),                          // 상세 신고 사유
+                            report.getReportedAt(),                              // 신고 날짜
+                            report.getReporterUser().getName(),                  // 신고한 사람 이름
+                            report.getReportedUser().getName()                   // 신고당한 사람 이름
                         ))
                         .collect(Collectors.toList())
                 );
@@ -177,6 +181,7 @@ public class AdminService {
 
         return new PageImpl<>(pagedReports, pageable, reportedUserResponses.size());
     }
+
 
     /**
      * 유저의 모든 콘텐츠 블라인드 처리 특정 유저의 QnA, 리뷰, 답글 등을 블라인드 처리합니다.

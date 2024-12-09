@@ -15,7 +15,7 @@ public interface UserService extends UserDetailsService {
 
     void generateAndSendResetCode(String email);
 
-    boolean verifyResetCode(String email, String code);
+    boolean verifyResetCode(String email, String token);
 
     void resetPassword(String email, String newPassword);
 }

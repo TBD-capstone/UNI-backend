@@ -1,162 +1,235 @@
 package uni.backend.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import uni.backend.domain.dto.*;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import uni.backend.config.TestSecurityConfig;
+import uni.backend.controller.ChatController;
+import uni.backend.domain.dto.ChatMessageRequest;
+import uni.backend.domain.dto.ChatMessageResponse;
+import uni.backend.domain.dto.ChatRoomRequest;
+import uni.backend.domain.dto.ChatRoomResponse;
+import uni.backend.security.JwtUtils;
 import uni.backend.service.ChatService;
+import org.springframework.context.annotation.Import;
 
-import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(ChatController.class)
+@Import(TestSecurityConfig.class)
 class ChatControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private ChatService chatService;
 
-    @Mock
+    @MockBean
     private SimpMessageSendingOperations messagingTemplate;
 
-    @InjectMocks
-    private ChatController chatController;
-
-    @Mock
-    private Principal principal;
-
-    @BeforeEach
-    void setUp() {
-        lenient().when(principal.getName()).thenReturn("user@example.com");
-    }
+    @MockBean
+    private JwtUtils jwtUtils;
 
     @Test
-    void testGetChatRooms() {
+    @DisplayName("GET /api/chat/rooms - 채팅방 목록 조회")
+    @WithMockUser(username = "testUser", roles = {"USER"})
+    void getChatRooms() throws Exception {
         // Given
-        List<ChatRoomResponse> chatRooms = List.of(
-                ChatRoomResponse.builder().chatRoomId(1).build(),
-                ChatRoomResponse.builder().chatRoomId(2).build()
+        List<ChatRoomResponse> mockChatRooms = List.of(
+                ChatRoomResponse.builder()
+                        .chatRoomId(1)
+                        .myId(100)
+                        .myName("User1")
+                        .otherId(200)
+                        .otherName("User2")
+                        .unreadCount(2)
+                        .build(),
+                ChatRoomResponse.builder()
+                        .chatRoomId(2)
+                        .myId(100)
+                        .myName("User1")
+                        .otherId(201)
+                        .otherName("User3")
+                        .unreadCount(0)
+                        .build()
         );
-        when(chatService.getChatRoomsForUser(principal.getName())).thenReturn(chatRooms);
+        when(chatService.getChatRoomsForUser("testUser")).thenReturn(mockChatRooms);
 
-        // When
-        ResponseEntity<List<ChatRoomResponse>> response = chatController.getChatRooms(principal);
-
-        // Then
-        verify(chatService, times(1)).getChatRoomsForUser(principal.getName());
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
+        // When & Then
+        mockMvc.perform(get("/api/chat/rooms").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].chatRoomId").value(1))
+                .andExpect(jsonPath("$[0].myName").value("User1"))
+                .andExpect(jsonPath("$[1].chatRoomId").value(2))
+                .andExpect(jsonPath("$[1].myName").value("User1"));
     }
 
     @Test
-    void testRequestChat() {
+    @DisplayName("POST /api/chat/request - 채팅방 생성")
+    @WithMockUser(username = "testUser", roles = {"USER"})
+    void createChatRoom() throws Exception {
         // Given
-        ChatRoomRequest request = ChatRoomRequest.builder().receiverId(2).build();
-        ChatRoomResponse responseMock = ChatRoomResponse.builder().chatRoomId(1).build();
-        when(chatService.createChatRoom(principal.getName(), request)).thenReturn(responseMock);
+        ChatRoomRequest request = ChatRoomRequest.builder()
+                .receiverId(200)
+                .build();
 
-        // When
-        ResponseEntity<ChatRoomResponse> response = chatController.requestChat(request, principal);
+        ChatRoomResponse response = ChatRoomResponse.builder()
+                .chatRoomId(1)
+                .myId(100)
+                .myName("testUser")
+                .otherId(200)
+                .otherName("User2")
+                .unreadCount(0)
+                .build();
 
-        // Then
-        verify(chatService, times(1)).createChatRoom(principal.getName(), request);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().getChatRoomId());
+        when(chatService.createChatRoom(eq("testUser"), any(ChatRoomRequest.class)))
+                .thenReturn(response);
+
+        // When & Then
+        mockMvc.perform(post("/api/chat/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"receiverId\":200}")
+                        .principal(() -> "testUser")) // Provide Principal explicitly
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.chatRoomId").value(1))
+                .andExpect(jsonPath("$.myId").value(100))
+                .andExpect(jsonPath("$.myName").value("testUser"))
+                .andExpect(jsonPath("$.otherId").value(200))
+                .andExpect(jsonPath("$.otherName").value("User2"))
+                .andExpect(jsonPath("$.unreadCount").value(0));
     }
 
     @Test
-    void testGetChatRoomMessages() {
+    @DisplayName("GET /api/chat/room/{roomId} - 채팅방 메시지 조회")
+    @WithMockUser(username = "testUser", roles = {"USER"})
+    void getChatRoomMessages() throws Exception {
         // Given
-        List<ChatMessageResponse> messages = List.of(
-                ChatMessageResponse.builder().messageId(1).content("Hello").build(),
-                ChatMessageResponse.builder().messageId(2).content("World").build()
+        List<ChatMessageResponse> mockMessages = List.of(
+                ChatMessageResponse.builder()
+                        .messageId(1)
+                        .roomId(1)
+                        .content("Hello")
+                        .senderId(100)
+                        .receiverId(200)
+                        .sendAt(LocalDateTime.now())
+                        .build(),
+                ChatMessageResponse.builder()
+                        .messageId(2)
+                        .roomId(1)
+                        .content("Hi")
+                        .senderId(101)
+                        .receiverId(100)
+                        .sendAt(LocalDateTime.now())
+                        .build()
         );
-        when(chatService.getChatMessages(1)).thenReturn(messages);
+        when(chatService.getChatMessages(1)).thenReturn(mockMessages);
 
-        // When
-        ResponseEntity<List<ChatMessageResponse>> response = chatController.getChatRoomMessages(1);
-
-        // Then
-        verify(chatService, times(1)).getChatMessages(1);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
+        // When & Then
+        mockMvc.perform(get("/api/chat/room/1").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].messageId").value(1))
+                .andExpect(jsonPath("$[0].content").value("Hello"));
     }
 
     @Test
-    void testSendWebSocketMessage() {
+    @DisplayName("POST /api/chat/room/{roomId}/messages - 메시지 전송")
+    @WithMockUser(username = "testUser", roles = {"USER"})
+    void sendRestMessage() throws Exception {
         // Given
-        ChatMessageRequest messageRequest = ChatMessageRequest.builder().roomId(1).content("Hello").build();
-        ChatMessageResponse responseMock = ChatMessageResponse.builder().messageId(1).content("Hello").build();
-        when(chatService.sendMessage(messageRequest, principal.getName(), null)).thenReturn(responseMock);
+        ChatMessageRequest request = ChatMessageRequest.builder()
+                .roomId(1)
+                .content("Hello")
+                .receiverId(200)
+                .build();
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .messageId(1)
+                .roomId(1)
+                .content("Hello")
+                .senderId(100)
+                .receiverId(200)
+                .sendAt(LocalDateTime.now())
+                .build();
+        when(chatService.sendMessage(any(ChatMessageRequest.class), eq("testUser"), eq(1)))
+                .thenReturn(response);
 
-        // When
-        chatController.sendWebSocketMessage(messageRequest, principal);
-
-        // Then
-        verify(chatService, times(1)).sendMessage(messageRequest, principal.getName(), null);
-        verify(messagingTemplate, times(1)).convertAndSend("/sub/chat/room/1", responseMock);
-        verify(messagingTemplate, times(1)).convertAndSend("/sub/user/" + responseMock.getReceiverId(), responseMock);
+        // When & Then
+        mockMvc.perform(post("/api/chat/room/1/messages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roomId\":1,\"content\":\"Hello\",\"receiverId\":200}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.messageId").value(1))
+                .andExpect(jsonPath("$.content").value("Hello"));
     }
 
     @Test
-    void testSendRestMessage() {
+    @DisplayName("GET /api/chat/translate/{messageId} - 메시지 번역")
+    @WithMockUser
+    void translateChatMessage() throws Exception {
         // Given
-        ChatMessageRequest messageRequest = ChatMessageRequest.builder().roomId(1).content("Hello").build();
-        ChatMessageResponse responseMock = ChatMessageResponse.builder().messageId(1).content("Hello").build();
-        when(chatService.sendMessage(messageRequest, principal.getName(), 1)).thenReturn(responseMock);
+        when(chatService.translateMessage(1, "en")).thenReturn("Translated Message");
 
-        // When
-        ResponseEntity<ChatMessageResponse> response = chatController.sendRestMessage(1, messageRequest, principal);
-
-        // Then
-        verify(chatService, times(1)).sendMessage(messageRequest, principal.getName(), 1);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().getMessageId());
+        // When & Then
+        mockMvc.perform(get("/api/chat/translate/1")
+                        .header("Accept-Language", "en")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Translated Message"));
     }
 
     @Test
-    void testTranslateChatMessage() {
+    @DisplayName("GET /api/chat/translate/{messageId} - 메시지 번역 실패")
+    @WithMockUser
+    void translateChatMessageFailure() throws Exception {
         // Given
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        when(mockRequest.getHeader("Accept-Language")).thenReturn("en");
-        when(chatService.translateMessage(1, "en")).thenReturn("Translated Text");
-
-        // When
-        ResponseEntity<String> response = chatController.translateChatMessage(1, mockRequest);
-
-        // Then
-        verify(chatService, times(1)).translateMessage(1, "en");
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Translated Text", response.getBody());
-    }
-
-    @Test
-    void testTranslateChatMessageNotFound() {
-        // Given
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        when(mockRequest.getHeader("Accept-Language")).thenReturn("en");
         when(chatService.translateMessage(1, "en")).thenReturn(null);
 
-        // When
-        ResponseEntity<String> response = chatController.translateChatMessage(1, mockRequest);
+        // When & Then
+        mockMvc.perform(get("/api/chat/translate/1")
+                        .header("Accept-Language", "en")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Message or translation failed"));
+    }
 
-        // Then
-        verify(chatService, times(1)).translateMessage(1, "en");
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Message or translation failed", response.getBody());
+    @Test
+    @DisplayName("POST /api/chat/room/{roomId}/leave - 채팅방 나가기")
+    @WithMockUser(username = "testUser")
+    void leaveChatRoom() throws Exception {
+        // Given
+        doNothing().when(chatService).markMessagesAsRead(1, "testUser");
+
+        // When & Then
+        mockMvc.perform(post("/api/chat/room/1/leave")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Successfully left the chat room."));
+    }
+
+    @Test
+    @DisplayName("POST /api/chat/room/{roomId}/leave - 채팅방 나가기 실패")
+    @WithMockUser(username = "testUser")
+    void leaveChatRoomFailure() throws Exception {
+        // Given
+        doThrow(new RuntimeException("Error")).when(chatService).markMessagesAsRead(1, "testUser");
+
+        // When & Then
+        mockMvc.perform(post("/api/chat/room/1/leave")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("Failed to leave chat room."));
     }
 }

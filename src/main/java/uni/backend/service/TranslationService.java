@@ -145,25 +145,25 @@ public class TranslationService {
     }
 
 
-    public CreateGlossaryResponse createGlossary(CreateGlossaryRequest request) {
+    /*public CreateGlossaryResponse createGlossary(CreateGlossaryRequest request) {
         CreateGlossaryResponse response = restClient.post().uri(DEEPL_GLOSSARY_URL)
             .header("Authorization", "DeepL-Auth-Key " + authKey).body(request).retrieve()
             .body(CreateGlossaryResponse.class);
 
         return response;
-    }
+    }*/
 
-    public GlossariesListResponse getGlossariesList() {
+    /*public GlossariesListResponse getGlossariesList() {
 
         return restClient.get().uri(DEEPL_GLOSSARY_URL)
             .header("Authorization", "DeepL-Auth-Key " + authKey).retrieve()
             .body(GlossariesListResponse.class);
-    }
+    }*/
 
-    public SingleGlossaryResponse retrieveGlossaryEntry(String glossaryId) {
+    /*public SingleGlossaryResponse retrieveGlossaryEntry(String glossaryId) {
         return restClient.get().uri(DEEPL_GLOSSARY_ENTRY_URL + "/" + glossaryId + "/entries")
             .header("Authorization", "DeepL-Auth-Key " + authKey).retrieve()
             .body(SingleGlossaryResponse.class);
-    }
+    }*/
 
 }

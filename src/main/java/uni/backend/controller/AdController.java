@@ -1,48 +1,54 @@
 package uni.backend.controller;
 
-import java.util.List;
-import java.util.Objects;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import uni.backend.domain.Ad;
-import uni.backend.domain.dto.AdEditRequest;
 import uni.backend.domain.dto.AdListResponse;
 import uni.backend.domain.dto.AdRequest;
+import uni.backend.domain.dto.UpdateAdStatusRequest;
 import uni.backend.enums.AdStatus;
 import uni.backend.service.AdService;
 
 @RestController
-@RequestMapping("/api/admin/ad")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class AdController {
 
-    @Autowired
-    private AdService adService;
+    private final AdService adService;
 
-    private AdStatus extractStatus(String status) {
-        return AdStatus.POSTED;
-    }
-
-    @GetMapping()
+    // 모든 광고 조회
+    @GetMapping("/admin/ad")
     public ResponseEntity<AdListResponse> getAllAds() {
         AdListResponse adListResponse = adService.findAll();
         return ResponseEntity.ok(adListResponse);
     }
 
-    @PostMapping("/new")
-    public Ad createAd(@RequestBody AdRequest adRequest) {
-        return adService.uploadAd(adRequest);
+    // 새로운 광고 생성
+    @PostMapping("/admin/ad/new")
+    public ResponseEntity<Ad> createAd(
+        @RequestPart("adImg") MultipartFile adImg,
+        @RequestPart("adRequest") AdRequest adRequest) {
+
+        Ad createdAd = adService.uploadAd(adImg, adRequest);
+        return ResponseEntity.ok(createdAd);
     }
 
-    @PostMapping()
-    public Ad updateAd(@RequestBody AdEditRequest adEditRequest) {
-        return adService.updateAdStatus(adEditRequest.getAdId(), adEditRequest.getAdStatus());
+
+    // 광고 상태 수정
+    @PostMapping("/admin/ad/update-status")
+    public ResponseEntity<Void> updateAdStatus(@RequestBody @Valid UpdateAdStatusRequest request) {
+        adService.updateAdStatus(request.getAdId(), request.getNewStatus());
+        return ResponseEntity.ok().build();
+    }
+
+
+    // 랜덤 ACTIVE 광고 반환
+    @GetMapping("/ad")
+    public ResponseEntity<Ad> getRandomActiveAd() {
+        Ad activeAd = adService.getRandomActiveAd();
+        return ResponseEntity.ok(activeAd);
     }
 }

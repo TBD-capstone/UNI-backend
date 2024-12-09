@@ -52,7 +52,7 @@ public class ChatController {
         if (messageRequest.getContent() == null || messageRequest.getContent().trim().isEmpty()) {
             return;
         }
-        ChatMessageResponse response = chatService.sendMessage(messageRequest, principal.getName(), null);
+        ChatMessageResponse response = chatService.sendMessage(messageRequest, principal.getName(), messageRequest.getRoomId());
 
         messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
         messagingTemplate.convertAndSend("/sub/user/" + response.getReceiverId(), response);
@@ -82,30 +82,10 @@ public class ChatController {
         return ResponseEntity.ok(translation);
     }
 
-    //개별 메시지 읽음 처리
-    @MessageMapping("/read")
-    public void handleIncomingMessage(@Payload ChatMessageRequest messageRequest, Principal principal) {
-        ChatMessageResponse response = chatService.sendMessage(messageRequest, principal.getName(), null);
-
-        messagingTemplate.convertAndSend("/sub/chat/room/" + messageRequest.getRoomId(), response);
-
-        chatService.markMessageAsRead(response.getMessageId(), messageRequest.getRoomId(), principal.getName());
-    }
-
     //특정 채팅방 메시지 읽음 처리
     @MessageMapping("/enter")
     public void markMessagesAsRead(@Payload Integer roomId, Principal principal) {
         chatService.markMessagesAsRead(roomId, principal.getName());
-    }
-
-    @PostMapping("/read/bulk")
-    public ResponseEntity<String> handleBulkRead(@RequestBody ReadMessagesRequest request, Principal principal) {
-        try {
-            chatService.markMessagesAsRead(request.getRoomId(), request.getMessageIds(), principal.getName());
-            return ResponseEntity.ok("Messages marked as read.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to mark messages as read.");
-        }
     }
 
     @PostMapping("/room/{roomId}/leave")

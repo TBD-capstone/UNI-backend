@@ -35,7 +35,7 @@ public class AdminController {
         );
 
         // recipientEmails 전달
-        adminService.createAccountAndSendToMultipleRecipients(recipientEmails);
+        adminService.createAccount(recipientEmails);
         return ResponseEntity.ok("관리자 계정이 생성되었으며 이메일이 발송되었습니다.");
     }
 
@@ -83,7 +83,7 @@ public class AdminController {
      */
     @GetMapping("/reported-users")
     public ResponseEntity<Page<ReportedUserResponse>> getReportedUsers(
-        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
 
         Page<ReportedUserResponse> reportedUsers = adminService.getReportedUsers(page, size);

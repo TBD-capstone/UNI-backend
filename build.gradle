@@ -39,10 +39,13 @@ dependencies {
     implementation 'com.deepl.api:deepl-java:1.6.0'
     implementation 'org.springframework.boot:spring-boot-starter-webflux:3.3.4'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
-    implementation 'org.springframework.session:spring-session-core'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
-
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -63,6 +66,7 @@ tasks.jacocoTestReport {
     dependsOn test // 테스트 실행 후 리포트 생성
     reports {
         html.required.set(true)
+        xml.required.set(true)
         html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/test/html"))
     }
 

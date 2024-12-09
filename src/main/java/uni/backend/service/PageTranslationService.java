@@ -2,13 +2,17 @@ package uni.backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import uni.backend.domain.dto.HomeDataResponse;
+import uni.backend.domain.Hashtag;
+import uni.backend.domain.University;
 import uni.backend.domain.dto.HomeProfileResponse;
 import uni.backend.domain.dto.IndividualProfileResponse;
 import uni.backend.domain.dto.IndividualTranslationResponse;
@@ -19,6 +23,9 @@ import uni.backend.domain.dto.ReviewReplyResponse;
 import uni.backend.domain.dto.ReviewResponse;
 import uni.backend.domain.dto.TranslationRequest;
 import uni.backend.domain.dto.TranslationResponse;
+import uni.backend.repository.HashtagRepository;
+import uni.backend.repository.UniversityRepository;
+import uni.backend.util.MainCategoryMap;
 
 @Service
 public class PageTranslationService {
@@ -27,26 +34,45 @@ public class PageTranslationService {
     @Autowired
     private TranslationService translationService;
 
-    private List<String> extractUnivHashtag(String univName, List<String> hashtags,
-        String acceptLanguage, String content) {
-        TranslationRequest translationRequest = new TranslationRequest();
-        List<String> newList = new ArrayList<>(hashtags);
-        if (content != null) {
-            newList.addFirst(content);
+    @Autowired
+    private UniversityRepository universityRepository;
+
+    private List<String> translateHashtag(List<String> hashtags, String acceptLanguage) {
+        if (hashtags == null || hashtags.isEmpty()) {
+            return hashtags; // 입력값이 비어있으면 그대로 반환
         }
-        newList.addFirst(univName);
-        translationRequest.setText(newList);
-        translationRequest.setSource_lang("ko");
-        translationRequest.setTarget_lang(acceptLanguage);
-        TranslationResponse translationResponse = translationService.translate(
-            translationRequest);
-        return translationResponse.getTranslations()
-            .stream()
-            .map(IndividualTranslationResponse::getText)
-            .collect(Collectors.toList());
+        acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
+        List<String> translatedHashtags = new ArrayList<>();
+
+        for (String hashtag : hashtags) {
+            String foreignKeyword = mapToForeignKeyword(hashtag,
+                acceptLanguage.toLowerCase());
+            translatedHashtags.add(foreignKeyword);
+        }
+
+        return translatedHashtags;
     }
 
-    private String translateOneLine(String text, String acceptLanguage) {
+    private String getUnivNameByLanguage(String univName, String acceptLanguage) {
+        Optional<University> universityOpt = universityRepository.findByUniName(univName);
+        University university = universityOpt.orElse(null);
+        String translatedUnivName;
+        if (university != null) {
+            translatedUnivName = switch (acceptLanguage) {
+                case "zh" -> university.getZhUniName();
+                case "en" -> university.getEnUniName();
+                default -> university.getUniName();
+            };
+        } else {
+            translatedUnivName = univName;
+        }
+        return translatedUnivName;
+    }
+
+    private String translateOneText(String text, String acceptLanguage) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
         List<String> oneList = new ArrayList<>(List.of());
         oneList.add(text);
         TranslationRequest translationRequest = new TranslationRequest();
@@ -63,37 +89,19 @@ public class PageTranslationService {
             return;
         }
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
-        List<String> data = extractUnivHashtag(individualProfileResponse.getUniv(),
-            individualProfileResponse.getHashtags(), acceptLanguage,
-            individualProfileResponse.getDescription());
-        individualProfileResponse.setUniv(data.getFirst());
-        if (data.size() > 1) {
-            individualProfileResponse.setDescription(data.get(1));
-        }
-        if (data.size() > 2) {
-            individualProfileResponse.setHashtags(data.subList(2, data.size()));
-        }
+
+        individualProfileResponse.setDescription(translateOneText(
+            individualProfileResponse.getDescription(), acceptLanguage));
+        individualProfileResponse.setUniv(
+            getUnivNameByLanguage(individualProfileResponse.getUniv(), acceptLanguage));
+        List<String> hashtags = translateHashtag(individualProfileResponse.getHashtags(),
+            acceptLanguage);
+        individualProfileResponse.setHashtags(hashtags);
 
         String region = individualProfileResponse.getRegion();
         if (region != null && !region.isEmpty()) {
-            String translatedRegion = translateOneLine(region, acceptLanguage);
+            String translatedRegion = translateOneText(region, acceptLanguage);
             individualProfileResponse.setRegion(translatedRegion);
-        }
-    }
-
-    public void translateHomeDataResponse(HomeDataResponse homeDataResponse,
-        String acceptLanguage) {
-        if (homeDataResponse == null || homeDataResponse.getData() == null) {
-            return;
-        }
-
-        for (HomeProfileResponse profile : homeDataResponse.getData()) {
-            List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
-                acceptLanguage, null);
-            profile.setUnivName(data.getFirst());
-            if (data.size() > 1) {
-                profile.setHashtags(data.subList(1, data.size()));
-            }
         }
     }
 
@@ -150,18 +158,20 @@ public class PageTranslationService {
         if (acceptLanguage == null || acceptLanguage.isEmpty()) {
             return;
         }
+        // 사용 언어 결정
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
 
         for (HomeProfileResponse profile : results.getContent()) {
-            List<String> data = extractUnivHashtag(profile.getUnivName(), profile.getHashtags(),
-                acceptLanguage, null);
-            profile.setUnivName(data.getFirst());
-            if (data.size() > 1) {
-                profile.setHashtags(data.subList(1, data.size()));
-            }
-        }
+            String translatedUnivName = getUnivNameByLanguage(profile.getUnivName(),
+                acceptLanguage);
+            profile.setUnivName(translatedUnivName);
 
+            List<String> translatedHashtags = translateHashtag(profile.getHashtags(),
+                acceptLanguage);
+            profile.setHashtags(translatedHashtags);
+        }
     }
+
 
     public void translateMarkers(List<MarkerResponse> markers, String acceptLanguage) {
         acceptLanguage = translationService.determineTargetLanguage(acceptLanguage);
@@ -192,4 +202,25 @@ public class PageTranslationService {
         }
 
     }
+
+    public String mapToKoreanKeyword(String userInput) {
+        return MainCategoryMap.HASHTAG_TRANSLATION_MAP.getOrDefault(userInput.toLowerCase(),
+            userInput);
+    }
+
+    public String mapToForeignKeyword(String koreanKeyword, String targetLanguage) {
+        String result = koreanKeyword;
+        if (Objects.equals(koreanKeyword, "대학생활")) {
+            koreanKeyword = "대학 생활";
+        }
+        if (MainCategoryMap.KOREAN_HASHTAG_MAP.containsKey(koreanKeyword)) {
+            Map<String, String> subMap = MainCategoryMap.KOREAN_HASHTAG_MAP.get(koreanKeyword);
+            if (subMap.containsKey(targetLanguage)) {
+                result = subMap.get(targetLanguage);
+            }
+        }
+
+        return result;
+    }
+
 }

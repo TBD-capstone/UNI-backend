@@ -111,7 +111,7 @@ public class ReviewService {
     }
 
     // 대댓글 변환 로직
-    private List<ReviewReplyResponse> getReplyResponses(Review review) {
+    protected List<ReviewReplyResponse> getReplyResponses(Review review) {
         List<ReviewReply> replies = review.getReplies(); // ReviewReply 사용
         if (replies == null) {
             return new ArrayList<>(); // null이면 빈 리스트 반환

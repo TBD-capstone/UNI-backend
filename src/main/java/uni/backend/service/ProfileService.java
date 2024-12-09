@@ -90,6 +90,7 @@ public class ProfileService {
         return IndividualProfileResponse.builder()
             .userId(userId)
             .userName(profile.getUser().getName())
+            .role(profile.getUser().getRole())
             .imgProf(profile.getImgProf())
             .imgBack(profile.getImgBack())
             .univ(profile.getUser().getUnivName())

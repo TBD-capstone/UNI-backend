@@ -43,23 +43,23 @@ class TranslationController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/glossary/create")
+    /*@PostMapping("/glossary/create")
     public ResponseEntity<CreateGlossaryResponse> createGlossary(
         @RequestBody CreateGlossaryRequest request) {
         CreateGlossaryResponse response = translationService.createGlossary(request);
         return ResponseEntity.ok(response);
-    }
+    }*/
 
-    @GetMapping("/glossary/list")
+    /*@GetMapping("/glossary/list")
     public ResponseEntity<GlossariesListResponse> listGlossaries() {
         GlossariesListResponse response = translationService.getGlossariesList();
         return ResponseEntity.ok(response);
-    }
+    }*/
 
-    @GetMapping("/glossary/retrieve/{glossary_id}")
+    /*@GetMapping("/glossary/retrieve/{glossary_id}")
     public ResponseEntity<SingleGlossaryResponse> retrieveGlossaryEntry(
         @PathVariable String glossary_id) {
         SingleGlossaryResponse response = translationService.retrieveGlossaryEntry(glossary_id);
         return ResponseEntity.ok(response);
-    }
+    }*/
 }

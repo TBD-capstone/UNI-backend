@@ -30,7 +30,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
 
     Optional<Profile> findByUser(User user); // User 객체를 통해 Profile 조회
 
-    //    Remapper findByUnivNameAndHashtags(List<String> hashtags, int size, PageRequest pageable);
     @Query("SELECT DISTINCT p FROM Profile p " +
         "LEFT JOIN p.mainCategories mc " +
         "LEFT JOIN mc.hashtag h " +
@@ -41,7 +40,8 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> { // 
         " LEFT JOIN p2.mainCategories mc2 " +
         " LEFT JOIN mc2.hashtag h2 " +
         " WHERE p2.profileId = p.profileId AND h2.hashtagName IN :hashtags) = :hashtagsSize) " +
-        "AND p.user.role = 'KOREAN'")
+        "AND p.user.role = 'KOREAN' " +
+        "AND p.user.status <> 'BANNED'")
     Page<Profile> findByUnivNameAndHashtags(
         @Param("univName") String univName,
         @Param("hashtags") List<String> hashtags,
