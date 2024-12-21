@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uni.backend.domain.Matching;
+import uni.backend.domain.Matching.Status;
 import uni.backend.domain.User;
 import uni.backend.domain.dto.*;
 import uni.backend.repository.MatchingRepository;
@@ -68,6 +69,18 @@ public class MatchingService {
             return MatchingUpdateResponse.from(match);
         }
         throw new IllegalArgumentException("Matching not found");
+    }
+
+    public String getMatchingResponseMessage(MatchingUpdateResponse response) {
+        String responseMessage;
+        if (response.getStatus().equals(Status.ACCEPTED)) {
+            responseMessage = "매칭 요청이 수락되었습니다.";
+        } else if (response.getStatus().equals(Status.REJECTED)) {
+            responseMessage = "매칭 요청이 거절되었습니다.";
+        } else {
+            responseMessage = "매칭 상태가 변경되었습니다.";
+        }
+        return responseMessage;
     }
 
     public List<MatchingListResponse> getMatchingListByRequester(Integer requesterId) {

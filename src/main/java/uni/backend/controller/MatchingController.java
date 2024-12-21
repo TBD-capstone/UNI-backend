@@ -63,18 +63,9 @@ public class MatchingController {
         // MatchingUpdateResponse를 생성
         MatchingUpdateResponse response = matchingService.handleMatchResponse(request);
 
-        // 요청자의 ID를 추출하여 메시지 전송
-        String responseMessage;
-        if ("ACCEPTED".equals(response.getStatus().toString())) {
-            responseMessage = "매칭 요청이 수락되었습니다.";
-        } else if ("REJECTED".equals(response.getStatus().toString())) {
-            responseMessage = "매칭 요청이 거절되었습니다.";
-        } else {
-            responseMessage = "매칭 상태가 변경되었습니다.";
-        }
-
         messagingTemplate.convertAndSend(
-            "/sub/match-response/" + response.getRequesterId(), responseMessage);
+            "/sub/match-response/" + response.getRequesterId(),
+            matchingService.getMatchingResponseMessage(response));
 
         return response;
     }

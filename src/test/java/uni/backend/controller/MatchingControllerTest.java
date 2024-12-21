@@ -326,8 +326,8 @@ class MatchingControllerTest {
             requesterId, receiverId);
 
         // Then
-        assertNotNull(response); // 응답이 null이 아닌지 확인
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()); // 상태 코드가 NO_CONTENT인지 확인
+        assertNotNull(response);
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
         // Mock 호출 검증
         verify(matchingService, times(1)).getPendingMatching(requesterId, receiverId);
@@ -351,14 +351,14 @@ class MatchingControllerTest {
         MatchingCreateResponse response = matchingController.handleMatchRequest(createRequest);
 
         // Then
-        assertNotNull(response); // 응답이 null이 아닌지 확인
-        assertEquals(1, response.getMatchingId()); // 매칭 ID 확인
-        assertEquals(1, response.getRequesterId()); // 요청자 ID 확인
-        assertEquals(2, response.getReceiverId()); // 수신자 ID 확인
-        assertEquals("PENDING", response.getStatus()); // 상태 확인
+        assertNotNull(response);
+        assertEquals(1, response.getMatchingId());
+        assertEquals(1, response.getRequesterId());
+        assertEquals(2, response.getReceiverId());
+        assertEquals("PENDING", response.getStatus());
         verify(matchingService, times(1)).createMatchRequest(createRequest); // 서비스 호출 검증
         verify(messagingTemplate, times(1))
-            .convertAndSend("/sub/match-request/2", createResponse); // 메시지 전송 검증
+            .convertAndSend("/sub/match-request/2", createResponse);
     }
 
     @Test
@@ -379,11 +379,12 @@ class MatchingControllerTest {
         MatchingUpdateResponse response = matchingController.handleMatchResponse(updateRequest);
 
         // Then
-        assertNotNull(response); // 응답이 null이 아닌지 확인
-        assertEquals(1, response.getMatchingId()); // 매칭 ID 확인
-        assertEquals("ACCEPTED", response.getStatus()); // 상태 확인
-        verify(matchingService, times(1)).handleMatchResponse(updateRequest); // 서비스 호출 검증
+        assertNotNull(response);
+        assertEquals(1, response.getMatchingId());
+        assertEquals("ACCEPTED", response.getStatus());
+        verify(matchingService, times(1)).handleMatchResponse(updateRequest);
         verify(messagingTemplate, times(1))
-            .convertAndSend("/sub/match-response/response", updateResponse); // 메시지 전송 검증
+            .convertAndSend("/sub/match-response/" + response.getRequesterId(),
+                matchingService.getMatchingResponseMessage(response));
     }
 }

@@ -194,9 +194,13 @@ class MatchingServiceTest {
     void 매칭_응답_처리_성공() {
         // given
         int matchingId = 1;
+        User requester = new User().builder()
+            .userId(1)
+            .build();
 
         Matching matching = new Matching();
         matching.setMatchingId(matchingId);
+        matching.setRequester(requester);
         matching.setStatus(Matching.Status.PENDING);
 
         MatchingUpdateRequest request = new MatchingUpdateRequest();
@@ -218,9 +222,13 @@ class MatchingServiceTest {
     void 매칭_응답_처리_거절() {
         // given
         int matchingId = 2;
+        User requester = new User().builder()
+            .userId(1)
+            .build();
 
         Matching matching = new Matching();
         matching.setMatchingId(matchingId);
+        matching.setRequester(requester);
         matching.setStatus(Matching.Status.PENDING);
 
         MatchingUpdateRequest request = new MatchingUpdateRequest();
