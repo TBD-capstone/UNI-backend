@@ -143,20 +143,25 @@ class AdminServiceTest {
     @DisplayName("신고된 유저 리스트 조회 성공 테스트")
     void getReportedUsers_성공() {
         // given
+        User reporterUser = User.builder()
+            .userId(1)
+            .name("Reporter Name") // getName() 호출을 위해 필요한 값
+            .email("reporter@example.com")
+            .build();
+
         User reportedUser = User.builder()
             .userId(2)
             .email("reported@example.com")
             .build();
 
         Report report = Report.builder()
+            .reporterUser(reporterUser) // reporterUser 설정
             .reportedUser(reportedUser)
             .category(ReportCategory.CHAT)
             .reason(ReportReason.SPAM)
             .detailedReason("Spam content")
             .title("Spam Report")
             .build();
-
-        List<Report> reports = List.of(report);
 
         when(reportRepository.findAll()).thenReturn(List.of(report));
 

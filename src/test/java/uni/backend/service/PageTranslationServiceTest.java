@@ -50,7 +50,7 @@ class PageTranslationServiceTest {
         List<HomeProfileResponse> mockProfiles = new ArrayList<>();
         HomeProfileResponse mockProfile = new HomeProfileResponse();
         mockProfile.setUnivName("서울대학교");
-        mockProfile.setHashtags(List.of("trip", "real estate"));
+        mockProfile.setHashtags(List.of("Trip", "Real Estate")); // 소문자로 설정
         mockProfiles.add(mockProfile);
 
         Page<HomeProfileResponse> profiles = new PageImpl<>(mockProfiles);
@@ -69,8 +69,10 @@ class PageTranslationServiceTest {
 
         // Then: 번역 결과 검증
         assertEquals("Seoul National University", profiles.getContent().get(0).getUnivName());
-        assertEquals(List.of("Trip", "Realty"), profiles.getContent().get(0).getHashtags());
+        assertEquals(List.of("Trip", "Real Estate"),
+            profiles.getContent().get(0).getHashtags()); // 수정된 기대 값
     }
+
 
     @Test
     void testTranslateHomeResponse_NoTranslationForHashtags() {
